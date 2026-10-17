@@ -3,7 +3,7 @@ import '@testing-library/jest-dom';
 import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { MemoryRouter, Routes, Route } from 'react-router-dom';
 import { ThresholdsProfilesChange, ThresholdsProfilesList, ThresholdsProfileVersionDetail } from '../ThresholdProfiles';
-import { Backend, WebApi } from '../DataManager';
+import { Backend } from '../DataManager';
 import { QueryClient, QueryClientProvider, setLogger } from 'react-query';
 import { NotificationManager } from 'react-notifications';
 import selectEvent from 'react-select-event';
@@ -11,21 +11,16 @@ import selectEvent from 'react-select-event';
 
 jest.mock('../DataManager', () => {
   return {
-    Backend: jest.fn(),
-    WebApi: jest.fn()
+    Backend: jest.fn()
   }
 })
 
 jest.setTimeout(50000);
 
 const mockChangeObject = jest.fn();
-const mockChangeThresholdsProfile = jest.fn();
 const mockDeleteObject = jest.fn();
-const mockDeleteThresholdsProfile = jest.fn();
 const mockAddObject = jest.fn();
-const mockAddThresholdsProfile = jest.fn();
 const mockFetchReports = jest.fn()
-const mockChangeReport = jest.fn()
 
 const queryClient = new QueryClient();
 
@@ -582,8 +577,6 @@ function renderListView(publicView=false) {
         <QueryClientProvider client={queryClient}>
           <MemoryRouter initialEntries={ [ route ] }>
             <ThresholdsProfilesList
-              webapithresholds="https://mock.thresholds.com"
-              webapitoken="token"
               publicView={ true }
             />
           </MemoryRouter>
@@ -597,8 +590,6 @@ function renderListView(publicView=false) {
         <QueryClientProvider client={queryClient}>
           <MemoryRouter initialEntries={ [ route ] }>
             <ThresholdsProfilesList
-              webapithresholds="https://mock.thresholds.com"
-              webapitoken="token"
             />
           </MemoryRouter>
         </QueryClientProvider>
@@ -620,9 +611,7 @@ function renderChangeView(publicView=false) {
                 path="/ui/public_thresholdsprofiles/:name"
                 element={ 
                   <ThresholdsProfilesChange
-                    webapithresholds="https://mock.thresholds.com"
-                    webapitoken="token"
-                    tenantname="TENANT"
+                                tenantname="TENANT"
                     publicView={ true }
                   /> 
                 }
@@ -643,9 +632,7 @@ function renderChangeView(publicView=false) {
                 path="/ui/thresholdsprofiles/:name"
                 element={ 
                   <ThresholdsProfilesChange
-                    webapithresholds="https://mock.thresholds.com"
-                    webapitoken="token"
-                    tenantname="TENANT"
+                                tenantname="TENANT"
                   /> 
                 }
               />
@@ -665,8 +652,6 @@ function renderAddView() {
       <QueryClientProvider client={queryClient}>
         <MemoryRouter initialEntries={ [ route ] }>
           <ThresholdsProfilesChange
-            webapithresholds="https://mock.thresholds.com"
-            webapitoken="token"
             tenantname="TENANT"
             addview={ true }
           />
@@ -774,20 +759,13 @@ describe('Tests for threshols profile changeview', () => {
 
   beforeEach(() => {
     mockFetchReports.mockReturnValue([mockReports[1]])
-    WebApi.mockImplementation(() => {
-      return {
-        fetchThresholdsProfile: () => Promise.resolve(mockWebApiProfile),
-        fetchMetricProfiles: () => Promise.resolve(mockMetricProfiles),
-        fetchReportsTopologyEndpoints: () => Promise.resolve(mockTopologyEndpoints),
-        fetchReports: mockFetchReports,
-        changeThresholdsProfile: mockChangeThresholdsProfile,
-        deleteThresholdsProfile: mockDeleteThresholdsProfile,
-        changeReport: mockChangeReport
-      }
-    })
     Backend.mockImplementation(() => {
       return {
         fetchData: () => Promise.resolve(mockBackendProfile),
+        fetchWebApiThresholdsProfile: () => Promise.resolve(mockWebApiProfile),
+        fetchWebApiMetricProfiles: () => Promise.resolve(mockMetricProfiles),
+        fetchWebApiTopologyEndpoints: () => Promise.resolve(mockTopologyEndpoints),
+        fetchWebApiReports: mockFetchReports,
         fetchListOfNames: () => Promise.resolve(mockAllMetrics),
         isActiveSession: (path) => {
           switch (path) {
@@ -1057,9 +1035,6 @@ describe('Tests for threshols profile changeview', () => {
       Promise.resolve({ ok: true, status: 200, statusText: 'OK' })
     )
 
-    mockChangeThresholdsProfile.mockReturnValueOnce(
-      Promise.resolve({ ok: 'ok' })
-    )
 
     renderChangeView();
 
@@ -1254,23 +1229,6 @@ describe('Tests for threshols profile changeview', () => {
     fireEvent.click(screen.getByRole('button', { name: /yes/i }));
 
     await waitFor(() => {
-      expect(mockChangeThresholdsProfile).toHaveBeenCalledWith({
-        id: '00000000-oooo-kkkk-aaaa-aaeekkccnnee',
-        name: 'TEST_PROFILE',
-        rules: [
-          {
-            endpoint_group: 'GRIDOPS-MSG',
-            host: 'msg.argo.grnet.gr',
-            metric: 'argo.AMS-Check',
-            thresholds: 'time=1s;1:15;10:20;0;10'
-          },
-          {
-            metric: 'org.bdii.Entries',
-            host: 'bdii.grid.cesnet.cz',
-            thresholds: 'entries=2B;0:;2:'
-          }
-        ]
-      })
     })
 
     await waitFor(() => {
@@ -1285,12 +1243,13 @@ describe('Tests for threshols profile changeview', () => {
             endpoint_group: 'GRIDOPS-MSG',
             host: 'msg.argo.grnet.gr',
             metric: 'argo.AMS-Check',
-            thresholds: 'time=1s;1:15;10:20;0;10'
+            thresholds: [{label: 'time', value: '1', uom: 's', warn1: '1', warn2: '15', crit1: '10', crit2: '20', min: '0', max: '10'}]
           },
           {
+            endpoint_group: null,
             metric: 'org.bdii.Entries',
             host: 'bdii.grid.cesnet.cz',
-            thresholds: 'entries=2B;0:;2:'
+            thresholds: [{label: 'entries', value: '2', uom: 'B', warn1: '0', warn2: '', crit1: '2', crit2: ''}]
           }
           ]
         }
@@ -1307,9 +1266,6 @@ describe('Tests for threshols profile changeview', () => {
   test('Test change thresholds profile with empty threshold value and save', async () => {
     mockChangeObject.mockReturnValueOnce(
       Promise.resolve({ ok: true, status: 200, statusText: 'OK' })
-    )
-    mockChangeThresholdsProfile.mockReturnValueOnce(
-      Promise.resolve({ ok: 'ok' })
     )
 
     renderChangeView();
@@ -1396,23 +1352,6 @@ describe('Tests for threshols profile changeview', () => {
     fireEvent.click(screen.getByRole('button', { name: /yes/i }));
 
     await waitFor(() => {
-      expect(mockChangeThresholdsProfile).toHaveBeenCalledWith({
-        id: '00000000-oooo-kkkk-aaaa-aaeekkccnnee',
-        name: 'TEST_PROFILE',
-        rules: [
-          {
-            endpoint_group: 'GRIDOPS-MSG',
-            host: 'msg.argo.grnet.gr',
-            metric: 'argo.AMS-Check',
-            thresholds: 'time=1s;1:15;10:20;0;10'
-          },
-          {
-            metric: 'org.bdii.Entries',
-            host: 'bdii.grid.cesnet.cz',
-            thresholds: 'entries=0;0:;2:'
-          }
-        ]
-      })
     })
 
     await waitFor(() => {
@@ -1427,12 +1366,13 @@ describe('Tests for threshols profile changeview', () => {
               endpoint_group: 'GRIDOPS-MSG',
               host: 'msg.argo.grnet.gr',
               metric: 'argo.AMS-Check',
-              thresholds: 'time=1s;1:15;10:20;0;10'
+              thresholds: [{label: 'time', value: '1', uom: 's', warn1: '1', warn2: '15', crit1: '10', crit2: '20', min: '0', max: '10'}]
             },
             {
+              endpoint_group: null,
               metric: 'org.bdii.Entries',
               host: 'bdii.grid.cesnet.cz',
-              thresholds: 'entries=0;0:;2:'
+              thresholds: [{label: 'entries', value: '0', uom: '', warn1: '0', warn2: '', crit1: '2', crit2: ''}]
             }
           ]
         }
@@ -1446,480 +1386,9 @@ describe('Tests for threshols profile changeview', () => {
     )
   })
 
-  test('Test error changing thresholds profile on web api with error message', async () => {
-    mockChangeThresholdsProfile.mockImplementationOnce( () => {
-      throw Error('406 Content Not acceptable: There has been an error.')
-    } );
 
-    renderChangeView();
-
-    await waitFor(() => {
-      expect(screen.getByRole("button", { name: /save/i })).toBeInTheDocument()
-    })
-
-    await selectEvent.select(screen.getByText('TEST'), 'TESTa')
-
-    var rule1 = within(screen.getByTestId('rules.0'))
-
-    await waitFor(() => {
-      selectEvent.select(rule1.getByText('org.nagios.ARGOWeb-Status'), 'argo.AMS-Check')
-    })
-
-    await waitFor(() => {
-      expect(rule1.getByText("argo.AMS-Check")).toBeInTheDocument()
-    })
-
-    rule1 = within(screen.getByTestId('rules.0'))
-
-    expect(rule1.queryByText('argo.egi.eu')).not.toBeInTheDocument();
-    expect(rule1.queryByText('msg.argo.grnet.gr')).not.toBeInTheDocument();
-    expect(rule1.queryByText('sedoor1.bfg.uni-freiburg.de')).not.toBeInTheDocument();
-    expect(rule1.queryByText('sedoor2.bfg.uni-freiburg.de')).not.toBeInTheDocument();
-    expect(rule1.queryByText('eosccore.ui.argo.grnet.gr')).not.toBeInTheDocument();
-    expect(rule1.queryByText('argo.eosc-portal.eu')).not.toBeInTheDocument();
-    expect(rule1.queryByText('ce1.grid.cesnet.cz')).not.toBeInTheDocument();
-    expect(rule1.queryByText('se1.grid.cesnet.cz')).not.toBeInTheDocument();
-    expect(rule1.queryByText('sbdii.grid.cesnet.cz')).not.toBeInTheDocument();
-    expect(rule1.queryByText('bdii.grid.cesnet.cz')).not.toBeInTheDocument();
-    expect(rule1.queryByText('grid108.kfki.hu')).not.toBeInTheDocument();
-
-    selectEvent.openMenu(rule1.getAllByText(/select/i)[0])
-    expect(rule1.queryByText('argo.egi.eu')).not.toBeInTheDocument();
-    expect(rule1.getByText('msg.argo.grnet.gr')).toBeInTheDocument();
-    expect(rule1.queryByText('sedoor1.bfg.uni-freiburg.de')).not.toBeInTheDocument();
-    expect(rule1.queryByText('sedoor2.bfg.uni-freiburg.de')).not.toBeInTheDocument();
-    expect(rule1.queryByText('eosccore.ui.argo.grnet.gr')).not.toBeInTheDocument();
-    expect(rule1.queryByText('argo.eosc-portal.eu')).not.toBeInTheDocument();
-    expect(rule1.queryByText('ce1.grid.cesnet.cz')).not.toBeInTheDocument();
-    expect(rule1.queryByText('se1.grid.cesnet.cz')).not.toBeInTheDocument();
-    expect(rule1.queryByText('sbdii.grid.cesnet.cz')).not.toBeInTheDocument();
-    expect(rule1.queryByText('bdii.grid.cesnet.cz')).not.toBeInTheDocument();
-    expect(rule1.queryByText('grid108.kfki.hu')).not.toBeInTheDocument();
-
-    await waitFor(() => {
-      selectEvent.select(rule1.getAllByText(/select/i)[0], 'msg.argo.grnet.gr')
-    })
-
-    await waitFor(() => {
-      expect(rule1.getByText("msg.argo.grnet.gr")).toBeInTheDocument()
-    })
-
-    rule1 = within(screen.getByTestId('rules.0'))
-
-    expect(rule1.queryByText('GRIDOPS-MSG')).not.toBeInTheDocument();
-    expect(rule1.queryByText('EOSC_Messaging')).not.toBeInTheDocument();
-    expect(rule1.queryByText('UNI-FREIBURG')).not.toBeInTheDocument();
-    expect(rule1.queryByText('EOSC_Core_Monitoring')).not.toBeInTheDocument();
-    expect(rule1.queryByText('EOSC_Exchange_Monitoring')).not.toBeInTheDocument();
-    expect(rule1.queryByText('GRIDOPS-SAM')).not.toBeInTheDocument();
-    expect(rule1.queryByText('prague_cesnet_lcg2')).not.toBeInTheDocument();
-
-    selectEvent.openMenu(rule1.getAllByText(/select/i)[0])
-    expect(rule1.getByText('GRIDOPS-MSG')).toBeInTheDocument();
-    expect(rule1.getByText('EOSC_Messaging')).toBeInTheDocument();
-    expect(rule1.queryByText('UNI-FREIBURG')).not.toBeInTheDocument();
-    expect(rule1.queryByText('EOSC_Core_Monitoring')).not.toBeInTheDocument();
-    expect(rule1.queryByText('EOSC_Exchange_Monitoring')).not.toBeInTheDocument();
-    expect(rule1.queryByText('GRIDOPS-SAM')).not.toBeInTheDocument();
-    expect(rule1.queryByText('prague_cesnet_lcg2')).not.toBeInTheDocument();
-
-    await waitFor(() => {
-      selectEvent.select(rule1.getAllByText(/select/i)[0], 'GRIDOPS-MSG')
-    })
-
-    await waitFor(() => {
-      expect(rule1.getByText("GRIDOPS-MSG")).toBeInTheDocument()
-    })
-
-    fireEvent.change(screen.getByTestId('rules.0.thresholds.0.warn1'), { target: { value: '1' } });
-    fireEvent.change(screen.getByTestId('rules.0.thresholds.0.warn2'), { target: { value: '15' } });
-    fireEvent.change(screen.getByTestId('rules.0.thresholds.0.crit1'), { target: { value: '10' } });
-    fireEvent.change(screen.getByTestId('rules.0.thresholds.0.crit2'), { target: { value: '20' } });
-    fireEvent.click(screen.getByTestId('rules.0.thresholds.1.remove'))
-
-    fireEvent.click(screen.getByTestId('rules.2.remove'))
-    fireEvent.click(screen.getByTestId('rules.1.remove'));
-
-    fireEvent.click(screen.getByRole('button', { name: 'Add new rule' }));
-
-    var newRule = within(screen.getByTestId('rules.1'))
-
-    expect(newRule.queryByText('argo.AMS-Check')).not.toBeInTheDocument();
-    expect(newRule.queryByText('argo.AMSPublisher-Check')).not.toBeInTheDocument();
-    expect(newRule.queryByText('argo.POEM-API-MON')).not.toBeInTheDocument();
-    expect(newRule.queryByText('argo.API-Status-Check')).not.toBeInTheDocument();
-    expect(newRule.queryByText('ch.cern.HTCondorCE-JobState')).not.toBeInTheDocument();
-    expect(newRule.queryByText('ch.cern.HTCondorCE-JobSubmit')).not.toBeInTheDocument();
-    expect(newRule.queryByText('org.bdii.Entries')).not.toBeInTheDocument();
-    expect(newRule.queryByText('org.bdii.Freshness')).not.toBeInTheDocument();
-    expect(newRule.queryByText('org.nagios.ARGOWeb-AR')).not.toBeInTheDocument();
-    expect(newRule.queryByText('org.nagios.ARGOWeb-Status')).not.toBeInTheDocument();
-    expect(newRule.queryByText('org.nagios.BDII-Check')).not.toBeInTheDocument();
-    expect(newRule.queryByText('org.nagios.GridFTP-Check')).not.toBeInTheDocument();
-
-    selectEvent.openMenu(newRule.getAllByText(/select/i)[0])
-    expect(newRule.getByText('argo.AMS-Check')).toBeInTheDocument();
-    expect(newRule.getByText('argo.AMSPublisher-Check')).toBeInTheDocument();
-    expect(newRule.getByText('argo.POEM-API-MON')).toBeInTheDocument();
-    expect(newRule.getByText('argo.API-Status-Check')).toBeInTheDocument();
-    expect(newRule.getByText('ch.cern.HTCondorCE-JobState')).toBeInTheDocument();
-    expect(newRule.getByText('ch.cern.HTCondorCE-JobSubmit')).toBeInTheDocument();
-    expect(newRule.getByText('org.bdii.Entries')).toBeInTheDocument();
-    expect(newRule.getByText('org.bdii.Freshness')).toBeInTheDocument();
-    expect(newRule.getByText('org.nagios.ARGOWeb-AR')).toBeInTheDocument();
-    expect(newRule.getByText('org.nagios.ARGOWeb-Status')).toBeInTheDocument();
-    expect(newRule.getByText('org.nagios.BDII-Check')).toBeInTheDocument();
-    expect(newRule.getByText('org.nagios.GridFTP-Check')).toBeInTheDocument();
-
-    await waitFor(() => {
-      selectEvent.select(newRule.getAllByText(/select/i)[0], 'org.bdii.Entries')
-    })
-
-    await waitFor(() => {
-      expect(newRule.getByText("org.bdii.Entries")).toBeInTheDocument()
-    })
-
-    newRule = within(screen.getByTestId('rules.1'))
-
-    expect(newRule.queryByText('msg.argo.grnet.gr')).not.toBeInTheDocument();
-    expect(newRule.queryByText('sedoor1.bfg.uni-freiburg.de')).not.toBeInTheDocument();
-    expect(newRule.queryByText('sedoor2.bfg.uni-freiburg.de')).not.toBeInTheDocument();
-    expect(newRule.queryByText('eosccore.ui.argo.grnet.gr')).not.toBeInTheDocument();
-    expect(newRule.queryByText('argo.eosc-portal.eu')).not.toBeInTheDocument();
-    expect(newRule.queryByText('argo.egi.eu')).not.toBeInTheDocument();
-    expect(newRule.queryByText('ce1.grid.cesnet.cz')).not.toBeInTheDocument();
-    expect(newRule.queryByText('se1.grid.cesnet.cz')).not.toBeInTheDocument();
-    expect(newRule.queryByText('sbdii.grid.cesnet.cz')).not.toBeInTheDocument();
-    expect(newRule.queryByText('bdii.grid.cesnet.cz')).not.toBeInTheDocument();
-    expect(newRule.queryByText('grid108.kfki.hu')).not.toBeInTheDocument();
-
-    selectEvent.openMenu(newRule.getAllByText(/select/i)[0])
-    expect(newRule.queryByText('msg.argo.grnet.gr')).not.toBeInTheDocument();
-    expect(newRule.queryByText('sedoor1.bfg.uni-freiburg.de')).not.toBeInTheDocument();
-    expect(newRule.queryByText('sedoor2.bfg.uni-freiburg.de')).not.toBeInTheDocument();
-    expect(newRule.queryByText('eosccore.ui.argo.grnet.gr')).not.toBeInTheDocument();
-    expect(newRule.queryByText('argo.eosc-portal.eu')).not.toBeInTheDocument();
-    expect(newRule.queryByText('argo.egi.eu')).not.toBeInTheDocument();
-    expect(newRule.queryByText('ce1.grid.cesnet.cz')).not.toBeInTheDocument();
-    expect(newRule.queryByText('se1.grid.cesnet.cz')).not.toBeInTheDocument();
-    expect(newRule.getByText('sbdii.grid.cesnet.cz')).toBeInTheDocument();
-    expect(newRule.getByText('bdii.grid.cesnet.cz')).toBeInTheDocument();
-    expect(newRule.queryByText('grid108.kfki.hu')).not.toBeInTheDocument();
-
-    await waitFor(() => {
-      selectEvent.select(newRule.getAllByText(/select/i)[0], 'bdii.grid.cesnet.cz')
-    })
-
-    await waitFor(() => {
-      expect(newRule.getByText("bdii.grid.cesnet.cz")).toBeInTheDocument()
-    })
-
-    newRule = within(screen.getByTestId('rules.1'))
-
-    expect(newRule.queryByText('GRIDOPS-MSG')).not.toBeInTheDocument();
-    expect(newRule.queryByText('EOSC_Messaging')).not.toBeInTheDocument();
-    expect(newRule.queryByText('UNI-FREIBURG')).not.toBeInTheDocument();
-    expect(newRule.queryByText('EOSC_Core_Monitoring')).not.toBeInTheDocument();
-    expect(newRule.queryByText('EOSC_Exchange_Monitoring')).not.toBeInTheDocument();
-    expect(newRule.queryByText('GRIDOPS-SAM')).not.toBeInTheDocument();
-    expect(newRule.queryByText('prague_cesnet_lcg2')).not.toBeInTheDocument();
-
-    selectEvent.openMenu(newRule.getAllByText(/select/i)[0])
-    expect(newRule.queryByText('GRIDOPS-MSG')).not.toBeInTheDocument();
-    expect(newRule.queryByText('EOSC_Messaging')).not.toBeInTheDocument();
-    expect(newRule.queryByText('UNI-FREIBURG')).not.toBeInTheDocument();
-    expect(newRule.queryByText('EOSC_Core_Monitoring')).not.toBeInTheDocument();
-    expect(newRule.queryByText('EOSC_Exchange_Monitoring')).not.toBeInTheDocument();
-    expect(newRule.queryByText('GRIDOPS-SAM')).not.toBeInTheDocument();
-    expect(newRule.getByText('prague_cesnet_lcg2')).toBeInTheDocument();
-
-    fireEvent.change(screen.getByTestId('rules.1.thresholds.0.label'), { target: { value: 'entries' } });
-    fireEvent.change(screen.getByTestId('rules.1.thresholds.0.value'), { target: { value: '2' } });
-    await selectEvent.select(newRule.getAllByText(/select/i)[1], "B")
-    fireEvent.change(screen.getByTestId('rules.1.thresholds.0.warn1'), { target: { value: '0' } });
-    fireEvent.change(screen.getByTestId('rules.1.thresholds.0.crit1'), { target: { value: '2' } });
-
-    fireEvent.click(screen.getByRole('button', { name: /save/i }))
-    await waitFor(() => {
-      expect(screen.getByRole('dialog', { title: /change/i })).toBeInTheDocument();
-    })
-    fireEvent.click(screen.getByRole('button', { name: /yes/i }));
-
-    await waitFor(() => {
-      expect(mockChangeThresholdsProfile).toHaveBeenCalledWith({
-        id: '00000000-oooo-kkkk-aaaa-aaeekkccnnee',
-        name: 'TEST_PROFILE',
-        rules: [
-          {
-            endpoint_group: 'GRIDOPS-MSG',
-            host: 'msg.argo.grnet.gr',
-            metric: 'argo.AMS-Check',
-            thresholds: 'time=1s;1:15;10:20;0;10'
-          },
-          {
-            metric: 'org.bdii.Entries',
-            host: 'bdii.grid.cesnet.cz',
-            thresholds: 'entries=2B;0:;2:'
-          }
-        ]
-      })
-    })
-
-    await waitFor(() => {
-      expect(mockChangeObject).not.toHaveBeenCalled()
-    })
-
-    expect(queryClient.invalidateQueries).not.toHaveBeenCalled();
-    expect(NotificationManager.error).toHaveBeenCalledWith(
-      <div>
-        <p>406 Content Not acceptable: There has been an error.</p>
-        <p>Click to dismiss.</p>
-      </div>,
-      'Web API error',
-      0,
-      expect.any(Function)
-    )
-  })
-
-  test('Test error changing thresholds profile on web api without error message', async () => {
-    mockChangeThresholdsProfile.mockImplementationOnce( () => { throw Error() } );
-
-    renderChangeView();
-
-    await waitFor(() => {
-      expect(screen.getByRole("button", { name: /save/i })).toBeInTheDocument()
-    })
-
-    await selectEvent.select(screen.getByText('TEST'), 'TESTa')
-
-    var rule1 = within(screen.getByTestId('rules.0'))
-
-    await waitFor(() => {
-      selectEvent.select(rule1.getByText('org.nagios.ARGOWeb-Status'), 'argo.AMS-Check')
-    })
-
-    await waitFor(() => {
-      expect(rule1.getByText("argo.AMS-Check")).toBeInTheDocument()
-    })
-
-    rule1 = within(screen.getByTestId('rules.0'))
-
-    expect(rule1.queryByText('argo.egi.eu')).not.toBeInTheDocument();
-    expect(rule1.queryByText('msg.argo.grnet.gr')).not.toBeInTheDocument();
-    expect(rule1.queryByText('sedoor1.bfg.uni-freiburg.de')).not.toBeInTheDocument();
-    expect(rule1.queryByText('sedoor2.bfg.uni-freiburg.de')).not.toBeInTheDocument();
-    expect(rule1.queryByText('eosccore.ui.argo.grnet.gr')).not.toBeInTheDocument();
-    expect(rule1.queryByText('argo.eosc-portal.eu')).not.toBeInTheDocument();
-    expect(rule1.queryByText('ce1.grid.cesnet.cz')).not.toBeInTheDocument();
-    expect(rule1.queryByText('se1.grid.cesnet.cz')).not.toBeInTheDocument();
-    expect(rule1.queryByText('sbdii.grid.cesnet.cz')).not.toBeInTheDocument();
-    expect(rule1.queryByText('bdii.grid.cesnet.cz')).not.toBeInTheDocument();
-    expect(rule1.queryByText('grid108.kfki.hu')).not.toBeInTheDocument();
-
-    selectEvent.openMenu(rule1.getAllByText(/select/i)[0])
-    expect(rule1.queryByText('argo.egi.eu')).not.toBeInTheDocument();
-    expect(rule1.getByText('msg.argo.grnet.gr')).toBeInTheDocument();
-    expect(rule1.queryByText('sedoor1.bfg.uni-freiburg.de')).not.toBeInTheDocument();
-    expect(rule1.queryByText('sedoor2.bfg.uni-freiburg.de')).not.toBeInTheDocument();
-    expect(rule1.queryByText('eosccore.ui.argo.grnet.gr')).not.toBeInTheDocument();
-    expect(rule1.queryByText('argo.eosc-portal.eu')).not.toBeInTheDocument();
-    expect(rule1.queryByText('ce1.grid.cesnet.cz')).not.toBeInTheDocument();
-    expect(rule1.queryByText('se1.grid.cesnet.cz')).not.toBeInTheDocument();
-    expect(rule1.queryByText('sbdii.grid.cesnet.cz')).not.toBeInTheDocument();
-    expect(rule1.queryByText('bdii.grid.cesnet.cz')).not.toBeInTheDocument();
-    expect(rule1.queryByText('grid108.kfki.hu')).not.toBeInTheDocument();
-
-    await waitFor(() => {
-      selectEvent.select(rule1.getAllByText(/select/i)[0], 'msg.argo.grnet.gr')
-    })
-    
-    await waitFor(() => {
-      expect(rule1.getByText("msg.argo.grnet.gr")).toBeInTheDocument()
-    })
-
-    rule1 = within(screen.getByTestId('rules.0'))
-
-    expect(rule1.queryByText('GRIDOPS-MSG')).not.toBeInTheDocument();
-    expect(rule1.queryByText('EOSC_Messaging')).not.toBeInTheDocument();
-    expect(rule1.queryByText('UNI-FREIBURG')).not.toBeInTheDocument();
-    expect(rule1.queryByText('EOSC_Core_Monitoring')).not.toBeInTheDocument();
-    expect(rule1.queryByText('EOSC_Exchange_Monitoring')).not.toBeInTheDocument();
-    expect(rule1.queryByText('GRIDOPS-SAM')).not.toBeInTheDocument();
-    expect(rule1.queryByText('prague_cesnet_lcg2')).not.toBeInTheDocument();
-
-    selectEvent.openMenu(rule1.getAllByText(/select/i)[0])
-    expect(rule1.getByText('GRIDOPS-MSG')).toBeInTheDocument();
-    expect(rule1.getByText('EOSC_Messaging')).toBeInTheDocument();
-    expect(rule1.queryByText('UNI-FREIBURG')).not.toBeInTheDocument();
-    expect(rule1.queryByText('EOSC_Core_Monitoring')).not.toBeInTheDocument();
-    expect(rule1.queryByText('EOSC_Exchange_Monitoring')).not.toBeInTheDocument();
-    expect(rule1.queryByText('GRIDOPS-SAM')).not.toBeInTheDocument();
-    expect(rule1.queryByText('prague_cesnet_lcg2')).not.toBeInTheDocument();
-
-    await waitFor(() => {
-      selectEvent.select(rule1.getAllByText(/select/i)[0], 'GRIDOPS-MSG')
-    })
-
-    await waitFor(() => {
-      expect(rule1.getByText("GRIDOPS-MSG")).toBeInTheDocument()
-    })
-
-    rule1 = within(screen.getByTestId('rules.0'))
-
-    fireEvent.change(screen.getByTestId('rules.0.thresholds.0.warn1'), { target: { value: '1' } });
-    fireEvent.change(screen.getByTestId('rules.0.thresholds.0.warn2'), { target: { value: '15' } });
-    fireEvent.change(screen.getByTestId('rules.0.thresholds.0.crit1'), { target: { value: '10' } });
-    fireEvent.change(screen.getByTestId('rules.0.thresholds.0.crit2'), { target: { value: '20' } });
-    fireEvent.click(screen.getByTestId('rules.0.thresholds.1.remove'))
-
-    fireEvent.click(screen.getByTestId('rules.2.remove'))
-    fireEvent.click(screen.getByTestId('rules.1.remove'));
-
-    fireEvent.click(screen.getByRole('button', { name: 'Add new rule' }));
-
-    var newRule = within(screen.getByTestId('rules.1'))
-
-    expect(newRule.queryByText('argo.AMS-Check')).not.toBeInTheDocument();
-    expect(newRule.queryByText('argo.AMSPublisher-Check')).not.toBeInTheDocument();
-    expect(newRule.queryByText('argo.POEM-API-MON')).not.toBeInTheDocument();
-    expect(newRule.queryByText('argo.API-Status-Check')).not.toBeInTheDocument();
-    expect(newRule.queryByText('ch.cern.HTCondorCE-JobState')).not.toBeInTheDocument();
-    expect(newRule.queryByText('ch.cern.HTCondorCE-JobSubmit')).not.toBeInTheDocument();
-    expect(newRule.queryByText('org.bdii.Entries')).not.toBeInTheDocument();
-    expect(newRule.queryByText('org.bdii.Freshness')).not.toBeInTheDocument();
-    expect(newRule.queryByText('org.nagios.ARGOWeb-AR')).not.toBeInTheDocument();
-    expect(newRule.queryByText('org.nagios.ARGOWeb-Status')).not.toBeInTheDocument();
-    expect(newRule.queryByText('org.nagios.BDII-Check')).not.toBeInTheDocument();
-    expect(newRule.queryByText('org.nagios.GridFTP-Check')).not.toBeInTheDocument();
-
-    selectEvent.openMenu(newRule.getAllByText(/select/i)[0])
-    expect(newRule.getByText('argo.AMS-Check')).toBeInTheDocument();
-    expect(newRule.getByText('argo.AMSPublisher-Check')).toBeInTheDocument();
-    expect(newRule.getByText('argo.POEM-API-MON')).toBeInTheDocument();
-    expect(newRule.getByText('argo.API-Status-Check')).toBeInTheDocument();
-    expect(newRule.getByText('ch.cern.HTCondorCE-JobState')).toBeInTheDocument();
-    expect(newRule.getByText('ch.cern.HTCondorCE-JobSubmit')).toBeInTheDocument();
-    expect(newRule.getByText('org.bdii.Entries')).toBeInTheDocument();
-    expect(newRule.getByText('org.bdii.Freshness')).toBeInTheDocument();
-    expect(newRule.getByText('org.nagios.ARGOWeb-AR')).toBeInTheDocument();
-    expect(newRule.getByText('org.nagios.ARGOWeb-Status')).toBeInTheDocument();
-    expect(newRule.getByText('org.nagios.BDII-Check')).toBeInTheDocument();
-    expect(newRule.getByText('org.nagios.GridFTP-Check')).toBeInTheDocument();
-
-    await waitFor(() => {
-      selectEvent.select(newRule.getAllByText(/select/i)[0], 'org.bdii.Entries')
-    })
-
-    await waitFor(() => {
-      expect(newRule.getByText("org.bdii.Entries")).toBeInTheDocument()
-    })
-
-    newRule = within(screen.getByTestId('rules.1'))
-
-    expect(newRule.queryByText('msg.argo.grnet.gr')).not.toBeInTheDocument();
-    expect(newRule.queryByText('sedoor1.bfg.uni-freiburg.de')).not.toBeInTheDocument();
-    expect(newRule.queryByText('sedoor2.bfg.uni-freiburg.de')).not.toBeInTheDocument();
-    expect(newRule.queryByText('eosccore.ui.argo.grnet.gr')).not.toBeInTheDocument();
-    expect(newRule.queryByText('argo.eosc-portal.eu')).not.toBeInTheDocument();
-    expect(newRule.queryByText('argo.egi.eu')).not.toBeInTheDocument();
-    expect(newRule.queryByText('ce1.grid.cesnet.cz')).not.toBeInTheDocument();
-    expect(newRule.queryByText('se1.grid.cesnet.cz')).not.toBeInTheDocument();
-    expect(newRule.queryByText('sbdii.grid.cesnet.cz')).not.toBeInTheDocument();
-    expect(newRule.queryByText('bdii.grid.cesnet.cz')).not.toBeInTheDocument();
-    expect(newRule.queryByText('grid108.kfki.hu')).not.toBeInTheDocument();
-
-    selectEvent.openMenu(newRule.getAllByText(/select/i)[0])
-    expect(newRule.queryByText('msg.argo.grnet.gr')).not.toBeInTheDocument();
-    expect(newRule.queryByText('sedoor1.bfg.uni-freiburg.de')).not.toBeInTheDocument();
-    expect(newRule.queryByText('sedoor2.bfg.uni-freiburg.de')).not.toBeInTheDocument();
-    expect(newRule.queryByText('eosccore.ui.argo.grnet.gr')).not.toBeInTheDocument();
-    expect(newRule.queryByText('argo.eosc-portal.eu')).not.toBeInTheDocument();
-    expect(newRule.queryByText('argo.egi.eu')).not.toBeInTheDocument();
-    expect(newRule.queryByText('ce1.grid.cesnet.cz')).not.toBeInTheDocument();
-    expect(newRule.queryByText('se1.grid.cesnet.cz')).not.toBeInTheDocument();
-    expect(newRule.getByText('sbdii.grid.cesnet.cz')).toBeInTheDocument();
-    expect(newRule.getByText('bdii.grid.cesnet.cz')).toBeInTheDocument();
-    expect(newRule.queryByText('grid108.kfki.hu')).not.toBeInTheDocument();
-
-    await waitFor(() => {
-      selectEvent.select(newRule.getAllByText(/select/i)[0], 'bdii.grid.cesnet.cz')
-    })
-
-    await waitFor(() => {
-      expect(newRule.getByText("bdii.grid.cesnet.cz")).toBeInTheDocument()
-    })
-
-    newRule = within(screen.getByTestId('rules.1'))
-
-    expect(newRule.queryByText('GRIDOPS-MSG')).not.toBeInTheDocument();
-    expect(newRule.queryByText('EOSC_Messaging')).not.toBeInTheDocument();
-    expect(newRule.queryByText('UNI-FREIBURG')).not.toBeInTheDocument();
-    expect(newRule.queryByText('EOSC_Core_Monitoring')).not.toBeInTheDocument();
-    expect(newRule.queryByText('EOSC_Exchange_Monitoring')).not.toBeInTheDocument();
-    expect(newRule.queryByText('GRIDOPS-SAM')).not.toBeInTheDocument();
-    expect(newRule.queryByText('prague_cesnet_lcg2')).not.toBeInTheDocument();
-
-    selectEvent.openMenu(newRule.getAllByText(/select/i)[0])
-    expect(newRule.queryByText('GRIDOPS-MSG')).not.toBeInTheDocument();
-    expect(newRule.queryByText('EOSC_Messaging')).not.toBeInTheDocument();
-    expect(newRule.queryByText('UNI-FREIBURG')).not.toBeInTheDocument();
-    expect(newRule.queryByText('EOSC_Core_Monitoring')).not.toBeInTheDocument();
-    expect(newRule.queryByText('EOSC_Exchange_Monitoring')).not.toBeInTheDocument();
-    expect(newRule.queryByText('GRIDOPS-SAM')).not.toBeInTheDocument();
-    expect(newRule.getByText('prague_cesnet_lcg2')).toBeInTheDocument();
-
-    fireEvent.change(screen.getByTestId('rules.1.thresholds.0.label'), { target: { value: 'entries' } });
-    fireEvent.change(screen.getByTestId('rules.1.thresholds.0.value'), { target: { value: '2' } });
-    await selectEvent.select(newRule.getAllByText(/select/i)[1], "B")
-    fireEvent.change(screen.getByTestId('rules.1.thresholds.0.warn1'), { target: { value: '0' } });
-    fireEvent.change(screen.getByTestId('rules.1.thresholds.0.crit1'), { target: { value: '2' } });
-
-    fireEvent.click(screen.getByRole('button', { name: /save/i }))
-    await waitFor(() => {
-      expect(screen.getByRole('dialog', { title: /change/i })).toBeInTheDocument();
-    })
-    fireEvent.click(screen.getByRole('button', { name: /yes/i }));
-
-    await waitFor(() => {
-      expect(mockChangeThresholdsProfile).toHaveBeenCalledWith({
-        id: '00000000-oooo-kkkk-aaaa-aaeekkccnnee',
-        name: 'TEST_PROFILE',
-        rules: [
-          {
-            endpoint_group: 'GRIDOPS-MSG',
-            host: 'msg.argo.grnet.gr',
-            metric: 'argo.AMS-Check',
-            thresholds: 'time=1s;1:15;10:20;0;10'
-          },
-          {
-            metric: 'org.bdii.Entries',
-            host: 'bdii.grid.cesnet.cz',
-            thresholds: 'entries=2B;0:;2:'
-          }
-        ]
-      })
-    })
-
-    await waitFor(() => {
-      expect(mockChangeObject).not.toHaveBeenCalled()
-    })
-
-    expect(queryClient.invalidateQueries).not.toHaveBeenCalled();
-    expect(NotificationManager.error).toHaveBeenCalledWith(
-      <div>
-        <p>Web API error changing thresholds profile</p>
-        <p>Click to dismiss.</p>
-      </div>,
-      'Web API error',
-      0,
-      expect.any(Function)
-    )
-  })
 
   test('Test error changing thresholds profile on internal backend with error message', async () => {
-    mockChangeThresholdsProfile.mockReturnValueOnce(
-      Promise.resolve({ ok: 'ok' })
-    )
     mockChangeObject.mockImplementationOnce( () => {
       throw Error('400 BAD REQUEST: There has been an error.')
     } );
@@ -2121,23 +1590,6 @@ describe('Tests for threshols profile changeview', () => {
     fireEvent.click(screen.getByRole('button', { name: /yes/i }));
 
     await waitFor(() => {
-      expect(mockChangeThresholdsProfile).toHaveBeenCalledWith({
-        id: '00000000-oooo-kkkk-aaaa-aaeekkccnnee',
-        name: 'TEST_PROFILE',
-        rules: [
-          {
-            endpoint_group: 'GRIDOPS-MSG',
-            host: 'msg.argo.grnet.gr',
-            metric: 'argo.AMS-Check',
-            thresholds: 'time=1s;1:15;10:20;0;10'
-          },
-          {
-            metric: 'org.bdii.Entries',
-            host: 'bdii.grid.cesnet.cz',
-            thresholds: 'entries=2B;0:;2:'
-          }
-        ]
-      })
     })
 
     await waitFor(() => {
@@ -2152,12 +1604,13 @@ describe('Tests for threshols profile changeview', () => {
             endpoint_group: 'GRIDOPS-MSG',
             host: 'msg.argo.grnet.gr',
             metric: 'argo.AMS-Check',
-            thresholds: 'time=1s;1:15;10:20;0;10'
+            thresholds: [{label: 'time', value: '1', uom: 's', warn1: '1', warn2: '15', crit1: '10', crit2: '20', min: '0', max: '10'}]
           },
           {
+            endpoint_group: null,
             metric: 'org.bdii.Entries',
             host: 'bdii.grid.cesnet.cz',
-            thresholds: 'entries=2B;0:;2:'
+            thresholds: [{label: 'entries', value: '2', uom: 'B', warn1: '0', warn2: '', crit1: '2', crit2: ''}]
           }
           ]
         }
@@ -2176,9 +1629,6 @@ describe('Tests for threshols profile changeview', () => {
   })
 
   test('Test error changing thresholds profile on internal backend without error message', async () => {
-    mockChangeThresholdsProfile.mockReturnValueOnce(
-      Promise.resolve({ ok: 'ok' })
-    )
     mockChangeObject.mockImplementationOnce( () => { throw Error() } );
 
     renderChangeView();
@@ -2378,23 +1828,6 @@ describe('Tests for threshols profile changeview', () => {
     fireEvent.click(screen.getByRole('button', { name: /yes/i }));
 
     await waitFor(() => {
-      expect(mockChangeThresholdsProfile).toHaveBeenCalledWith({
-        id: '00000000-oooo-kkkk-aaaa-aaeekkccnnee',
-        name: 'TEST_PROFILE',
-        rules: [
-          {
-            endpoint_group: 'GRIDOPS-MSG',
-            host: 'msg.argo.grnet.gr',
-            metric: 'argo.AMS-Check',
-            thresholds: 'time=1s;1:15;10:20;0;10'
-          },
-          {
-            metric: 'org.bdii.Entries',
-            host: 'bdii.grid.cesnet.cz',
-            thresholds: 'entries=2B;0:;2:'
-          }
-        ]
-      })
     })
 
     await waitFor(() => {
@@ -2409,12 +1842,13 @@ describe('Tests for threshols profile changeview', () => {
             endpoint_group: 'GRIDOPS-MSG',
             host: 'msg.argo.grnet.gr',
             metric: 'argo.AMS-Check',
-            thresholds: 'time=1s;1:15;10:20;0;10'
+            thresholds: [{label: 'time', value: '1', uom: 's', warn1: '1', warn2: '15', crit1: '10', crit2: '20', min: '0', max: '10'}]
           },
           {
+            endpoint_group: null,
             metric: 'org.bdii.Entries',
             host: 'bdii.grid.cesnet.cz',
-            thresholds: 'entries=2B;0:;2:'
+            thresholds: [{label: 'entries', value: '2', uom: 'B', warn1: '0', warn2: '', crit1: '2', crit2: ''}]
           }
           ]
         }
@@ -2434,9 +1868,6 @@ describe('Tests for threshols profile changeview', () => {
   })
 
   test('Test successfully deleting thresholds profile', async () => {
-    mockDeleteThresholdsProfile.mockReturnValueOnce(
-      Promise.resolve({ ok: true, status: 200, statusText: 'OK' })
-    )
 
     renderChangeView();
 
@@ -2451,9 +1882,6 @@ describe('Tests for threshols profile changeview', () => {
     fireEvent.click(screen.getByRole('button', { name: /yes/i }));
 
     await waitFor(() => {
-      expect(mockDeleteThresholdsProfile).toHaveBeenCalledWith(
-        '00000000-oooo-kkkk-aaaa-aaeekkccnnee',
-      )
     })
 
     await waitFor(() => {
@@ -2463,7 +1891,6 @@ describe('Tests for threshols profile changeview', () => {
     })
 
     await waitFor(() => {
-      expect(mockChangeReport).not.toHaveBeenCalled()
     })
 
     expect(queryClient.invalidateQueries).toHaveBeenCalledWith('thresholdsprofile');
@@ -2475,101 +1902,12 @@ describe('Tests for threshols profile changeview', () => {
     expect(NotificationManager.warning).not.toHaveBeenCalled()
   })
 
-  test('Test error deleting thresholds profile on web api with error message', async () => {
-    mockDeleteThresholdsProfile.mockImplementationOnce( () => {
-      throw Error('406 Content Not acceptable: There has been an error.')
-    } );
 
-    renderChangeView();
-
-    await waitFor(() => {
-      expect(screen.getByRole("button", { name: /save/i })).toBeInTheDocument()
-    })
-
-    fireEvent.click(screen.getByRole('button', { name: /delete/i }))
-    await waitFor(() => {
-      expect(screen.getByRole('dialog', { title: /delete/i })).toBeInTheDocument();
-    })
-    fireEvent.click(screen.getByRole('button', { name: /yes/i }));
-
-    await waitFor(() => {
-      expect(mockDeleteThresholdsProfile).toHaveBeenCalledWith(
-        '00000000-oooo-kkkk-aaaa-aaeekkccnnee',
-      )
-    })
-
-    await waitFor(() => {
-      expect(mockDeleteObject).not.toHaveBeenCalled()
-    })
-
-    await waitFor(() => {
-      expect(mockChangeReport).not.toHaveBeenCalled()
-    })
-
-    expect(queryClient.invalidateQueries).not.toHaveBeenCalled();
-    expect(NotificationManager.error).toHaveBeenCalledWith(
-      <div>
-        <p>406 Content Not acceptable: There has been an error.</p>
-        <p>Click to dismiss.</p>
-      </div>,
-      'Web API error',
-      0,
-      expect.any(Function)
-    )
-    expect(NotificationManager.info).not.toHaveBeenCalled()
-    expect(NotificationManager.warning).not.toHaveBeenCalled()
-  })
-
-  test('Test error deleting thresholds profile on web api without error message', async () => {
-    mockDeleteThresholdsProfile.mockImplementationOnce( () => { throw Error() } );
-
-    renderChangeView();
-
-    await waitFor(() => {
-      expect(screen.getByRole("button", { name: /save/i })).toBeInTheDocument()
-    })
-
-    fireEvent.click(screen.getByRole('button', { name: /delete/i }))
-    await waitFor(() => {
-      expect(screen.getByRole('dialog', { title: /delete/i })).toBeInTheDocument();
-    })
-    fireEvent.click(screen.getByRole('button', { name: /yes/i }));
-
-    await waitFor(() => {
-      expect(mockDeleteThresholdsProfile).toHaveBeenCalledWith(
-        '00000000-oooo-kkkk-aaaa-aaeekkccnnee',
-      )
-    })
-
-    await waitFor(() => {
-      expect(mockDeleteObject).not.toHaveBeenCalled()
-    })
-
-    await waitFor(() => {
-      expect(mockChangeReport).not.toHaveBeenCalled()
-    })
-
-    expect(queryClient.invalidateQueries).not.toHaveBeenCalled();
-    expect(NotificationManager.error).toHaveBeenCalledWith(
-      <div>
-        <p>Web API error deleting thresholds profile</p>
-        <p>Click to dismiss.</p>
-      </div>,
-      'Web API error',
-      0,
-      expect.any(Function)
-    )
-    expect(NotificationManager.info).not.toHaveBeenCalled()
-    expect(NotificationManager.warning).not.toHaveBeenCalled()
-  })
 
   test('Test error deleting thresholds profile on internal api with error message', async () => {
     mockDeleteObject.mockImplementationOnce( () => {
       throw Error('400 BAD REQUEST: There has been an error.')
     } );
-    mockDeleteThresholdsProfile.mockReturnValueOnce(
-      Promise.resolve({ ok: true, status: 200, statusText: 'OK' })
-    )
 
     renderChangeView();
 
@@ -2584,9 +1922,6 @@ describe('Tests for threshols profile changeview', () => {
     fireEvent.click(screen.getByRole('button', { name: /yes/i }));
 
     await waitFor(() => {
-      expect(mockDeleteThresholdsProfile).toHaveBeenCalledWith(
-        '00000000-oooo-kkkk-aaaa-aaeekkccnnee',
-      )
     })
 
     await waitFor(() => {
@@ -2596,7 +1931,6 @@ describe('Tests for threshols profile changeview', () => {
     })
 
     await waitFor(() => {
-      expect(mockChangeReport).not.toHaveBeenCalled()
     })
 
     expect(queryClient.invalidateQueries).not.toHaveBeenCalled();
@@ -2615,9 +1949,6 @@ describe('Tests for threshols profile changeview', () => {
 
   test('Test error deleting thresholds profile on internal api without error message', async () => {
     mockDeleteObject.mockImplementationOnce( () => { throw Error() } );
-    mockDeleteThresholdsProfile.mockReturnValueOnce(
-      Promise.resolve({ ok: true, status: 200, statusText: 'OK' })
-    )
 
     renderChangeView();
 
@@ -2632,9 +1963,6 @@ describe('Tests for threshols profile changeview', () => {
     fireEvent.click(screen.getByRole('button', { name: /yes/i }));
 
     await waitFor(() => {
-      expect(mockDeleteThresholdsProfile).toHaveBeenCalledWith(
-        '00000000-oooo-kkkk-aaaa-aaeekkccnnee',
-      )
     })
 
     await waitFor(() => {
@@ -2644,7 +1972,6 @@ describe('Tests for threshols profile changeview', () => {
     })
 
     await waitFor(() => {
-      expect(mockChangeReport).not.toHaveBeenCalled()
     })
 
     expect(queryClient.invalidateQueries).not.toHaveBeenCalled();
@@ -2663,9 +1990,6 @@ describe('Tests for threshols profile changeview', () => {
 
   test("Test delete thresholds profile when associated with report", async () => {
     mockFetchReports.mockReturnValueOnce(mockReports)
-    mockDeleteThresholdsProfile.mockReturnValueOnce(
-      Promise.resolve({ ok: true, status: 200, statusText: "OK" })
-    )
 
     renderChangeView()
 
@@ -2680,7 +2004,6 @@ describe('Tests for threshols profile changeview', () => {
     fireEvent.click(screen.getByRole("button", { name: /yes/i }))
 
     await waitFor(() => {
-      expect(mockDeleteThresholdsProfile).not.toHaveBeenCalled()
     })
 
     await waitFor(() => {
@@ -2708,16 +2031,11 @@ describe('Tests for thresholds profiles addview', () => {
   jest.spyOn(queryClient, 'invalidateQueries');
 
   beforeAll(() => {
-    WebApi.mockImplementation(() => {
-      return {
-        fetchMetricProfiles: () => Promise.resolve(mockMetricProfiles),
-        fetchReportsTopologyEndpoints: () => Promise.resolve(mockTopologyEndpoints),
-        addThresholdsProfile: mockAddThresholdsProfile
-      }
-    })
     Backend.mockImplementation(() => {
       return {
         fetchListOfNames: () => Promise.resolve(mockAllMetrics),
+        fetchWebApiMetricProfiles: () => Promise.resolve(mockMetricProfiles),
+        fetchWebApiTopologyEndpoints: () => Promise.resolve(mockTopologyEndpoints),
         isActiveSession: (path) => {
           switch (path) {
             case true:
@@ -2760,20 +2078,6 @@ describe('Tests for thresholds profiles addview', () => {
   })
 
   test('Test successfully adding thresholds profile', async () => {
-    mockAddThresholdsProfile.mockReturnValueOnce(
-      Promise.resolve({
-        status: {
-          message: 'Thresholds profile Created',
-          code: "200"
-        },
-        data: {
-          id: '00000000-oooo-kkkk-aaaa-aaeekkccnnee',
-          links: {
-            self: 'string'
-          }
-        }
-      })
-    )
 
     renderAddView();
 
@@ -2994,22 +2298,6 @@ describe('Tests for thresholds profiles addview', () => {
     fireEvent.click(screen.getByRole('button', { name: /yes/i }));
 
     await waitFor(() => {
-      expect(mockAddThresholdsProfile).toHaveBeenCalledWith({
-        name: 'TEST_PROFILE2',
-        rules: [
-          {
-            endpoint_group: 'EOSC_Messaging',
-            host: 'msg.argo.grnet.gr',
-            metric: 'argo.AMS-Check',
-            thresholds: 'freshness=1s;1:15;10:20'
-          },
-          {
-            endpoint_group: 'BUDAPEST',
-            metric: 'ch.cern.HTCondorCE-JobState',
-            thresholds: 'test=2TB;2:8;3:8;0;10'
-          }
-        ]
-      })
     })
 
     await waitFor(() => {
@@ -3024,12 +2312,13 @@ describe('Tests for thresholds profiles addview', () => {
             endpoint_group: 'EOSC_Messaging',
             host: 'msg.argo.grnet.gr',
             metric: 'argo.AMS-Check',
-            thresholds: 'freshness=1s;1:15;10:20'
+            thresholds: [{label: 'freshness', value: '1', uom: 's', warn1: '1', warn2: '15', crit1: '10', crit2: '20'}]
           },
           {
             endpoint_group: 'BUDAPEST',
+            host: null,
             metric: 'ch.cern.HTCondorCE-JobState',
-            thresholds: 'test=2TB;2:8;3:8;0;10'
+            thresholds: [{label: 'test', value: '2', uom: 'TB', warn1: '2', warn2: '8', crit1: '3', crit2: '8', min: '0', max: '10'}]
           }
           ]
         }
@@ -3044,20 +2333,6 @@ describe('Tests for thresholds profiles addview', () => {
   })
 
   test('Test successfully adding thresholds profile with threshold without value', async () => {
-    mockAddThresholdsProfile.mockReturnValueOnce(
-      Promise.resolve({
-        status: {
-          message: 'Thresholds profile Created',
-          code: "200"
-        },
-        data: {
-          id: '00000000-oooo-kkkk-aaaa-aaeekkccnnee',
-          links: {
-            self: 'string'
-          }
-        }
-      })
-    )
 
     renderAddView();
 
@@ -3157,22 +2432,6 @@ describe('Tests for thresholds profiles addview', () => {
     fireEvent.click(screen.getByRole('button', { name: /yes/i }));
 
     await waitFor(() => {
-      expect(mockAddThresholdsProfile).toHaveBeenCalledWith({
-        name: 'TEST_PROFILE2',
-        rules: [
-          {
-            endpoint_group: 'EOSC_Messaging',
-            host: 'msg.argo.grnet.gr',
-            metric: 'argo.AMS-Check',
-            thresholds: 'freshness=1s;1:15;10:20 entries=0;0:;2:'
-          },
-          {
-            endpoint_group: 'BUDAPEST',
-            metric: 'ch.cern.HTCondorCE-JobState',
-            thresholds: 'test=2TB;2:8;3:8;0;10'
-          }
-        ]
-      })
     })
 
     await waitFor(() => {
@@ -3187,12 +2446,13 @@ describe('Tests for thresholds profiles addview', () => {
             endpoint_group: 'EOSC_Messaging',
             host: 'msg.argo.grnet.gr',
             metric: 'argo.AMS-Check',
-            thresholds: 'freshness=1s;1:15;10:20 entries=0;0:;2:'
+            thresholds: [{label: 'freshness', value: '1', uom: 's', warn1: '1', warn2: '15', crit1: '10', crit2: '20'}, {label: 'entries', value: '0', uom: '', warn1: '0', warn2: '', crit1: '2', crit2: ''}]
           },
           {
             endpoint_group: 'BUDAPEST',
+            host: null,
             metric: 'ch.cern.HTCondorCE-JobState',
-            thresholds: 'test=2TB;2:8;3:8;0;10'
+            thresholds: [{label: 'test', value: '2', uom: 'TB', warn1: '2', warn2: '8', crit1: '3', crit2: '8', min: '0', max: '10'}]
           }
           ]
         }
@@ -3206,533 +2466,9 @@ describe('Tests for thresholds profiles addview', () => {
     )
   })
 
-  test('Test error adding thresholds profile in web api with error message', async () => {
-    mockAddThresholdsProfile.mockImplementationOnce( () => {
-      throw Error('406 Content Not acceptable: There has been an error.')
-    } );
 
-    renderAddView();
-
-    await waitFor(() => {
-      expect(screen.getByRole("button", { name: /save/i })).toBeInTheDocument()
-    })
-
-    fireEvent.change(screen.getByTestId('name'), { target: { value: 'TEST_PROFILE2' } });
-
-    await selectEvent.select(screen.getByText(/select/i), 'TEST')
-
-    fireEvent.click(screen.getByRole('button', { name: 'Add a rule' }));
-
-    var rule1 = within(screen.getByTestId('rules.0'))
-
-    expect(rule1.queryByText('argo.AMS-Check')).not.toBeInTheDocument();
-    expect(rule1.queryByText('argo.AMSPublisher-Check')).not.toBeInTheDocument();
-    expect(rule1.queryByText('argo.POEM-API-MON')).not.toBeInTheDocument();
-    expect(rule1.queryByText('argo.API-Status-Check')).not.toBeInTheDocument();
-    expect(rule1.queryByText('ch.cern.HTCondorCE-JobState')).not.toBeInTheDocument();
-    expect(rule1.queryByText('ch.cern.HTCondorCE-JobSubmit')).not.toBeInTheDocument();
-    expect(rule1.queryByText('org.bdii.Entries')).not.toBeInTheDocument();
-    expect(rule1.queryByText('org.bdii.Freshness')).not.toBeInTheDocument();
-    expect(rule1.queryByText('org.nagios.ARGOWeb-AR')).not.toBeInTheDocument();
-    expect(rule1.queryByText('org.nagios.ARGOWeb-Status')).not.toBeInTheDocument();
-    expect(rule1.queryByText('org.nagios.BDII-Check')).not.toBeInTheDocument();
-    expect(rule1.queryByText('org.nagios.GridFTP-Check')).not.toBeInTheDocument();
-
-    selectEvent.openMenu(rule1.getAllByText(/select/i)[0])
-    expect(rule1.getByText('argo.AMS-Check')).toBeInTheDocument();
-    expect(rule1.getByText('argo.AMSPublisher-Check')).toBeInTheDocument();
-    expect(rule1.getByText('argo.POEM-API-MON')).toBeInTheDocument();
-    expect(rule1.getByText('argo.API-Status-Check')).toBeInTheDocument();
-    expect(rule1.getByText('ch.cern.HTCondorCE-JobState')).toBeInTheDocument();
-    expect(rule1.getByText('ch.cern.HTCondorCE-JobSubmit')).toBeInTheDocument();
-    expect(rule1.getByText('org.bdii.Entries')).toBeInTheDocument();
-    expect(rule1.getByText('org.bdii.Freshness')).toBeInTheDocument();
-    expect(rule1.getByText('org.nagios.ARGOWeb-AR')).toBeInTheDocument();
-    expect(rule1.getByText('org.nagios.ARGOWeb-Status')).toBeInTheDocument();
-    expect(rule1.getByText('org.nagios.BDII-Check')).toBeInTheDocument();
-    expect(rule1.getByText('org.nagios.GridFTP-Check')).toBeInTheDocument();
-
-    await waitFor(() => {
-      selectEvent.select(rule1.getAllByText(/select/i)[0], 'argo.AMS-Check')
-    })
-
-    await waitFor(() => {
-      expect(rule1.getByText("argo.AMS-Check")).toBeInTheDocument()
-    })
-
-    rule1 = within(screen.getByTestId('rules.0'))
-
-    expect(rule1.queryByText('msg.argo.grnet.gr')).not.toBeInTheDocument();
-    expect(rule1.queryByText('sedoor1.bfg.uni-freiburg.de')).not.toBeInTheDocument();
-    expect(rule1.queryByText('sedoor2.bfg.uni-freiburg.de')).not.toBeInTheDocument();
-    expect(rule1.queryByText('eosccore.ui.argo.grnet.gr')).not.toBeInTheDocument();
-    expect(rule1.queryByText('argo.eosc-portal.eu')).not.toBeInTheDocument();
-    expect(rule1.queryByText('ce1.grid.cesnet.cz')).not.toBeInTheDocument();
-    expect(rule1.queryByText('se1.grid.cesnet.cz')).not.toBeInTheDocument();
-    expect(rule1.queryByText('sbdii.grid.cesnet.cz')).not.toBeInTheDocument();
-    expect(rule1.queryByText('bdii.grid.cesnet.cz')).not.toBeInTheDocument();
-    expect(rule1.queryByText('grid108.kfki.hu')).not.toBeInTheDocument();
-
-    selectEvent.openMenu(rule1.getAllByText(/select/i)[0])
-    expect(rule1.getByText('msg.argo.grnet.gr')).toBeInTheDocument();
-    expect(rule1.queryByText('sedoor1.bfg.uni-freiburg.de')).not.toBeInTheDocument();
-    expect(rule1.queryByText('sedoor2.bfg.uni-freiburg.de')).not.toBeInTheDocument();
-    expect(rule1.queryByText('eosccore.ui.argo.grnet.gr')).not.toBeInTheDocument();
-    expect(rule1.queryByText('argo.eosc-portal.eu')).not.toBeInTheDocument();
-    expect(rule1.queryByText('ce1.grid.cesnet.cz')).not.toBeInTheDocument();
-    expect(rule1.queryByText('se1.grid.cesnet.cz')).not.toBeInTheDocument();
-    expect(rule1.queryByText('sbdii.grid.cesnet.cz')).not.toBeInTheDocument();
-    expect(rule1.queryByText('bdii.grid.cesnet.cz')).not.toBeInTheDocument();
-    expect(rule1.queryByText('grid108.kfki.hu')).not.toBeInTheDocument();
-
-    await waitFor(() => {
-      selectEvent.select(rule1.getAllByText(/select/i)[0], 'msg.argo.grnet.gr')
-    })
-
-    await waitFor(() => {
-      expect(rule1.getByText("msg.argo.grnet.gr"))
-    })
-
-    rule1 = within(screen.getByTestId('rules.0'))
-
-    expect(rule1.queryByText('GRIDOPS-MSG')).not.toBeInTheDocument();
-    expect(rule1.queryByText('EOSC_Messaging')).not.toBeInTheDocument();
-    expect(rule1.queryByText('UNI-FREIBURG')).not.toBeInTheDocument();
-    expect(rule1.queryByText('EOSC_Core_Monitoring')).not.toBeInTheDocument();
-    expect(rule1.queryByText('EOSC_Exchange_Monitoring')).not.toBeInTheDocument();
-    expect(rule1.queryByText('GRIDOPS-SAM')).not.toBeInTheDocument();
-    expect(rule1.queryByText('prague_cesnet_lcg2')).not.toBeInTheDocument();
-    expect(rule1.queryByText('BUDAPEST')).not.toBeInTheDocument();
-
-    selectEvent.openMenu(rule1.getAllByText(/select/i)[0])
-    expect(rule1.getByText('GRIDOPS-MSG')).toBeInTheDocument();
-    expect(rule1.getByText('EOSC_Messaging')).toBeInTheDocument();
-    expect(rule1.queryByText('UNI-FREIBURG')).not.toBeInTheDocument();
-    expect(rule1.queryByText('EOSC_Core_Monitoring')).not.toBeInTheDocument();
-    expect(rule1.queryByText('EOSC_Exchange_Monitoring')).not.toBeInTheDocument();
-    expect(rule1.queryByText('GRIDOPS-SAM')).not.toBeInTheDocument();
-    expect(rule1.queryByText('prague_cesnet_lcg2')).not.toBeInTheDocument();
-    expect(rule1.queryByText('BUDAPEST')).not.toBeInTheDocument();
-
-    await waitFor(() => {
-      selectEvent.select(rule1.getAllByText(/select/i)[0], 'EOSC_Messaging')
-    })
-
-    await waitFor(() => {
-      expect(rule1.getByText("EOSC_Messaging")).toBeInTheDocument()
-    })
-
-    rule1 = within(screen.getByTestId('rules.0'))
-
-    fireEvent.change(screen.getByTestId('rules.0.thresholds.0.label'), { target: { value: 'freshness' } });
-    fireEvent.change(screen.getByTestId('rules.0.thresholds.0.value'), { target: { value: '1' } });
-    await selectEvent.select(rule1.getAllByText(/select/i)[0], "s")
-    fireEvent.change(screen.getByTestId('rules.0.thresholds.0.warn1'), { target: { value: '1' } });
-    fireEvent.change(screen.getByTestId('rules.0.thresholds.0.warn2'), { target: { value: '15' } });
-    fireEvent.change(screen.getByTestId('rules.0.thresholds.0.crit1'), { target: { value: '10' } });
-    fireEvent.change(screen.getByTestId('rules.0.thresholds.0.crit2'), { target: { value: '20' } });
-
-    rule1 = within(screen.getByTestId('rules.0'))
-
-    fireEvent.click(screen.getByTestId('rules.0.thresholds.0.add'));
-    fireEvent.change(screen.getByTestId('rules.0.thresholds.1.label'), { target: { value: 'entries' } });
-    fireEvent.change(screen.getByTestId('rules.0.thresholds.1.value'), { target: { value: '2' } });
-    await selectEvent.select(rule1.getAllByText(/select/i)[0], "B")
-    fireEvent.change(screen.getByTestId('rules.0.thresholds.1.warn1'), { target: { value: '0' } });
-    fireEvent.change(screen.getByTestId('rules.0.thresholds.1.crit1'), { target: { value: '2' } });
-
-    fireEvent.click(screen.getByRole('button', { name: 'Add new rule' }));
-
-    var rule2 = within(screen.getByTestId('rules.1'))
-
-    expect(rule2.queryByText('argo.AMS-Check')).not.toBeInTheDocument();
-    expect(rule2.queryByText('argo.AMSPublisher-Check')).not.toBeInTheDocument();
-    expect(rule2.queryByText('argo.POEM-API-MON')).not.toBeInTheDocument();
-    expect(rule2.queryByText('argo.API-Status-Check')).not.toBeInTheDocument();
-    expect(rule2.queryByText('ch.cern.HTCondorCE-JobState')).not.toBeInTheDocument();
-    expect(rule2.queryByText('ch.cern.HTCondorCE-JobSubmit')).not.toBeInTheDocument();
-    expect(rule2.queryByText('org.bdii.Entries')).not.toBeInTheDocument();
-    expect(rule2.queryByText('org.bdii.Freshness')).not.toBeInTheDocument();
-    expect(rule2.queryByText('org.nagios.ARGOWeb-AR')).not.toBeInTheDocument();
-    expect(rule2.queryByText('org.nagios.ARGOWeb-Status')).not.toBeInTheDocument();
-    expect(rule2.queryByText('org.nagios.BDII-Check')).not.toBeInTheDocument();
-    expect(rule2.queryByText('org.nagios.GridFTP-Check')).not.toBeInTheDocument();
-
-    selectEvent.openMenu(rule2.getAllByText(/select/i)[0])
-    expect(rule2.getByText('argo.AMS-Check')).toBeInTheDocument();
-    expect(rule2.getByText('argo.AMSPublisher-Check')).toBeInTheDocument();
-    expect(rule2.getByText('argo.POEM-API-MON')).toBeInTheDocument();
-    expect(rule2.getByText('argo.API-Status-Check')).toBeInTheDocument();
-    expect(rule2.getByText('ch.cern.HTCondorCE-JobState')).toBeInTheDocument();
-    expect(rule2.getByText('ch.cern.HTCondorCE-JobSubmit')).toBeInTheDocument();
-    expect(rule2.getByText('org.bdii.Entries')).toBeInTheDocument();
-    expect(rule2.getByText('org.bdii.Freshness')).toBeInTheDocument();
-    expect(rule2.getByText('org.nagios.ARGOWeb-AR')).toBeInTheDocument();
-    expect(rule2.getByText('org.nagios.ARGOWeb-Status')).toBeInTheDocument();
-    expect(rule2.getByText('org.nagios.BDII-Check')).toBeInTheDocument();
-    expect(rule2.getByText('org.nagios.GridFTP-Check')).toBeInTheDocument();
-
-    await waitFor(() => {
-      selectEvent.select(rule2.getAllByText(/select/i)[0], 'ch.cern.HTCondorCE-JobState')
-    })
-
-    await waitFor(() => {
-      expect(rule2.getByText("ch.cern.HTCondorCE-JobState")).toBeInTheDocument()
-    })
-
-    rule2 = within(screen.getByTestId('rules.1'))
-
-    expect(rule2.queryByText('GRIDOPS-MSG')).not.toBeInTheDocument();
-    expect(rule2.queryByText('EOSC_Messaging')).not.toBeInTheDocument();
-    expect(rule2.queryByText('UNI-FREIBURG')).not.toBeInTheDocument();
-    expect(rule2.queryByText('EOSC_Core_Monitoring')).not.toBeInTheDocument();
-    expect(rule2.queryByText('EOSC_Exchange_Monitoring')).not.toBeInTheDocument();
-    expect(rule2.queryByText('GRIDOPS-SAM')).not.toBeInTheDocument();
-    expect(rule2.queryByText('prague_cesnet_lcg2')).not.toBeInTheDocument();
-    expect(rule2.queryByText('BUDAPEST')).not.toBeInTheDocument();
-
-    selectEvent.openMenu(rule2.getAllByText(/select/i)[1])
-    expect(rule2.queryByText('GRIDOPS-MSG')).not.toBeInTheDocument();
-    expect(rule2.queryByText('EOSC_Messaging')).not.toBeInTheDocument();
-    expect(rule2.queryByText('UNI-FREIBURG')).not.toBeInTheDocument();
-    expect(rule2.queryByText('EOSC_Core_Monitoring')).not.toBeInTheDocument();
-    expect(rule2.queryByText('EOSC_Exchange_Monitoring')).not.toBeInTheDocument();
-    expect(rule2.queryByText('GRIDOPS-SAM')).not.toBeInTheDocument();
-    expect(rule2.getByText('prague_cesnet_lcg2')).toBeInTheDocument();
-    expect(rule2.getByText('BUDAPEST')).toBeInTheDocument();
-
-    await waitFor(() => {
-      selectEvent.select(rule2.getAllByText(/select/i)[1], 'BUDAPEST')
-    })
-
-    await waitFor(() => {
-      expect(rule2.getByText("BUDAPEST")).toBeInTheDocument()
-    })
-
-    rule2 = within(screen.getByTestId('rules.1'))
-
-    fireEvent.change(screen.getByTestId('rules.1.thresholds.0.label'), { target: { value: 'test' } });
-    fireEvent.change(screen.getByTestId('rules.1.thresholds.0.value'), { target: { value: '2' } });
-    await selectEvent.select(rule2.getAllByText(/select/i)[1], "TB")
-    fireEvent.change(screen.getByTestId('rules.1.thresholds.0.warn1'), { target: { value: '2' } });
-    fireEvent.change(screen.getByTestId('rules.1.thresholds.0.warn2'), { target: { value: '8' } });
-    fireEvent.change(screen.getByTestId('rules.1.thresholds.0.crit1'), { target: { value: '3' } });
-    fireEvent.change(screen.getByTestId('rules.1.thresholds.0.crit2'), { target: { value: '8' } });
-    fireEvent.change(screen.getByTestId('rules.1.thresholds.0.min'), { target: { value: '0' } });
-    fireEvent.change(screen.getByTestId('rules.1.thresholds.0.max'), { target: { value: '10' } });
-
-    fireEvent.click(screen.getByTestId('rules.0.thresholds.1.remove'));
-
-    fireEvent.click(screen.getByRole('button', { name: /save/i }))
-    await waitFor(() => {
-      expect(screen.getByRole('dialog', { title: /add/i })).toBeInTheDocument();
-    })
-    fireEvent.click(screen.getByRole('button', { name: /yes/i }));
-
-    await waitFor(() => {
-      expect(mockAddThresholdsProfile).toHaveBeenCalledWith({
-        name: 'TEST_PROFILE2',
-        rules: [
-          {
-            endpoint_group: 'EOSC_Messaging',
-            host: 'msg.argo.grnet.gr',
-            metric: 'argo.AMS-Check',
-            thresholds: 'freshness=1s;1:15;10:20'
-          },
-          {
-            endpoint_group: 'BUDAPEST',
-            metric: 'ch.cern.HTCondorCE-JobState',
-            thresholds: 'test=2TB;2:8;3:8;0;10'
-          }
-        ]
-      })
-    })
-
-    await waitFor(() => {
-      expect(mockAddObject).not.toHaveBeenCalled()
-    })
-
-    expect(queryClient.invalidateQueries).not.toHaveBeenCalled();
-    expect(NotificationManager.error).toHaveBeenCalledWith(
-      <div>
-        <p>406 Content Not acceptable: There has been an error.</p>
-        <p>Click to dismiss.</p>
-      </div>,
-      'Web API error',
-      0,
-      expect.any(Function)
-    )
-  })
-
-  test('Test error adding thresholds profile in web api without error message', async () => {
-    mockAddThresholdsProfile.mockImplementationOnce( () => { throw Error() } );
-
-    renderAddView();
-
-    await waitFor(() => {
-      expect(screen.getByRole("button", { name: /save/i })).toBeInTheDocument()
-    })
-
-    fireEvent.change(screen.getByTestId('name'), { target: { value: 'TEST_PROFILE2' } });
-
-    await selectEvent.select(screen.getByText(/select/i), 'TEST')
-
-    fireEvent.click(screen.getByRole('button', { name: 'Add a rule' }));
-
-    var rule1 = within(screen.getByTestId('rules.0'))
-
-    expect(rule1.queryByText('argo.AMS-Check')).not.toBeInTheDocument();
-    expect(rule1.queryByText('argo.AMSPublisher-Check')).not.toBeInTheDocument();
-    expect(rule1.queryByText('argo.POEM-API-MON')).not.toBeInTheDocument();
-    expect(rule1.queryByText('argo.API-Status-Check')).not.toBeInTheDocument();
-    expect(rule1.queryByText('ch.cern.HTCondorCE-JobState')).not.toBeInTheDocument();
-    expect(rule1.queryByText('ch.cern.HTCondorCE-JobSubmit')).not.toBeInTheDocument();
-    expect(rule1.queryByText('org.bdii.Entries')).not.toBeInTheDocument();
-    expect(rule1.queryByText('org.bdii.Freshness')).not.toBeInTheDocument();
-    expect(rule1.queryByText('org.nagios.ARGOWeb-AR')).not.toBeInTheDocument();
-    expect(rule1.queryByText('org.nagios.ARGOWeb-Status')).not.toBeInTheDocument();
-    expect(rule1.queryByText('org.nagios.BDII-Check')).not.toBeInTheDocument();
-    expect(rule1.queryByText('org.nagios.GridFTP-Check')).not.toBeInTheDocument();
-
-    selectEvent.openMenu(rule1.getAllByText(/select/i)[0])
-    expect(rule1.getByText('argo.AMS-Check')).toBeInTheDocument();
-    expect(rule1.getByText('argo.AMSPublisher-Check')).toBeInTheDocument();
-    expect(rule1.getByText('argo.POEM-API-MON')).toBeInTheDocument();
-    expect(rule1.getByText('argo.API-Status-Check')).toBeInTheDocument();
-    expect(rule1.getByText('ch.cern.HTCondorCE-JobState')).toBeInTheDocument();
-    expect(rule1.getByText('ch.cern.HTCondorCE-JobSubmit')).toBeInTheDocument();
-    expect(rule1.getByText('org.bdii.Entries')).toBeInTheDocument();
-    expect(rule1.getByText('org.bdii.Freshness')).toBeInTheDocument();
-    expect(rule1.getByText('org.nagios.ARGOWeb-AR')).toBeInTheDocument();
-    expect(rule1.getByText('org.nagios.ARGOWeb-Status')).toBeInTheDocument();
-    expect(rule1.getByText('org.nagios.BDII-Check')).toBeInTheDocument();
-    expect(rule1.getByText('org.nagios.GridFTP-Check')).toBeInTheDocument();
-
-    await waitFor(() => {
-      selectEvent.select(rule1.getAllByText(/select/i)[0], 'argo.AMS-Check')
-    })
-
-    await waitFor(() => {
-      expect(rule1.getByText("argo.AMS-Check")).toBeInTheDocument()
-    })
-
-    rule1 = within(screen.getByTestId('rules.0'))
-
-    expect(rule1.queryByText('msg.argo.grnet.gr')).not.toBeInTheDocument();
-    expect(rule1.queryByText('sedoor1.bfg.uni-freiburg.de')).not.toBeInTheDocument();
-    expect(rule1.queryByText('sedoor2.bfg.uni-freiburg.de')).not.toBeInTheDocument();
-    expect(rule1.queryByText('eosccore.ui.argo.grnet.gr')).not.toBeInTheDocument();
-    expect(rule1.queryByText('argo.eosc-portal.eu')).not.toBeInTheDocument();
-    expect(rule1.queryByText('ce1.grid.cesnet.cz')).not.toBeInTheDocument();
-    expect(rule1.queryByText('se1.grid.cesnet.cz')).not.toBeInTheDocument();
-    expect(rule1.queryByText('sbdii.grid.cesnet.cz')).not.toBeInTheDocument();
-    expect(rule1.queryByText('bdii.grid.cesnet.cz')).not.toBeInTheDocument();
-    expect(rule1.queryByText('grid108.kfki.hu')).not.toBeInTheDocument();
-
-    selectEvent.openMenu(rule1.getAllByText(/select/i)[0])
-    expect(rule1.getByText('msg.argo.grnet.gr')).toBeInTheDocument();
-    expect(rule1.queryByText('sedoor1.bfg.uni-freiburg.de')).not.toBeInTheDocument();
-    expect(rule1.queryByText('sedoor2.bfg.uni-freiburg.de')).not.toBeInTheDocument();
-    expect(rule1.queryByText('eosccore.ui.argo.grnet.gr')).not.toBeInTheDocument();
-    expect(rule1.queryByText('argo.eosc-portal.eu')).not.toBeInTheDocument();
-    expect(rule1.queryByText('ce1.grid.cesnet.cz')).not.toBeInTheDocument();
-    expect(rule1.queryByText('se1.grid.cesnet.cz')).not.toBeInTheDocument();
-    expect(rule1.queryByText('sbdii.grid.cesnet.cz')).not.toBeInTheDocument();
-    expect(rule1.queryByText('bdii.grid.cesnet.cz')).not.toBeInTheDocument();
-    expect(rule1.queryByText('grid108.kfki.hu')).not.toBeInTheDocument();
-
-    await waitFor(() => {
-      selectEvent.select(rule1.getAllByText(/select/i)[0], 'msg.argo.grnet.gr')
-    })
-
-    await waitFor(() => {
-      expect(rule1.getByText("msg.argo.grnet.gr")).toBeInTheDocument()
-    })
-
-    rule1 = within(screen.getByTestId('rules.0'))
-
-    expect(rule1.queryByText('GRIDOPS-MSG')).not.toBeInTheDocument();
-    expect(rule1.queryByText('EOSC_Messaging')).not.toBeInTheDocument();
-    expect(rule1.queryByText('UNI-FREIBURG')).not.toBeInTheDocument();
-    expect(rule1.queryByText('EOSC_Core_Monitoring')).not.toBeInTheDocument();
-    expect(rule1.queryByText('EOSC_Exchange_Monitoring')).not.toBeInTheDocument();
-    expect(rule1.queryByText('GRIDOPS-SAM')).not.toBeInTheDocument();
-    expect(rule1.queryByText('prague_cesnet_lcg2')).not.toBeInTheDocument();
-    expect(rule1.queryByText('BUDAPEST')).not.toBeInTheDocument();
-
-    selectEvent.openMenu(rule1.getAllByText(/select/i)[0])
-    expect(rule1.getByText('GRIDOPS-MSG')).toBeInTheDocument();
-    expect(rule1.getByText('EOSC_Messaging')).toBeInTheDocument();
-    expect(rule1.queryByText('UNI-FREIBURG')).not.toBeInTheDocument();
-    expect(rule1.queryByText('EOSC_Core_Monitoring')).not.toBeInTheDocument();
-    expect(rule1.queryByText('EOSC_Exchange_Monitoring')).not.toBeInTheDocument();
-    expect(rule1.queryByText('GRIDOPS-SAM')).not.toBeInTheDocument();
-    expect(rule1.queryByText('prague_cesnet_lcg2')).not.toBeInTheDocument();
-    expect(rule1.queryByText('BUDAPEST')).not.toBeInTheDocument();
-
-    await waitFor(() => {
-      selectEvent.select(rule1.getAllByText(/select/i)[0], 'EOSC_Messaging')
-    })
-
-    await waitFor(() => {
-      expect(rule1.getByText("EOSC_Messaging")).toBeInTheDocument()
-    })
-
-    rule1 = within(screen.getByTestId('rules.0'))
-
-    fireEvent.change(screen.getByTestId('rules.0.thresholds.0.label'), { target: { value: 'freshness' } });
-    fireEvent.change(screen.getByTestId('rules.0.thresholds.0.value'), { target: { value: '1' } });
-    await selectEvent.select(rule1.getAllByText(/select/i)[0], "s")
-    fireEvent.change(screen.getByTestId('rules.0.thresholds.0.warn1'), { target: { value: '1' } });
-    fireEvent.change(screen.getByTestId('rules.0.thresholds.0.warn2'), { target: { value: '15' } });
-    fireEvent.change(screen.getByTestId('rules.0.thresholds.0.crit1'), { target: { value: '10' } });
-    fireEvent.change(screen.getByTestId('rules.0.thresholds.0.crit2'), { target: { value: '20' } });
-
-    fireEvent.click(screen.getByTestId('rules.0.thresholds.0.add'));
-    fireEvent.change(screen.getByTestId('rules.0.thresholds.1.label'), { target: { value: 'entries' } });
-    fireEvent.change(screen.getByTestId('rules.0.thresholds.1.value'), { target: { value: '2' } });
-    await selectEvent.select(rule1.getAllByText(/select/i)[0], "B")
-    fireEvent.change(screen.getByTestId('rules.0.thresholds.1.warn1'), { target: { value: '0' } });
-    fireEvent.change(screen.getByTestId('rules.0.thresholds.1.crit1'), { target: { value: '2' } });
-
-    fireEvent.click(screen.getByRole('button', { name: 'Add new rule' }));
-
-    var rule2 = within(screen.getByTestId('rules.1'))
-
-    expect(rule2.queryByText('argo.AMS-Check')).not.toBeInTheDocument();
-    expect(rule2.queryByText('argo.AMSPublisher-Check')).not.toBeInTheDocument();
-    expect(rule2.queryByText('argo.POEM-API-MON')).not.toBeInTheDocument();
-    expect(rule2.queryByText('argo.API-Status-Check')).not.toBeInTheDocument();
-    expect(rule2.queryByText('ch.cern.HTCondorCE-JobState')).not.toBeInTheDocument();
-    expect(rule2.queryByText('ch.cern.HTCondorCE-JobSubmit')).not.toBeInTheDocument();
-    expect(rule2.queryByText('org.bdii.Entries')).not.toBeInTheDocument();
-    expect(rule2.queryByText('org.bdii.Freshness')).not.toBeInTheDocument();
-    expect(rule2.queryByText('org.nagios.ARGOWeb-AR')).not.toBeInTheDocument();
-    expect(rule2.queryByText('org.nagios.ARGOWeb-Status')).not.toBeInTheDocument();
-    expect(rule2.queryByText('org.nagios.BDII-Check')).not.toBeInTheDocument();
-    expect(rule2.queryByText('org.nagios.GridFTP-Check')).not.toBeInTheDocument();
-
-    selectEvent.openMenu(rule2.getAllByText(/select/i)[0])
-    expect(rule2.getByText('argo.AMS-Check')).toBeInTheDocument();
-    expect(rule2.getByText('argo.AMSPublisher-Check')).toBeInTheDocument();
-    expect(rule2.getByText('argo.POEM-API-MON')).toBeInTheDocument();
-    expect(rule2.getByText('argo.API-Status-Check')).toBeInTheDocument();
-    expect(rule2.getByText('ch.cern.HTCondorCE-JobState')).toBeInTheDocument();
-    expect(rule2.getByText('ch.cern.HTCondorCE-JobSubmit')).toBeInTheDocument();
-    expect(rule2.getByText('org.bdii.Entries')).toBeInTheDocument();
-    expect(rule2.getByText('org.bdii.Freshness')).toBeInTheDocument();
-    expect(rule2.getByText('org.nagios.ARGOWeb-AR')).toBeInTheDocument();
-    expect(rule2.getByText('org.nagios.ARGOWeb-Status')).toBeInTheDocument();
-    expect(rule2.getByText('org.nagios.BDII-Check')).toBeInTheDocument();
-    expect(rule2.getByText('org.nagios.GridFTP-Check')).toBeInTheDocument();
-
-    await waitFor(() => {
-      selectEvent.select(rule2.getAllByText(/select/i)[0], 'ch.cern.HTCondorCE-JobState')
-    })
-
-    await waitFor(() => {
-      expect(rule2.getByText("ch.cern.HTCondorCE-JobState")).toBeInTheDocument()
-    })
-
-    rule2 = within(screen.getByTestId('rules.1'))
-
-    expect(rule2.queryByText('GRIDOPS-MSG')).not.toBeInTheDocument();
-    expect(rule2.queryByText('EOSC_Messaging')).not.toBeInTheDocument();
-    expect(rule2.queryByText('UNI-FREIBURG')).not.toBeInTheDocument();
-    expect(rule2.queryByText('EOSC_Core_Monitoring')).not.toBeInTheDocument();
-    expect(rule2.queryByText('EOSC_Exchange_Monitoring')).not.toBeInTheDocument();
-    expect(rule2.queryByText('GRIDOPS-SAM')).not.toBeInTheDocument();
-    expect(rule2.queryByText('prague_cesnet_lcg2')).not.toBeInTheDocument();
-    expect(rule2.queryByText('BUDAPEST')).not.toBeInTheDocument();
-
-    selectEvent.openMenu(rule2.getAllByText(/select/i)[1])
-    expect(rule2.queryByText('GRIDOPS-MSG')).not.toBeInTheDocument();
-    expect(rule2.queryByText('EOSC_Messaging')).not.toBeInTheDocument();
-    expect(rule2.queryByText('UNI-FREIBURG')).not.toBeInTheDocument();
-    expect(rule2.queryByText('EOSC_Core_Monitoring')).not.toBeInTheDocument();
-    expect(rule2.queryByText('EOSC_Exchange_Monitoring')).not.toBeInTheDocument();
-    expect(rule2.queryByText('GRIDOPS-SAM')).not.toBeInTheDocument();
-    expect(rule2.getByText('prague_cesnet_lcg2')).toBeInTheDocument();
-    expect(rule2.getByText('BUDAPEST')).toBeInTheDocument();
-
-    await waitFor(() => {
-      selectEvent.select(rule2.getAllByText(/select/i)[1], 'BUDAPEST')
-    })
-
-    await waitFor(() => {
-      expect(rule2.getByText("BUDAPEST")).toBeInTheDocument()
-    })
-
-    rule2 = within(screen.getByTestId('rules.1'))
-
-    fireEvent.change(screen.getByTestId('rules.1.thresholds.0.label'), { target: { value: 'test' } });
-    fireEvent.change(screen.getByTestId('rules.1.thresholds.0.value'), { target: { value: '2' } });
-    await selectEvent.select(rule2.getAllByText(/select/i)[1], "TB")
-    fireEvent.change(screen.getByTestId('rules.1.thresholds.0.warn1'), { target: { value: '2' } });
-    fireEvent.change(screen.getByTestId('rules.1.thresholds.0.warn2'), { target: { value: '8' } });
-    fireEvent.change(screen.getByTestId('rules.1.thresholds.0.crit1'), { target: { value: '3' } });
-    fireEvent.change(screen.getByTestId('rules.1.thresholds.0.crit2'), { target: { value: '8' } });
-    fireEvent.change(screen.getByTestId('rules.1.thresholds.0.min'), { target: { value: '0' } });
-    fireEvent.change(screen.getByTestId('rules.1.thresholds.0.max'), { target: { value: '10' } });
-
-    fireEvent.click(screen.getByTestId('rules.0.thresholds.1.remove'));
-
-    fireEvent.click(screen.getByRole('button', { name: /save/i }))
-    await waitFor(() => {
-      expect(screen.getByRole('dialog', { title: /add/i })).toBeInTheDocument();
-    })
-    fireEvent.click(screen.getByRole('button', { name: /yes/i }));
-
-    await waitFor(() => {
-      expect(mockAddThresholdsProfile).toHaveBeenCalledWith({
-        name: 'TEST_PROFILE2',
-        rules: [
-          {
-            endpoint_group: 'EOSC_Messaging',
-            host: 'msg.argo.grnet.gr',
-            metric: 'argo.AMS-Check',
-            thresholds: 'freshness=1s;1:15;10:20'
-          },
-          {
-            endpoint_group: 'BUDAPEST',
-            metric: 'ch.cern.HTCondorCE-JobState',
-            thresholds: 'test=2TB;2:8;3:8;0;10'
-          }
-        ]
-      })
-    })
-
-    await waitFor(() => {
-      expect(mockAddObject).not.toHaveBeenCalled()
-    })
-
-    expect(queryClient.invalidateQueries).not.toHaveBeenCalled();
-    expect(NotificationManager.error).toHaveBeenCalledWith(
-      <div>
-        <p>Web API error adding thresholds profile</p>
-        <p>Click to dismiss.</p>
-      </div>,
-      'Web API error',
-      0,
-      expect.any(Function)
-    )
-  })
 
   test('Test error adding thresholds profile in internal api with error message', async () => {
-    mockAddThresholdsProfile.mockReturnValueOnce(
-      Promise.resolve({
-        status: {
-          message: 'Thresholds profile Created',
-          code: "200"
-        },
-        data: {
-          id: '00000000-oooo-kkkk-aaaa-aaeekkccnnee',
-          links: {
-            self: 'string'
-          }
-        }
-      })
-    )
     mockAddObject.mockImplementationOnce( () => {
       throw Error('400 BAD REQUEST: There has been an error.')
     } );
@@ -3954,22 +2690,6 @@ describe('Tests for thresholds profiles addview', () => {
     fireEvent.click(screen.getByRole('button', { name: /yes/i }));
 
     await waitFor(() => {
-      expect(mockAddThresholdsProfile).toHaveBeenCalledWith({
-        name: 'TEST_PROFILE2',
-        rules: [
-          {
-            endpoint_group: 'EOSC_Messaging',
-            host: 'msg.argo.grnet.gr',
-            metric: 'argo.AMS-Check',
-            thresholds: 'freshness=1s;1:15;10:20'
-          },
-          {
-            endpoint_group: 'BUDAPEST',
-            metric: 'ch.cern.HTCondorCE-JobState',
-            thresholds: 'test=2TB;2:8;3:8;0;10'
-          }
-        ]
-      })
     })
 
     await waitFor(() => {
@@ -3984,12 +2704,13 @@ describe('Tests for thresholds profiles addview', () => {
             endpoint_group: 'EOSC_Messaging',
             host: 'msg.argo.grnet.gr',
             metric: 'argo.AMS-Check',
-            thresholds: 'freshness=1s;1:15;10:20'
+            thresholds: [{label: 'freshness', value: '1', uom: 's', warn1: '1', warn2: '15', crit1: '10', crit2: '20'}]
           },
           {
             endpoint_group: 'BUDAPEST',
+            host: null,
             metric: 'ch.cern.HTCondorCE-JobState',
-            thresholds: 'test=2TB;2:8;3:8;0;10'
+            thresholds: [{label: 'test', value: '2', uom: 'TB', warn1: '2', warn2: '8', crit1: '3', crit2: '8', min: '0', max: '10'}]
           }
           ]
         }
@@ -4009,20 +2730,6 @@ describe('Tests for thresholds profiles addview', () => {
   })
 
   test('Test error adding thresholds profile in internal api without error message', async () => {
-    mockAddThresholdsProfile.mockReturnValueOnce(
-      Promise.resolve({
-        status: {
-          message: 'Thresholds profile Created',
-          code: "200"
-        },
-        data: {
-          id: '00000000-oooo-kkkk-aaaa-aaeekkccnnee',
-          links: {
-            self: 'string'
-          }
-        }
-      })
-    )
     mockAddObject.mockImplementationOnce( () => { throw Error() } );
 
     renderAddView();
@@ -4242,22 +2949,6 @@ describe('Tests for thresholds profiles addview', () => {
     fireEvent.click(screen.getByRole('button', { name: /yes/i }));
 
     await waitFor(() => {
-      expect(mockAddThresholdsProfile).toHaveBeenCalledWith({
-        name: 'TEST_PROFILE2',
-        rules: [
-          {
-            endpoint_group: 'EOSC_Messaging',
-            host: 'msg.argo.grnet.gr',
-            metric: 'argo.AMS-Check',
-            thresholds: 'freshness=1s;1:15;10:20'
-          },
-          {
-            endpoint_group: 'BUDAPEST',
-            metric: 'ch.cern.HTCondorCE-JobState',
-            thresholds: 'test=2TB;2:8;3:8;0;10'
-          }
-        ]
-      })
     })
 
     await waitFor(() => {
@@ -4272,12 +2963,13 @@ describe('Tests for thresholds profiles addview', () => {
             endpoint_group: 'EOSC_Messaging',
             host: 'msg.argo.grnet.gr',
             metric: 'argo.AMS-Check',
-            thresholds: 'freshness=1s;1:15;10:20'
+            thresholds: [{label: 'freshness', value: '1', uom: 's', warn1: '1', warn2: '15', crit1: '10', crit2: '20'}]
           },
           {
             endpoint_group: 'BUDAPEST',
+            host: null,
             metric: 'ch.cern.HTCondorCE-JobState',
-            thresholds: 'test=2TB;2:8;3:8;0;10'
+            thresholds: [{label: 'test', value: '2', uom: 'TB', warn1: '2', warn2: '8', crit1: '3', crit2: '8', min: '0', max: '10'}]
           }
           ]
         }

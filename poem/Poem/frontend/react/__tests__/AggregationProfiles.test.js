@@ -2,7 +2,7 @@ import React from 'react';
 import { render, waitFor, screen, within, fireEvent } from '@testing-library/react';
 import '@testing-library/jest-dom';
 import { MemoryRouter, Routes, Route } from 'react-router-dom';
-import { Backend, WebApi } from '../DataManager';
+import { Backend } from '../DataManager';
 import {
   AggregationProfilesChange,
   AggregationProfilesList,
@@ -16,18 +16,14 @@ import selectEvent from 'react-select-event';
 
 jest.mock('../DataManager', () => {
   return {
-    Backend: jest.fn(),
-    WebApi: jest.fn()
+    Backend: jest.fn()
   }
 })
 
 jest.setTimeout(20000);
 
 const mockChangeObject = jest.fn();
-const mockChangeAggregation = jest.fn();
 const mockDeleteObject = jest.fn();
-const mockDeleteAggregation = jest.fn();
-const mockAddAggregation = jest.fn();
 const mockAddObject = jest.fn();
 const mockFetchReports = jest.fn()
 
@@ -582,9 +578,6 @@ function renderListView(publicView = false) {
           <MemoryRouter initialEntries={ [ route ] }>
             <AggregationProfilesList
               publicView={true}
-              webapimetric='https://mock.metrics.com'
-              webapiaggregation='https://mock.aggregations.com'
-              webapitoken='token'
             />
           </MemoryRouter>
         </QueryClientProvider>
@@ -597,9 +590,6 @@ function renderListView(publicView = false) {
         <QueryClientProvider client={queryClient}>
           <MemoryRouter initialEntries={ [ route ] }>
             <AggregationProfilesList
-              webapimetric='https://mock.metrics.com'
-              webapiaggregation='https://mock.aggregations.com'
-              webapitoken='token'
             />
           </MemoryRouter>
         </QueryClientProvider>
@@ -621,16 +611,7 @@ function renderChangeView(publicView = false) {
                 path="/ui/public_aggregationprofiles/:name"
                 element={
                   <AggregationProfilesChange
-                    webapimetric='https://mock.metrics.com'
-                    webapiaggregation='https://mock.aggregations.com'
-                    webapireports={{
-                      main: 'https://reports.com',
-                      tags: 'https://reports-tags.com',
-                      topologygroups: 'https://topology-groups.com',
-                      topologyendpoints: 'https://endpoints.com'
-                    }}
-                    webapitoken='token'
-                    tenantname='TENANT'
+                          tenantname='TENANT'
                     publicView={true}
                   />
                 }
@@ -651,10 +632,7 @@ function renderChangeView(publicView = false) {
                 path="/ui/aggregationprofiles/:name"
                 element={
                   <AggregationProfilesChange
-                    webapiaggregation='https://mock.aggregations.com'
-                    webapimetric='https://mock.metrics.com'
-                    webapitoken='token'
-                    tenantname='TENANT' 
+                                      tenantname='TENANT' 
                   />
                 }
               />
@@ -674,9 +652,6 @@ function renderAddview() {
       <QueryClientProvider client={queryClient}>
         <MemoryRouter initialEntries={ [ route ] }>
           <AggregationProfilesChange
-            webapiaggregation='https://mock.aggregations.com'
-            webapimetric='https://mock.metrics.com'
-            webapitoken='token'
             tenantname='TENANT'
             addview={true}
           />
@@ -775,21 +750,15 @@ describe('Tests for aggregation profiles changeview', () => {
 
   beforeEach(() => {
     mockFetchReports.mockReturnValue([mockReports[0], mockReports[1]])
-    WebApi.mockImplementation(() => {
-      return {
-        fetchMetricProfiles: () => Promise.resolve(mockWebApiMetricProfiles),
-        fetchAggregationProfile: () => Promise.resolve(mockWebApiProfile),
-        fetchReports: () => mockFetchReports,
-        changeAggregation: mockChangeAggregation,
-        deleteAggregation: mockDeleteAggregation
-      }
-    })
     Backend.mockImplementation(() => {
       return {
         isActiveSession: () => Promise.resolve(mockActiveSession),
         fetchData: () => Promise.resolve(mockBackendProfile),
         changeObject: mockChangeObject,
-        deleteObject: mockDeleteObject
+        deleteObject: mockDeleteObject,
+        fetchWebApiMetricProfiles: () => Promise.resolve(mockWebApiMetricProfiles),
+        fetchWebApiAggregation: () => Promise.resolve(mockWebApiProfile),
+        fetchWebApiReports: () => mockFetchReports
       }
     })
   })
@@ -1502,243 +1471,12 @@ describe('Tests for aggregation profiles changeview', () => {
     expect(helpers.downloadJSON).toHaveBeenCalledWith(content, 'TEST_PROFILE.json');
   })
 
-  test('Test error changing aggregation profile on web api with error message', async () => {
-    mockChangeAggregation.mockImplementationOnce(() => {
-      throw Error('406 Content Not acceptable: There has been an error.')
-    });
 
-    renderChangeView();
-
-    await waitFor(() => {
-      expect(screen.getByRole('button', { name: /save/i })).toBeInTheDocument();
-    })
-
-    await selectEvent.select(screen.getByText('EGI'), 'ARGO')
-
-    await selectEvent.select(screen.getAllByText('AND')[ 0 ], 'OR')
-    await selectEvent.select(screen.getAllByText('AND')[ 0 ], 'OR')
-    await selectEvent.select(screen.getByText('servicegroups'), 'sites')
-    await selectEvent.select(screen.getByText('ARGO_MON_CRITICAL'), 'ARGO_MON_TEST')
-
-    const card0 = within(screen.getByTestId('card-0'));
-    const card1 = within(screen.getByTestId('card-1'));
-
-    fireEvent.click(card0.getByTestId('remove-service-2'));
-    await selectEvent.select(card0.getAllByText("OR")[1], "AND")
-
-    fireEvent.click(card1.getByTestId('insert-0'));
-
-    await waitFor(async () => {
-      await selectEvent.select(card1.getAllByText(/select/i)[0], "webdav")
-    })
-
-    await selectEvent.select(within(screen.getByTestId("card-3")).getAllByText("OR")[1], "AND")
-
-    fireEvent.click(within(screen.getByTestId('card-2')).getByTestId('remove-group-2'));
-
-    fireEvent.click(screen.getByRole('button', { name: /save/i }))
-    await waitFor(() => {
-      expect(screen.getByRole('dialog', { title: /change/i })).toBeInTheDocument();
-    })
-    fireEvent.click(screen.getByRole('button', { name: /yes/i }));
-
-    await waitFor(() => {
-      expect(mockChangeAggregation).toHaveBeenCalledWith({
-        profile_operation: 'OR',
-        endpoint_group: 'sites',
-        groupname: 'ARGO',
-        name: 'TEST_PROFILE',
-        metric_operation: 'OR',
-        namespace: 'TENANT',
-        groups: [
-          {
-            services: [
-              {
-                operation: 'OR',
-                name: 'ARC-CE'
-              },
-              {
-                operation: 'AND',
-                name: 'GRAM5'
-              },
-              {
-                operation: 'OR',
-                name: 'org.opensciencegrid.htcondorce'
-              }
-            ],
-            operation: 'OR',
-            name: 'compute'
-          },
-          {
-            services: [
-              {
-                operation: 'OR',
-                name: 'SRM'
-              },
-              {
-                operation: 'OR',
-                name: 'webdav'
-              }
-            ],
-            operation: 'OR',
-            name: 'storage'
-          },
-          {
-            services: [
-              {
-                operation: 'OR',
-                name: 'org.openstack.nova'
-              }
-            ],
-            operation: 'AND',
-            name: 'cloud'
-          }
-        ],
-        metric_profile: {
-          name: 'ARGO_MON_TEST',
-          id: 'Eitaew8t-gSk6-nW8Q-Z3aF-quo0Saevooze'
-        },
-        id: '00000000-oooo-kkkk-aaaa-aaeekkccnnee'
-      })
-    })
-
-    await waitFor(() => {
-      expect(mockChangeObject).not.toHaveBeenCalled();
-    })
-
-    expect(queryClient.invalidateQueries).not.toHaveBeenCalled();
-    expect(NotificationManager.error).toHaveBeenCalledWith(
-      <div>
-        <p>406 Content Not acceptable: There has been an error.</p>
-        <p>Click to dismiss.</p>
-      </div>,
-      'Web API error',
-      0,
-      expect.any(Function)
-    )
-  })
-
-  test('Test error changing aggregation profile on web api without error message', async () => {
-    mockChangeAggregation.mockImplementationOnce(() => { throw Error() });
-
-    renderChangeView();
-
-    await waitFor(() => {
-      expect(screen.getByRole('button', { name: /save/i })).toBeInTheDocument();
-    })
-
-    await selectEvent.select(screen.getByText('EGI'), 'ARGO')
-
-    await selectEvent.select(screen.getAllByText('AND')[ 0 ], 'OR')
-    await selectEvent.select(screen.getAllByText('AND')[ 0 ], 'OR')
-    await selectEvent.select(screen.getByText('servicegroups'), 'sites')
-    await selectEvent.select(screen.getByText('ARGO_MON_CRITICAL'), 'ARGO_MON_TEST')
-
-    const card0 = within(screen.getByTestId('card-0'));
-    const card1 = within(screen.getByTestId('card-1'));
-
-    fireEvent.click(card0.getByTestId('remove-service-2'));
-    await selectEvent.select(card0.getAllByText("OR")[1], "AND")
-
-    fireEvent.click(card1.getByTestId('insert-0'));
-
-    await waitFor(async () => {
-      await selectEvent.select(card1.getAllByText(/select/i)[0], "webdav")
-    })
-
-    await selectEvent.select(within(screen.getByTestId("card-3")).getAllByText("OR")[1], "AND")
-
-    fireEvent.click(within(screen.getByTestId('card-2')).getByTestId('remove-group-2'));
-
-    fireEvent.click(screen.getByRole('button', { name: /save/i }))
-    await waitFor(() => {
-      expect(screen.getByRole('dialog', { title: /change/i })).toBeInTheDocument();
-    })
-    fireEvent.click(screen.getByRole('button', { name: /yes/i }));
-
-    await waitFor(() => {
-      expect(mockChangeAggregation).toHaveBeenCalledWith({
-        profile_operation: 'OR',
-        endpoint_group: 'sites',
-        groupname: 'ARGO',
-        name: 'TEST_PROFILE',
-        metric_operation: 'OR',
-        namespace: 'TENANT',
-        groups: [
-          {
-            services: [
-              {
-                operation: 'OR',
-                name: 'ARC-CE'
-              },
-              {
-                operation: 'AND',
-                name: 'GRAM5'
-              },
-              {
-                operation: 'OR',
-                name: 'org.opensciencegrid.htcondorce'
-              }
-            ],
-            operation: 'OR',
-            name: 'compute'
-          },
-          {
-            services: [
-              {
-                operation: 'OR',
-                name: 'SRM'
-              },
-              {
-                operation: 'OR',
-                name: 'webdav'
-              }
-            ],
-            operation: 'OR',
-            name: 'storage'
-          },
-          {
-            services: [
-              {
-                operation: 'OR',
-                name: 'org.openstack.nova'
-              }
-            ],
-            operation: 'AND',
-            name: 'cloud'
-          }
-        ],
-        metric_profile: {
-          name: 'ARGO_MON_TEST',
-          id: 'Eitaew8t-gSk6-nW8Q-Z3aF-quo0Saevooze'
-        },
-        id: '00000000-oooo-kkkk-aaaa-aaeekkccnnee'
-      })
-    })
-
-    await waitFor(() => {
-      expect(mockChangeObject).not.toHaveBeenCalled();
-    })
-
-    expect(queryClient.invalidateQueries).not.toHaveBeenCalled();
-    expect(NotificationManager.error).toHaveBeenCalledWith(
-      <div>
-        <p>Web API error changing aggregation profile</p>
-        <p>Click to dismiss.</p>
-      </div>,
-      'Web API error',
-      0,
-      expect.any(Function)
-    )
-  })
 
   test('Test error changing aggregation profile on internal API with error message', async () => {
     mockChangeObject.mockImplementationOnce(() => {
       throw Error('400 BAD REQUEST: There has been an error.')
     });
-    mockChangeAggregation.mockReturnValueOnce(
-      Promise.resolve({ ok: 'ok' })
-    )
 
     renderChangeView();
 
@@ -1776,63 +1514,6 @@ describe('Tests for aggregation profiles changeview', () => {
     fireEvent.click(screen.getByRole('button', { name: /yes/i }));
 
     await waitFor(() => {
-      expect(mockChangeAggregation).toHaveBeenCalledWith({
-        profile_operation: 'OR',
-        endpoint_group: 'sites',
-        groupname: 'ARGO',
-        name: 'TEST_PROFILE',
-        metric_operation: 'OR',
-        namespace: 'TENANT',
-        groups: [
-          {
-            services: [
-              {
-                operation: 'OR',
-                name: 'ARC-CE'
-              },
-              {
-                operation: 'AND',
-                name: 'GRAM5'
-              },
-              {
-                operation: 'OR',
-                name: 'org.opensciencegrid.htcondorce'
-              }
-            ],
-            operation: 'OR',
-            name: 'compute'
-          },
-          {
-            services: [
-              {
-                operation: 'OR',
-                name: 'SRM'
-              },
-              {
-                operation: 'OR',
-                name: 'webdav'
-              }
-            ],
-            operation: 'OR',
-            name: 'storage'
-          },
-          {
-            services: [
-              {
-                operation: 'OR',
-                name: 'org.openstack.nova'
-              }
-            ],
-            operation: 'AND',
-            name: 'cloud'
-          }
-        ],
-        metric_profile: {
-          name: 'ARGO_MON_TEST',
-          id: 'Eitaew8t-gSk6-nW8Q-Z3aF-quo0Saevooze'
-        },
-        id: '00000000-oooo-kkkk-aaaa-aaeekkccnnee'
-      })
     })
 
     await waitFor(() => {
@@ -1845,8 +1526,8 @@ describe('Tests for aggregation profiles changeview', () => {
           endpoint_group: 'sites',
           metric_operation: 'OR',
           profile_operation: 'OR',
-          metric_profile: 'ARGO_MON_TEST',
-          groups: JSON.stringify([
+          metric_profile: {name: 'ARGO_MON_TEST', id: 'Eitaew8t-gSk6-nW8Q-Z3aF-quo0Saevooze'},
+          groups: [
             {
               name: 'compute',
               operation: 'OR',
@@ -1889,7 +1570,7 @@ describe('Tests for aggregation profiles changeview', () => {
                 }
               ],
             }
-          ])
+          ]
         }
       )
     })
@@ -1908,7 +1589,6 @@ describe('Tests for aggregation profiles changeview', () => {
 
   test('Test error changing aggregation profile on internal API without error message', async () => {
     mockChangeObject.mockImplementationOnce(() => { throw Error() });
-    mockChangeAggregation.mockReturnValueOnce(Promise.resolve({ ok: 'ok' }));
 
     renderChangeView();
 
@@ -1946,63 +1626,6 @@ describe('Tests for aggregation profiles changeview', () => {
     fireEvent.click(screen.getByRole('button', { name: /yes/i }));
 
     await waitFor(() => {
-      expect(mockChangeAggregation).toHaveBeenCalledWith({
-        profile_operation: 'OR',
-        endpoint_group: 'sites',
-        groupname: 'ARGO',
-        name: 'TEST_PROFILE',
-        metric_operation: 'OR',
-        namespace: 'TENANT',
-        groups: [
-          {
-            services: [
-              {
-                operation: 'OR',
-                name: 'ARC-CE'
-              },
-              {
-                operation: 'AND',
-                name: 'GRAM5'
-              },
-              {
-                operation: 'OR',
-                name: 'org.opensciencegrid.htcondorce'
-              }
-            ],
-            operation: 'OR',
-            name: 'compute'
-          },
-          {
-            services: [
-              {
-                operation: 'OR',
-                name: 'SRM'
-              },
-              {
-                operation: 'OR',
-                name: 'webdav'
-              }
-            ],
-            operation: 'OR',
-            name: 'storage'
-          },
-          {
-            services: [
-              {
-                operation: 'OR',
-                name: 'org.openstack.nova'
-              }
-            ],
-            operation: 'AND',
-            name: 'cloud'
-          }
-        ],
-        metric_profile: {
-          name: 'ARGO_MON_TEST',
-          id: 'Eitaew8t-gSk6-nW8Q-Z3aF-quo0Saevooze'
-        },
-        id: '00000000-oooo-kkkk-aaaa-aaeekkccnnee'
-      })
     })
 
     await waitFor(() => {
@@ -2015,8 +1638,8 @@ describe('Tests for aggregation profiles changeview', () => {
           endpoint_group: 'sites',
           metric_operation: 'OR',
           profile_operation: 'OR',
-          metric_profile: 'ARGO_MON_TEST',
-          groups: JSON.stringify([
+          metric_profile: {name: 'ARGO_MON_TEST', id: 'Eitaew8t-gSk6-nW8Q-Z3aF-quo0Saevooze'},
+          groups: [
             {
               name: 'compute',
               operation: 'OR',
@@ -2059,7 +1682,7 @@ describe('Tests for aggregation profiles changeview', () => {
                 }
               ],
             }
-          ])
+          ]
         }
       )
     })
@@ -2077,7 +1700,6 @@ describe('Tests for aggregation profiles changeview', () => {
   })
 
   test('Test change aggregation profile and save', async () => {
-    mockChangeAggregation.mockReturnValueOnce(Promise.resolve({ ok: 'ok' }));
 
     renderChangeView();
 
@@ -2115,63 +1737,6 @@ describe('Tests for aggregation profiles changeview', () => {
     fireEvent.click(screen.getByRole('button', { name: /yes/i }));
 
     await waitFor(() => {
-      expect(mockChangeAggregation).toHaveBeenCalledWith({
-        profile_operation: 'OR',
-        endpoint_group: 'sites',
-        groupname: 'ARGO',
-        name: 'TEST_PROFILE',
-        metric_operation: 'OR',
-        namespace: 'TENANT',
-        groups: [
-          {
-            services: [
-              {
-                operation: 'OR',
-                name: 'ARC-CE'
-              },
-              {
-                operation: 'AND',
-                name: 'GRAM5'
-              },
-              {
-                operation: 'OR',
-                name: 'org.opensciencegrid.htcondorce'
-              }
-            ],
-            operation: 'OR',
-            name: 'compute'
-          },
-          {
-            services: [
-              {
-                operation: 'OR',
-                name: 'SRM'
-              },
-              {
-                operation: 'OR',
-                name: 'webdav'
-              }
-            ],
-            operation: 'OR',
-            name: 'storage'
-          },
-          {
-            services: [
-              {
-                operation: 'OR',
-                name: 'org.openstack.nova'
-              }
-            ],
-            operation: 'AND',
-            name: 'cloud'
-          }
-        ],
-        metric_profile: {
-          name: 'ARGO_MON_TEST',
-          id: 'Eitaew8t-gSk6-nW8Q-Z3aF-quo0Saevooze'
-        },
-        id: '00000000-oooo-kkkk-aaaa-aaeekkccnnee'
-      })
     })
 
     await waitFor(() => {
@@ -2184,8 +1749,8 @@ describe('Tests for aggregation profiles changeview', () => {
           endpoint_group: 'sites',
           metric_operation: 'OR',
           profile_operation: 'OR',
-          metric_profile: 'ARGO_MON_TEST',
-          groups: JSON.stringify([
+          metric_profile: {name: 'ARGO_MON_TEST', id: 'Eitaew8t-gSk6-nW8Q-Z3aF-quo0Saevooze'},
+          groups: [
             {
               name: 'compute',
               operation: 'OR',
@@ -2228,7 +1793,7 @@ describe('Tests for aggregation profiles changeview', () => {
                 }
               ],
             }
-          ])
+          ]
         }
       )
     })
@@ -2241,7 +1806,6 @@ describe('Tests for aggregation profiles changeview', () => {
   })
 
   test('Test import json, make some changes and save profile', async () => {
-    mockChangeAggregation.mockReturnValueOnce(Promise.resolve({ ok: 'ok' }));
 
     renderChangeView();
 
@@ -2319,53 +1883,6 @@ describe('Tests for aggregation profiles changeview', () => {
     fireEvent.click(screen.getByRole('button', { name: /yes/i }));
 
     await waitFor(() => {
-      expect(mockChangeAggregation).toHaveBeenCalledWith({
-        profile_operation: 'OR',
-        endpoint_group: 'sites',
-        groupname: 'EGI',
-        name: 'TEST_PROFILE',
-        metric_operation: 'AND',
-        namespace: 'TENANT',
-        groups: [
-          {
-            services: [
-              {
-                operation: 'OR',
-                name: 'ARC-CE'
-              },
-              {
-                operation: 'AND',
-                name: 'GRAM5'
-              },
-              {
-                operation: 'OR',
-                name: 'org.opensciencegrid.htcondorce'
-              },
-              {
-                operation: 'OR',
-                name: 'webdav'
-              }
-            ],
-            operation: 'OR',
-            name: 'compute'
-          },
-          {
-            services: [
-              {
-                operation: 'OR',
-                name: 'org.openstack.nova'
-              }
-            ],
-            operation: 'OR',
-            name: 'cloud'
-          }
-        ],
-        metric_profile: {
-          name: 'ARGO_MON_TEST',
-          id: 'Eitaew8t-gSk6-nW8Q-Z3aF-quo0Saevooze'
-        },
-        id: '00000000-oooo-kkkk-aaaa-aaeekkccnnee'
-      })
     })
 
     await waitFor(() => {
@@ -2378,8 +1895,8 @@ describe('Tests for aggregation profiles changeview', () => {
           endpoint_group: 'sites',
           metric_operation: 'AND',
           profile_operation: 'OR',
-          metric_profile: 'ARGO_MON_TEST',
-          groups: JSON.stringify([
+          metric_profile: {name: 'ARGO_MON_TEST', id: 'Eitaew8t-gSk6-nW8Q-Z3aF-quo0Saevooze'},
+          groups: [
             {
               services: [
                 {
@@ -2412,7 +1929,7 @@ describe('Tests for aggregation profiles changeview', () => {
                 }
               ]
             }
-          ])
+          ]
         }
       )
     })
@@ -2425,9 +1942,6 @@ describe('Tests for aggregation profiles changeview', () => {
   })
 
   test('Test successfully deleting aggregation profile', async () => {
-    mockDeleteAggregation.mockReturnValueOnce(
-      Promise.resolve({ ok: true, status: 200, statusText: 'OK' })
-    )
 
     renderChangeView();
 
@@ -2442,7 +1956,6 @@ describe('Tests for aggregation profiles changeview', () => {
     fireEvent.click(screen.getByRole('button', { name: /yes/i }));
 
     await waitFor(() => {
-      expect(mockDeleteAggregation).toHaveBeenCalledWith('00000000-oooo-kkkk-aaaa-aaeekkccnnee')
     })
 
     await waitFor(() => {
@@ -2474,7 +1987,6 @@ describe('Tests for aggregation profiles changeview', () => {
     fireEvent.click(screen.getByRole("button", { name: /yes/i }))
 
     await waitFor(() => {
-      expect(mockDeleteAggregation).not.toHaveBeenCalled()
     })
 
     await waitFor(() => {
@@ -2494,85 +2006,12 @@ describe('Tests for aggregation profiles changeview', () => {
     )
   })
 
-  test('Test error deleting aggregation profile on web api with error message', async () => {
-    mockDeleteAggregation.mockImplementationOnce(() => {
-      throw Error('406 Content Not acceptable: There has been an error.')
-    });
 
-    renderChangeView();
-
-    await waitFor(() => {
-      expect(screen.getByRole('button', { name: /save/i })).toBeInTheDocument();
-    })
-
-    fireEvent.click(screen.getByRole('button', { name: /delete/i }))
-    await waitFor(() => {
-      expect(screen.getByRole('dialog', { title: /delete/i })).toBeInTheDocument();
-    })
-    fireEvent.click(screen.getByRole('button', { name: /yes/i }));
-
-    await waitFor(() => {
-      expect(mockDeleteAggregation).toHaveBeenCalledWith('00000000-oooo-kkkk-aaaa-aaeekkccnnee')
-    })
-
-    await waitFor(() => {
-      expect(mockDeleteObject).not.toHaveBeenCalled();
-    })
-
-    expect(queryClient.invalidateQueries).not.toHaveBeenCalled();
-    expect(NotificationManager.error).toHaveBeenCalledWith(
-      <div>
-        <p>406 Content Not acceptable: There has been an error.</p>
-        <p>Click to dismiss.</p>
-      </div>,
-      'Web API error',
-      0,
-      expect.any(Function)
-    )
-  })
-
-  test('Test error deleting aggregation profile on web api without error message', async () => {
-    mockDeleteAggregation.mockImplementationOnce(() => { throw Error() });
-
-    renderChangeView();
-
-    await waitFor(() => {
-      expect(screen.getByRole('button', { name: /save/i })).toBeInTheDocument();
-    })
-
-    fireEvent.click(screen.getByRole('button', { name: /delete/i }))
-    await waitFor(() => {
-      expect(screen.getByRole('dialog', { title: /delete/i })).toBeInTheDocument();
-    })
-    fireEvent.click(screen.getByRole('button', { name: /yes/i }));
-
-    await waitFor(() => {
-      expect(mockDeleteAggregation).toHaveBeenCalledWith('00000000-oooo-kkkk-aaaa-aaeekkccnnee')
-    })
-
-    await waitFor(() => {
-      expect(mockDeleteObject).not.toHaveBeenCalled();
-    })
-
-    expect(queryClient.invalidateQueries).not.toHaveBeenCalled();
-    expect(NotificationManager.error).toHaveBeenCalledWith(
-      <div>
-        <p>Web API error deleting aggregation profile</p>
-        <p>Click to dismiss.</p>
-      </div>,
-      'Web API error',
-      0,
-      expect.any(Function)
-    )
-  })
 
   test('Test error deleting aggregation profile on internal backend with error message', async () => {
     mockDeleteObject.mockImplementationOnce(() => {
       throw Error('400 BAD REQUEST: There has been an error.')
     });
-    mockDeleteAggregation.mockReturnValueOnce(
-      Promise.resolve({ ok: true, status: 200, statusText: 'OK' })
-    )
 
     renderChangeView();
 
@@ -2587,7 +2026,6 @@ describe('Tests for aggregation profiles changeview', () => {
     fireEvent.click(screen.getByRole('button', { name: /yes/i }));
 
     await waitFor(() => {
-      expect(mockDeleteAggregation).toHaveBeenCalledWith('00000000-oooo-kkkk-aaaa-aaeekkccnnee')
     })
 
     await waitFor(() => {
@@ -2610,9 +2048,6 @@ describe('Tests for aggregation profiles changeview', () => {
 
   test('Test error deleting aggregation profile on internal backend without error message', async () => {
     mockDeleteObject.mockImplementationOnce(() => { throw Error() });
-    mockDeleteAggregation.mockReturnValueOnce(
-      Promise.resolve({ ok: true, status: 200, statusText: 'OK' })
-    )
 
     renderChangeView();
 
@@ -2627,7 +2062,6 @@ describe('Tests for aggregation profiles changeview', () => {
     fireEvent.click(screen.getByRole('button', { name: /yes/i }));
 
     await waitFor(() => {
-      expect(mockDeleteAggregation).toHaveBeenCalledWith('00000000-oooo-kkkk-aaaa-aaeekkccnnee')
     })
 
     await waitFor(() => {
@@ -2656,16 +2090,11 @@ describe('Tests for aggregation profile addview', () => {
   jest.spyOn(queryClient, 'invalidateQueries');
 
   beforeAll(() => {
-    WebApi.mockImplementation(() => {
-      return {
-        fetchMetricProfiles: () => Promise.resolve(mockWebApiMetricProfiles),
-        addAggregation: mockAddAggregation
-      }
-    })
     Backend.mockImplementation(() => {
       return {
         isActiveSession: () => Promise.resolve(mockActiveSession),
-        addObject: mockAddObject
+        addObject: mockAddObject,
+        fetchWebApiMetricProfiles: () => Promise.resolve(mockWebApiMetricProfiles)
       }
     })
   })
@@ -2910,20 +2339,6 @@ describe('Tests for aggregation profile addview', () => {
   })
 
   test('Test successfully adding an aggregation profile', async () => {
-    mockAddAggregation.mockReturnValueOnce(
-      Promise.resolve({
-        status: {
-          message: 'Aggregation profile Created',
-          code: "200"
-        },
-        data: {
-          id: '00000000-oooo-kkkk-aaaa-aaeekkccnnee',
-          links: {
-            self: 'string'
-          }
-        }
-      })
-    )
 
     renderAddview();
 
@@ -2968,59 +2383,19 @@ describe('Tests for aggregation profile addview', () => {
     fireEvent.click(screen.getByRole('button', { name: /yes/i }));
 
     await waitFor(() => {
-      expect(mockAddAggregation).toHaveBeenCalledWith({
-        profile_operation: 'AND',
-        endpoint_group: 'servicegroups',
-        groupname: 'ARGO',
-        name: 'NEW_PROFILE',
-        metric_operation: 'AND',
-        namespace: 'TENANT',
-        groups: [
-          {
-            name: 'Group 1',
-            operation: 'OR',
-            services: [
-              {
-                operation: 'OR',
-                name: 'ARC-CE'
-              },
-              {
-                operation: 'OR',
-                name: 'GRAM5'
-              }
-            ],
-          },
-          {
-            name: 'cloud',
-            operation: 'OR',
-            services: [
-              {
-                operation: 'OR',
-                name: 'org.openstack.nova'
-              }
-            ]
-          }
-        ],
-        metric_profile: {
-          name: 'ARGO_MON_CRITICAL',
-          id: '12341234-oooo-kkkk-aaaa-aaeekkccnnee'
-        },
-        id: ''
-      })
     })
 
     await waitFor(() => {
       expect(mockAddObject).toHaveBeenCalledWith(
         '/api/v2/internal/aggregations/',
         {
-          apiid: '00000000-oooo-kkkk-aaaa-aaeekkccnnee',
           profile_operation: 'AND',
           endpoint_group: 'servicegroups',
           groupname: 'ARGO',
           name: 'NEW_PROFILE',
           metric_operation: 'AND',
-          metric_profile: 'ARGO_MON_CRITICAL',
-          groups: JSON.stringify([
+          metric_profile: {name: 'ARGO_MON_CRITICAL', id: '12341234-oooo-kkkk-aaaa-aaeekkccnnee'},
+          groups: [
             {
               name: 'Group 1',
               operation: 'OR',
@@ -3045,7 +2420,7 @@ describe('Tests for aggregation profile addview', () => {
                 }
               ]
             }
-          ])
+          ]
         }
       )
     })
@@ -3057,229 +2432,9 @@ describe('Tests for aggregation profile addview', () => {
     )
   })
 
-  test('Test error adding aggregation profile in web api with error message', async () => {
-    mockAddAggregation.mockImplementationOnce( () => {
-      throw Error('406 Content Not acceptable: There has been an error.')
-    } );
 
-    renderAddview();
-
-    await waitFor(() => {
-      expect(screen.getByRole("button", { name: /save/i })).toBeInTheDocument();
-    })
-
-    fireEvent.change(screen.getByTestId('name'), { target: { value: 'NEW_PROFILE' } });
-
-    await selectEvent.select(screen.getAllByText(/select/i)[0], 'ARGO')
-
-    await selectEvent.select(screen.getAllByText(/select/i)[0], 'AND')
-    await selectEvent.select(screen.getAllByText(/select/i)[0], 'AND')
-    await selectEvent.select(screen.getAllByText(/select/i)[0], 'servicegroups')
-    await selectEvent.select(screen.getAllByText(/select/i)[0], 'ARGO_MON_CRITICAL')
-
-    fireEvent.click(screen.getByRole('button', { name: 'Add new group' }));
-    const card0 = within(screen.getByTestId('card-0'));
-    const selectFields0 = card0.getAllByText(/select/i)
-    fireEvent.change(card0.getByTestId("groups.0.name"), { target: { value: 'Group 1' } });
-    await selectEvent.select(selectFields0[0], "ARC-CE")
-    await selectEvent.select(selectFields0[1], "OR")
-    await selectEvent.select(selectFields0[2], "OR")
-    fireEvent.click(card0.getByTestId('insert-0'));
-    
-    await waitFor(async () => {
-      await selectEvent.select(card0.getAllByText(/select/i)[0], "GRAM5")
-    })
-
-    fireEvent.click(screen.getByRole('button', { name: 'Add new group' }));
-    const card1 = within(screen.getByTestId('card-1'))
-    const selectFields1 = card1.getAllByText(/select/i)
-    fireEvent.change(card1.getByTestId("groups.1.name"), { target: { value: 'cloud' } });
-    await selectEvent.select(selectFields1[0], "org.openstack.nova")
-    await selectEvent.select(selectFields1[1], "OR")
-    await selectEvent.select(selectFields1[2], "OR")
-
-    fireEvent.click(screen.getByRole('button', { name: /save/i }))
-    await waitFor(() => {
-      expect(screen.getByRole('dialog', { title: /add/i })).toBeInTheDocument();
-    })
-    fireEvent.click(screen.getByRole('button', { name: /yes/i }));
-
-    await waitFor(() => {
-      expect(mockAddAggregation).toHaveBeenCalledWith({
-        profile_operation: 'AND',
-        endpoint_group: 'servicegroups',
-        groupname: 'ARGO',
-        name: 'NEW_PROFILE',
-        metric_operation: 'AND',
-        namespace: 'TENANT',
-        groups: [
-          {
-            name: 'Group 1',
-            operation: 'OR',
-            services: [
-              {
-                operation: 'OR',
-                name: 'ARC-CE'
-              },
-              {
-                operation: 'OR',
-                name: 'GRAM5'
-              }
-            ],
-          },
-          {
-            name: 'cloud',
-            operation: 'OR',
-            services: [
-              {
-                operation: 'OR',
-                name: 'org.openstack.nova'
-              }
-            ]
-          }
-        ],
-        metric_profile: {
-          name: 'ARGO_MON_CRITICAL',
-          id: '12341234-oooo-kkkk-aaaa-aaeekkccnnee'
-        },
-        id: ''
-      })
-    })
-
-    await waitFor(() => {
-      expect(mockAddObject).not.toHaveBeenCalled();
-    })
-
-    expect(queryClient.invalidateQueries).not.toHaveBeenCalled();
-    expect(NotificationManager.error).toHaveBeenCalledWith(
-      <div>
-        <p>406 Content Not acceptable: There has been an error.</p>
-        <p>Click to dismiss.</p>
-      </div>,
-      'Web API error',
-      0,
-      expect.any(Function)
-    )
-  })
-
-  test('Test error adding aggregation profile in web api without error message', async () => {
-    mockAddAggregation.mockImplementationOnce( () => { throw Error() } );
-
-    renderAddview();
-
-    await waitFor(() => {
-      expect(screen.getByRole("button", { name: /save/i })).toBeInTheDocument();
-    })
-
-    fireEvent.change(screen.getByTestId('name'), { target: { value: 'NEW_PROFILE' } });
-
-    await selectEvent.select(screen.getAllByText(/select/i)[0], 'ARGO')
-
-    await selectEvent.select(screen.getAllByText(/select/i)[0], 'AND')
-    await selectEvent.select(screen.getAllByText(/select/i)[0], 'AND')
-    await selectEvent.select(screen.getAllByText(/select/i)[0], 'servicegroups')
-    await selectEvent.select(screen.getAllByText(/select/i)[0], 'ARGO_MON_CRITICAL')
-
-    fireEvent.click(screen.getByRole('button', { name: 'Add new group' }));
-    const card0 = within(screen.getByTestId('card-0'));
-    const selectFields0 = card0.getAllByText(/select/i)
-    fireEvent.change(card0.getByTestId("groups.0.name"), { target: { value: 'Group 1' } });
-    await selectEvent.select(selectFields0[0], "ARC-CE")
-    await selectEvent.select(selectFields0[1], "OR")
-    await selectEvent.select(selectFields0[2], "OR")
-    fireEvent.click(card0.getByTestId('insert-0'));
-
-    await waitFor(async () => {
-      await selectEvent.select(card0.getAllByText(/select/i)[0], "GRAM5")
-    })
-
-    fireEvent.click(screen.getByRole('button', { name: 'Add new group' }));
-    const card1 = within(screen.getByTestId('card-1'))
-    const selectFields1 = card1.getAllByText(/select/i)
-    fireEvent.change(card1.getByTestId("groups.1.name"), { target: { value: 'cloud' } });
-    await selectEvent.select(selectFields1[0], "org.openstack.nova")
-    await selectEvent.select(selectFields1[1], "OR")
-    await selectEvent.select(selectFields1[2], "OR")
-
-    fireEvent.click(screen.getByRole('button', { name: /save/i }))
-    await waitFor(() => {
-      expect(screen.getByRole('dialog', { title: /add/i })).toBeInTheDocument();
-    })
-    fireEvent.click(screen.getByRole('button', { name: /yes/i }));
-
-    await waitFor(() => {
-      expect(mockAddAggregation).toHaveBeenCalledWith({
-        profile_operation: 'AND',
-        endpoint_group: 'servicegroups',
-        groupname: 'ARGO',
-        name: 'NEW_PROFILE',
-        metric_operation: 'AND',
-        namespace: 'TENANT',
-        groups: [
-          {
-            name: 'Group 1',
-            operation: 'OR',
-            services: [
-              {
-                operation: 'OR',
-                name: 'ARC-CE'
-              },
-              {
-                operation: 'OR',
-                name: 'GRAM5'
-              }
-            ],
-          },
-          {
-            name: 'cloud',
-            operation: 'OR',
-            services: [
-              {
-                operation: 'OR',
-                name: 'org.openstack.nova'
-              }
-            ]
-          }
-        ],
-        metric_profile: {
-          name: 'ARGO_MON_CRITICAL',
-          id: '12341234-oooo-kkkk-aaaa-aaeekkccnnee'
-        },
-        id: ''
-      })
-    })
-
-    await waitFor(() => {
-      expect(mockAddObject).not.toHaveBeenCalled();
-    })
-
-    expect(queryClient.invalidateQueries).not.toHaveBeenCalled();
-    expect(NotificationManager.error).toHaveBeenCalledWith(
-      <div>
-        <p>Web API error adding aggregation profile</p>
-        <p>Click to dismiss.</p>
-      </div>,
-      'Web API error',
-      0,
-      expect.any(Function)
-    )
-  })
 
   test('Test error adding an aggregation profile in internal api with error message', async () => {
-    mockAddAggregation.mockReturnValueOnce(
-      Promise.resolve({
-        status: {
-          message: 'Aggregation profile Created',
-          code: "200"
-        },
-        data: {
-          id: '00000000-oooo-kkkk-aaaa-aaeekkccnnee',
-          links: {
-            self: 'string'
-          }
-        }
-      })
-    )
     mockAddObject.mockImplementationOnce( () => {
       throw Error('400 BAD REQUEST: There has been an error.')
     } );
@@ -3327,59 +2482,19 @@ describe('Tests for aggregation profile addview', () => {
     fireEvent.click(screen.getByRole('button', { name: /yes/i }));
 
     await waitFor(() => {
-      expect(mockAddAggregation).toHaveBeenCalledWith({
-        profile_operation: 'AND',
-        endpoint_group: 'servicegroups',
-        groupname: 'ARGO',
-        name: 'NEW_PROFILE',
-        metric_operation: 'AND',
-        namespace: 'TENANT',
-        groups: [
-          {
-            name: 'Group 1',
-            operation: 'OR',
-            services: [
-              {
-                operation: 'OR',
-                name: 'ARC-CE'
-              },
-              {
-                operation: 'OR',
-                name: 'GRAM5'
-              }
-            ],
-          },
-          {
-            name: 'cloud',
-            operation: 'OR',
-            services: [
-              {
-                operation: 'OR',
-                name: 'org.openstack.nova'
-              }
-            ]
-          }
-        ],
-        metric_profile: {
-          name: 'ARGO_MON_CRITICAL',
-          id: '12341234-oooo-kkkk-aaaa-aaeekkccnnee'
-        },
-        id: ''
-      })
     })
 
     await waitFor(() => {
       expect(mockAddObject).toHaveBeenCalledWith(
         '/api/v2/internal/aggregations/',
         {
-          apiid: '00000000-oooo-kkkk-aaaa-aaeekkccnnee',
           profile_operation: 'AND',
           endpoint_group: 'servicegroups',
           groupname: 'ARGO',
           name: 'NEW_PROFILE',
           metric_operation: 'AND',
-          metric_profile: 'ARGO_MON_CRITICAL',
-          groups: JSON.stringify([
+          metric_profile: {name: 'ARGO_MON_CRITICAL', id: '12341234-oooo-kkkk-aaaa-aaeekkccnnee'},
+          groups: [
             {
               name: 'Group 1',
               operation: 'OR',
@@ -3404,7 +2519,7 @@ describe('Tests for aggregation profile addview', () => {
                 }
               ]
             }
-          ])
+          ]
         }
       )
     })
@@ -3422,20 +2537,6 @@ describe('Tests for aggregation profile addview', () => {
   })
 
   test('Test error adding an aggregation profile in internal api without error message', async () => {
-    mockAddAggregation.mockReturnValueOnce(
-      Promise.resolve({
-        status: {
-          message: 'Aggregation profile Created',
-          code: "200"
-        },
-        data: {
-          id: '00000000-oooo-kkkk-aaaa-aaeekkccnnee',
-          links: {
-            self: 'string'
-          }
-        }
-      })
-    )
     mockAddObject.mockImplementationOnce( () => { throw Error() } );
 
     renderAddview();
@@ -3481,59 +2582,19 @@ describe('Tests for aggregation profile addview', () => {
     fireEvent.click(screen.getByRole('button', { name: /yes/i }));
 
     await waitFor(() => {
-      expect(mockAddAggregation).toHaveBeenCalledWith({
-        profile_operation: 'AND',
-        endpoint_group: 'servicegroups',
-        groupname: 'ARGO',
-        name: 'NEW_PROFILE',
-        metric_operation: 'AND',
-        namespace: 'TENANT',
-        groups: [
-          {
-            name: 'Group 1',
-            operation: 'OR',
-            services: [
-              {
-                operation: 'OR',
-                name: 'ARC-CE'
-              },
-              {
-                operation: 'OR',
-                name: 'GRAM5'
-              }
-            ],
-          },
-          {
-            name: 'cloud',
-            operation: 'OR',
-            services: [
-              {
-                operation: 'OR',
-                name: 'org.openstack.nova'
-              }
-            ]
-          }
-        ],
-        metric_profile: {
-          name: 'ARGO_MON_CRITICAL',
-          id: '12341234-oooo-kkkk-aaaa-aaeekkccnnee'
-        },
-        id: ''
-      })
     })
 
     await waitFor(() => {
       expect(mockAddObject).toHaveBeenCalledWith(
         '/api/v2/internal/aggregations/',
         {
-          apiid: '00000000-oooo-kkkk-aaaa-aaeekkccnnee',
           profile_operation: 'AND',
           endpoint_group: 'servicegroups',
           groupname: 'ARGO',
           name: 'NEW_PROFILE',
           metric_operation: 'AND',
-          metric_profile: 'ARGO_MON_CRITICAL',
-          groups: JSON.stringify([
+          metric_profile: {name: 'ARGO_MON_CRITICAL', id: '12341234-oooo-kkkk-aaaa-aaeekkccnnee'},
+          groups: [
             {
               name: 'Group 1',
               operation: 'OR',
@@ -3558,7 +2619,7 @@ describe('Tests for aggregation profile addview', () => {
                 }
               ]
             }
-          ])
+          ]
         }
       )
     })
