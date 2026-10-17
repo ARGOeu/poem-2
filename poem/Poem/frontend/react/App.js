@@ -1000,21 +1000,19 @@ const App = () => {
         `${isPublic ? "public_" : ""}operationsprofile`,
         () => fetchOperationsProfiles(isPublic)
       );
-      if (options.result.webapireports) {
-        if (!isPublic)
-          queryClient.prefetchQuery("topologytags", () =>
-            fetchTopologyTags(isPublic)
-          );
+      if (!isPublic)
+        queryClient.prefetchQuery("topologytags", () =>
+          fetchTopologyTags(isPublic)
+        );
 
-        queryClient.prefetchQuery(
-          `${isPublic ? "public_" : ""}topologygroups`,
-          () => fetchTopologyGroups(isPublic)
-        );
-        queryClient.prefetchQuery(
-          `${isPublic ? "public_" : ""}topologyendpoints`,
-          () => fetchTopologyEndpoints(isPublic)
-        );
-      }
+      queryClient.prefetchQuery(
+        `${isPublic ? "public_" : ""}topologygroups`,
+        () => fetchTopologyGroups(isPublic)
+      );
+      queryClient.prefetchQuery(
+        `${isPublic ? "public_" : ""}topologyendpoints`,
+        () => fetchTopologyEndpoints(isPublic)
+      );
     } else {
       queryClient.prefetchQuery("tenant", () => fetchTenants());
     }
