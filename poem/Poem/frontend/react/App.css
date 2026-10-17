@@ -41,8 +41,14 @@ a:hover {
 }
 
 .home-names {
-  max-height: 140px;
+  max-height: 180px;
   overflow-y: auto;
   border-top: 1px solid #e3e3e3;
   padding-top: 0.5rem;
+}
+
+.home-names .home-name {
+  font-size: 1.15rem;
+  line-height: 1.9;
+  font-weight: 500;
 }

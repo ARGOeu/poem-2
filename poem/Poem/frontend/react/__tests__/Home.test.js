@@ -69,7 +69,7 @@ describe('Tests for tenant home page', () => {
     expect(screen.getByText('Profiles')).toBeInTheDocument();
   })
 
-  test('Test that report names are listed', async () => {
+  test('Test that report names are listed with links', async () => {
     renderHome();
 
     await waitFor(() => {
@@ -77,9 +77,12 @@ describe('Tests for tenant home page', () => {
     })
 
     expect(screen.getByText('ops')).toBeInTheDocument();
+    expect(
+      screen.getByText('critical').closest('a')
+    ).toHaveAttribute('href', '/ui/reports/critical');
   })
 
-  test('Test that profile names are listed', async () => {
+  test('Test that profile names are listed with links', async () => {
     renderHome();
 
     await waitFor(() => {
@@ -88,6 +91,16 @@ describe('Tests for tenant home page', () => {
 
     expect(screen.getByText('mp1')).toBeInTheDocument();
     expect(screen.getByText('op1')).toBeInTheDocument();
+
+    expect(
+      screen.getByText('mp1').closest('a')
+    ).toHaveAttribute('href', '/ui/metricprofiles/mp1');
+    expect(
+      screen.getByText('ap3').closest('a')
+    ).toHaveAttribute('href', '/ui/aggregationprofiles/ap3');
+    expect(
+      screen.getByText('op1').closest('a')
+    ).toHaveAttribute('href', '/ui/operationsprofiles/op1');
   })
 
   test('Test that resource counts are shown', async () => {

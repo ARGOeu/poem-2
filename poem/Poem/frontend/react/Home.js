@@ -29,9 +29,9 @@ import {
 const HOME_NAMES_LIMIT = 100;
 
 
-const HomeNames = ({ names }) => {
+const HomeNames = ({ names, linkBase }) => {
   if (!names || names.length === 0)
-    return (<p className='text-muted small mb-0'>None</p>);
+    return (<p className='text-muted mb-0'>None</p>);
 
   const visible = names.slice(0, HOME_NAMES_LIMIT);
 
@@ -39,14 +39,24 @@ const HomeNames = ({ names }) => {
     <div className='home-names'>
       {
         visible.map(name => (
-          <div key={ name } className='text-truncate small' title={ name }>
-            { name }
+          <div key={ name } className='text-truncate home-name'>
+            {
+              linkBase ?
+                <Link
+                  to={ `${linkBase}/${encodeURIComponent(name)}` }
+                  title={ name }
+                >
+                  { name }
+                </Link>
+              :
+                <span title={ name }>{ name }</span>
+            }
           </div>
         ))
       }
       {
         names.length > HOME_NAMES_LIMIT &&
-          <div className='text-muted small'>
+          <div className='text-muted'>
             and { names.length - HOME_NAMES_LIMIT } more…
           </div>
       }
@@ -60,6 +70,7 @@ const HomeSummaryCard = ({
   icon,
   count,
   names,
+  namesLinkBase,
   linkTo,
   linkText,
   isLoading,
@@ -90,7 +101,7 @@ const HomeSummaryCard = ({
               <span className='home-card-icon'><Icon i={ icon } /></span>
               <span className='ms-2 fs-3 fw-bold'>{ count }</span>
             </div>
-            <HomeNames names={ names } />
+            <HomeNames names={ names } linkBase={ namesLinkBase } />
             {
               linkTo &&
                 <div className='mt-3'>
@@ -166,6 +177,7 @@ const TenantHome = () => {
             icon='reports'
             count={ reports.data ? reports.data.length : 0 }
             names={ reportNames }
+            namesLinkBase='/ui/reports'
             linkTo='/ui/reports'
             linkText='reports'
             isLoading={ reports.isLoading }
@@ -217,6 +229,7 @@ const TenantHome = () => {
             icon='metricprofiles'
             count={ metricProfiles.data ? metricProfiles.data.length : 0 }
             names={ metricProfileNames }
+            namesLinkBase='/ui/metricprofiles'
             linkTo='/ui/metricprofiles'
             linkText='metric profiles'
             isLoading={ metricProfiles.isLoading }
@@ -231,6 +244,7 @@ const TenantHome = () => {
               aggregationProfiles.data ? aggregationProfiles.data.length : 0
             }
             names={ aggregationProfileNames }
+            namesLinkBase='/ui/aggregationprofiles'
             linkTo='/ui/aggregationprofiles'
             linkText='aggregation profiles'
             isLoading={ aggregationProfiles.isLoading }
@@ -245,6 +259,7 @@ const TenantHome = () => {
               operationsProfiles.data ? operationsProfiles.data.length : 0
             }
             names={ operationProfileNames }
+            namesLinkBase='/ui/operationsprofiles'
             linkTo='/ui/operationsprofiles'
             linkText='operations profiles'
             isLoading={ operationsProfiles.isLoading }
