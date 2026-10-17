@@ -2,7 +2,7 @@ import React from 'react';
 import { render, screen, waitFor } from '@testing-library/react';
 import '@testing-library/jest-dom';
 import { MemoryRouter } from 'react-router-dom';
-import { QueryClient, QueryClientProvider } from 'react-query';
+import { QueryClient, QueryClientProvider, setLogger } from 'react-query';
 import Home from '../Home';
 import {
   fetchBackendReports,
@@ -12,6 +12,9 @@ import {
   fetchOperationsProfiles,
   fetchMetrics,
   fetchProbes,
+  fetchPackages,
+  fetchYumRepos,
+  fetchMetricTemplates,
 } from '../QueryFunctions';
 
 jest.mock('../QueryFunctions', () => ({
@@ -22,6 +25,9 @@ jest.mock('../QueryFunctions', () => ({
   fetchOperationsProfiles: jest.fn(),
   fetchMetrics: jest.fn(),
   fetchProbes: jest.fn(),
+  fetchPackages: jest.fn(),
+  fetchYumRepos: jest.fn(),
+  fetchMetricTemplates: jest.fn(),
 }));
 
 jest.mock('../DataManager', () => ({ Backend: jest.fn(() => ({})) }));
@@ -31,11 +37,17 @@ jest.mock('../Administration', () => ({
 
 const queryClient = new QueryClient();
 
-const renderHome = (isTenantSchema = true) =>
+setLogger({
+  log: () => {},
+  warn: () => {},
+  error: () => {}
+})
+
+const renderHome = (isTenantSchema = true, isTenantAdmin = false) =>
   render(
     <QueryClientProvider client={queryClient}>
       <MemoryRouter>
-        <Home isTenantSchema={isTenantSchema} />
+        <Home isTenantSchema={isTenantSchema} isTenantAdmin={isTenantAdmin} />
       </MemoryRouter>
     </QueryClientProvider>
   );
@@ -56,6 +68,11 @@ describe('Tests for tenant home page', () => {
     fetchOperationsProfiles.mockResolvedValue([{ name: 'op1' }]);
     fetchMetrics.mockResolvedValue([{ name: 'm1' }, { name: 'm2' }]);
     fetchProbes.mockResolvedValue([{ name: 'p1' }]);
+    fetchPackages.mockResolvedValue([{ name: 'pkg1' }, { name: 'pkg2' }]);
+    fetchYumRepos.mockResolvedValue([{ name: 'repo1' }]);
+    fetchMetricTemplates.mockResolvedValue(
+      [{ name: 'mt1' }, { name: 'mt2' }, { name: 'mt3' }]
+    );
   })
 
   test('Test that thematic sections render', async () => {
@@ -111,6 +128,59 @@ describe('Tests for tenant home page', () => {
     })
 
     expect(screen.getByText('3')).toBeInTheDocument();
+  })
+
+  test('Test that shared resources are hidden for non admin users', async () => {
+    renderHome(true, false);
+
+    await waitFor(() => {
+      expect(screen.getByText('Reporting')).toBeInTheDocument();
+    })
+
+    expect(screen.queryByText('Shared resources')).not.toBeInTheDocument();
+    expect(screen.queryByText('Packages')).not.toBeInTheDocument();
+    expect(screen.queryByText('YUM repos')).not.toBeInTheDocument();
+    expect(screen.queryByText('Metric templates')).not.toBeInTheDocument();
+    expect(fetchPackages).not.toHaveBeenCalled();
+    expect(fetchYumRepos).not.toHaveBeenCalled();
+    expect(fetchMetricTemplates).not.toHaveBeenCalled();
+  })
+
+  test('Test that shared resources are shown for tenant admins', async () => {
+    renderHome(true, true);
+
+    await waitFor(() => {
+      expect(screen.getByText('Shared resources')).toBeInTheDocument();
+    })
+
+    expect(screen.getByText('Packages')).toBeInTheDocument();
+    expect(screen.getByText('YUM repos')).toBeInTheDocument();
+    expect(screen.getByText('Metric templates')).toBeInTheDocument();
+
+    await waitFor(() => {
+      expect(fetchPackages).toHaveBeenCalled();
+    })
+
+    expect(fetchYumRepos).toHaveBeenCalled();
+    expect(fetchMetricTemplates).toHaveBeenCalled();
+  })
+
+  test('Test that shared resource cards link to admin lists', async () => {
+    renderHome(true, true);
+
+    await waitFor(() => {
+      expect(screen.getByText('View packages →')).toBeInTheDocument();
+    })
+
+    expect(
+      screen.getByText('View packages →').closest('a')
+    ).toHaveAttribute('href', '/ui/administration/packages/');
+    expect(
+      screen.getByText('View YUM repos →').closest('a')
+    ).toHaveAttribute('href', '/ui/administration/yumrepos/');
+    expect(
+      screen.getByText('View metric templates →').closest('a')
+    ).toHaveAttribute('href', '/ui/administration/metrictemplates/');
   })
 
   test('Test that placeholder renders for non-tenant schema', () => {
