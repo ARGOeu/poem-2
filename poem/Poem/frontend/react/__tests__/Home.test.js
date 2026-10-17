@@ -15,6 +15,8 @@ import {
   fetchPackages,
   fetchYumRepos,
   fetchMetricTemplates,
+  fetchUsers,
+  fetchAPIKeys,
 } from '../QueryFunctions';
 
 jest.mock('../QueryFunctions', () => ({
@@ -28,6 +30,8 @@ jest.mock('../QueryFunctions', () => ({
   fetchPackages: jest.fn(),
   fetchYumRepos: jest.fn(),
   fetchMetricTemplates: jest.fn(),
+  fetchUsers: jest.fn(),
+  fetchAPIKeys: jest.fn(),
 }));
 
 jest.mock('../DataManager', () => ({ Backend: jest.fn(() => ({})) }));
@@ -73,6 +77,10 @@ describe('Tests for tenant home page', () => {
     fetchMetricTemplates.mockResolvedValue(
       [{ name: 'mt1' }, { name: 'mt2' }, { name: 'mt3' }]
     );
+    fetchUsers.mockResolvedValue(
+      [{ username: 'u1' }, { username: 'u2' }, { username: 'u3' }, { username: 'u4' }]
+    );
+    fetchAPIKeys.mockResolvedValue([{ name: 'k1' }, { name: 'k2' }]);
   })
 
   test('Test that thematic sections render', async () => {
@@ -138,12 +146,17 @@ describe('Tests for tenant home page', () => {
     })
 
     expect(screen.queryByText('Shared resources')).not.toBeInTheDocument();
+    expect(screen.queryByText('Administration')).not.toBeInTheDocument();
     expect(screen.queryByText('Packages')).not.toBeInTheDocument();
     expect(screen.queryByText('YUM repos')).not.toBeInTheDocument();
     expect(screen.queryByText('Metric templates')).not.toBeInTheDocument();
+    expect(screen.queryByText('Users')).not.toBeInTheDocument();
+    expect(screen.queryByText('API keys')).not.toBeInTheDocument();
     expect(fetchPackages).not.toHaveBeenCalled();
     expect(fetchYumRepos).not.toHaveBeenCalled();
     expect(fetchMetricTemplates).not.toHaveBeenCalled();
+    expect(fetchUsers).not.toHaveBeenCalled();
+    expect(fetchAPIKeys).not.toHaveBeenCalled();
   })
 
   test('Test that shared resources are shown for tenant admins', async () => {
@@ -181,6 +194,30 @@ describe('Tests for tenant home page', () => {
     expect(
       screen.getByText('View metric templates →').closest('a')
     ).toHaveAttribute('href', '/ui/administration/metrictemplates/');
+  })
+
+  test('Test that administration cards are shown for tenant admins', async () => {
+    renderHome(true, true);
+
+    await waitFor(() => {
+      expect(screen.getByText('Administration')).toBeInTheDocument();
+    })
+
+    expect(screen.getByText('Users')).toBeInTheDocument();
+    expect(screen.getByText('API keys')).toBeInTheDocument();
+
+    await waitFor(() => {
+      expect(screen.getByText('View users →')).toBeInTheDocument();
+    })
+
+    expect(
+      screen.getByText('View users →').closest('a')
+    ).toHaveAttribute('href', '/ui/administration/users');
+    expect(
+      screen.getByText('View API keys →').closest('a')
+    ).toHaveAttribute('href', '/ui/administration/apikey');
+    expect(fetchUsers).toHaveBeenCalled();
+    expect(fetchAPIKeys).toHaveBeenCalled();
   })
 
   test('Test that placeholder renders for non-tenant schema', () => {

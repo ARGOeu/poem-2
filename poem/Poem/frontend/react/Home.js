@@ -26,6 +26,8 @@ import {
   fetchPackages,
   fetchYumRepos,
   fetchMetricTemplates,
+  fetchUsers,
+  fetchAPIKeys,
 } from './QueryFunctions';
 
 
@@ -179,6 +181,16 @@ const TenantHome = ({ isTenantAdmin = false }) => {
     { enabled: isTenantAdmin }
   );
 
+  const users = useQuery(
+    'user', () => fetchUsers(),
+    { enabled: isTenantAdmin }
+  );
+
+  const apiKeys = useQuery(
+    'apikey', () => fetchAPIKeys(),
+    { enabled: isTenantAdmin }
+  );
+
   const reportNames = namesOf(
     reports.data, (e) => e.name
   );
@@ -325,6 +337,34 @@ const TenantHome = ({ isTenantAdmin = false }) => {
                 linkText='metric templates'
                 isLoading={ metricTemplates.isLoading }
                 error={ metricTemplates.error }
+              />
+            </Col>
+          </HomeSection>
+      }
+
+      {
+        isTenantAdmin &&
+          <HomeSection title='Administration'>
+            <Col lg={ 4 } md={ 6 }>
+              <HomeSummaryCard
+                title='Users'
+                icon='users'
+                count={ users.data ? users.data.length : 0 }
+                linkTo='/ui/administration/users'
+                linkText='users'
+                isLoading={ users.isLoading }
+                error={ users.error }
+              />
+            </Col>
+            <Col lg={ 4 } md={ 6 }>
+              <HomeSummaryCard
+                title='API keys'
+                icon='apikey'
+                count={ apiKeys.data ? apiKeys.data.length : 0 }
+                linkTo='/ui/administration/apikey'
+                linkText='API keys'
+                isLoading={ apiKeys.isLoading }
+                error={ apiKeys.error }
               />
             </Col>
           </HomeSection>
