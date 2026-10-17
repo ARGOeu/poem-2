@@ -35,6 +35,13 @@ class MockResponse:
         self.status_code = status_code
         self.ok = False
 
+        if isinstance(data, dict):
+            self.content = json.dumps(data).encode()
+        elif isinstance(data, str):
+            self.content = data.encode()
+        else:
+            self.content = b""
+
         if self.status_code == 200:
             self.reason = 'OK'
             self.ok = True
