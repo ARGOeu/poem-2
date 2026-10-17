@@ -12,6 +12,7 @@ import {
   fetchOperationsProfiles,
   fetchMetrics,
   fetchProbes,
+  fetchProbeVersions,
   fetchPackages,
   fetchYumRepos,
   fetchMetricTemplates,
@@ -27,6 +28,7 @@ jest.mock('../QueryFunctions', () => ({
   fetchOperationsProfiles: jest.fn(),
   fetchMetrics: jest.fn(),
   fetchProbes: jest.fn(),
+  fetchProbeVersions: jest.fn(),
   fetchPackages: jest.fn(),
   fetchYumRepos: jest.fn(),
   fetchMetricTemplates: jest.fn(),
@@ -72,6 +74,11 @@ describe('Tests for tenant home page', () => {
     fetchOperationsProfiles.mockResolvedValue([{ name: 'op1' }]);
     fetchMetrics.mockResolvedValue([{ name: 'm1' }, { name: 'm2' }]);
     fetchProbes.mockResolvedValue([{ name: 'p1' }]);
+    fetchProbeVersions.mockResolvedValue([
+      { name: 'pv1' }, { name: 'pv2' }, { name: 'pv3' },
+      { name: 'pv4' }, { name: 'pv5' }, { name: 'pv6' },
+      { name: 'pv7' }
+    ]);
     fetchPackages.mockResolvedValue([{ name: 'pkg1' }, { name: 'pkg2' }]);
     fetchYumRepos.mockResolvedValue([{ name: 'repo1' }]);
     fetchMetricTemplates.mockResolvedValue(
@@ -137,6 +144,23 @@ describe('Tests for tenant home page', () => {
     })
 
     expect(screen.getByText('3')).toBeInTheDocument();
+  })
+
+  test('Test that probe versions count is shown with probes', async () => {
+    renderHome();
+
+    await waitFor(() => {
+      expect(screen.getByText('Probe versions:')).toBeInTheDocument();
+    })
+
+    expect(fetchProbeVersions).toHaveBeenCalled();
+
+    await waitFor(() => {
+      expect(screen.getByText('7')).toBeInTheDocument();
+    })
+
+    // The probe versions count lives in the probes card, not a separate one.
+    expect(screen.queryByText('Probe versions')).not.toBeInTheDocument();
   })
 
   test('Test that shared resources are hidden for non admin users', async () => {

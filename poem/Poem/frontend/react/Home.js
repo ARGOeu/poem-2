@@ -23,6 +23,7 @@ import {
   fetchOperationsProfiles,
   fetchMetrics,
   fetchProbes,
+  fetchProbeVersions,
   fetchPackages,
   fetchYumRepos,
   fetchMetricTemplates,
@@ -70,10 +71,34 @@ const HomeNames = ({ names, linkBase }) => {
 };
 
 
+const HomeExtraMetric = ({ label, query }) => {
+  if (query.error)
+    return null;
+
+  if (query.isLoading)
+    return (
+      <span
+        className='placeholder rounded'
+        style={{ height: '20px', width: '60%' }}
+      />
+    );
+
+  return (
+    <span className='text-muted'>
+      { label }:{" "}
+      <span className='fw-bold text-body'>
+        { query.data ? query.data.length : 0 }
+      </span>
+    </span>
+  );
+};
+
+
 const HomeSummaryCard = ({
   title,
   icon,
   count,
+  extra,
   names,
   namesLinkBase,
   linkTo,
@@ -106,6 +131,10 @@ const HomeSummaryCard = ({
               <span className='home-card-icon'><Icon i={ icon } /></span>
               <span className='ms-2 fs-3 fw-bold'>{ count }</span>
             </div>
+            {
+              extra &&
+                <div className='mb-3'>{ extra }</div>
+            }
             {
               names !== undefined &&
                 <HomeNames names={ names } linkBase={ namesLinkBase } />
@@ -152,6 +181,10 @@ const TenantHome = ({ isTenantAdmin = false }) => {
 
   const probes = useQuery(
     'probe', () => fetchProbes()
+  );
+
+  const probeVersions = useQuery(
+    ['probe', 'version'], () => fetchProbeVersions()
   );
 
   const metricProfiles = useQuery(
@@ -247,6 +280,9 @@ const TenantHome = ({ isTenantAdmin = false }) => {
             title='Probes'
             icon='probes'
             count={ probes.data ? probes.data.length : 0 }
+            extra={
+              <HomeExtraMetric label='Probe versions' query={ probeVersions } />
+            }
             linkTo='/ui/probes'
             linkText='probes'
             isLoading={ probes.isLoading }
