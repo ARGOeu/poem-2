@@ -804,7 +804,6 @@ const InnerFooter = ({ termsLink, privacyLink, border=false, publicPage=false}) 
       <p className={`text-center ${publicPage ? 'mb-0' : 'mb-0 pb-1'}`}>
         <small>
           <strong>ARGO POEM</strong> is a service jointly developed and maintained by &nbsp;
-          <a href="http://www.cnrs.fr/" title="Centre national de la recherche scientifique">CNRS</a>, &nbsp;
           <a href="https://grnet.gr/" title="Greek Research and Technology Network">GRNET</a> and &nbsp;
           <a href="http://www.srce.unizg.hr/" title="University computing centre">SRCE</a>&nbsp;
           co-funded by <a href="https://www.eosc-hub.eu" title="EOSC-Hub">EOSC-Hub</a> and &nbsp;

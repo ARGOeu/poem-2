@@ -75,7 +75,6 @@ describe('Test for login page on SuperAdmin POEM', () => {
     expect(screen.getAllByRole('button')).toHaveLength(1);
     expect(screen.getByRole('button', { name: /login using username and password/i })).toBeInTheDocument();
 
-    expect(screen.getByText(/cnrs/i).closest('a')).toHaveAttribute('href', 'http://www.cnrs.fr/');
     expect(screen.getByText(/grnet/i).closest('a')).toHaveAttribute('href', 'https://grnet.gr/');
     expect(screen.getByText(/srce/i).closest('a')).toHaveAttribute('href', 'http://www.srce.unizg.hr/');
     expect(screen.getByText(/eosc-hub/i).closest('a')).toHaveAttribute('href', 'https://www.eosc-hub.eu');
@@ -111,7 +110,6 @@ describe('Test for login page on tenant POEM', () => {
     expect(screen.getByRole('button', { name: /login using username and password/i })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /egi checkin/i}).textContent).toBe('Log in using EGI CheckIn');
 
-    expect(screen.getByText(/cnrs/i).closest('a')).toHaveAttribute('href', 'http://www.cnrs.fr/');
     expect(screen.getByText(/grnet/i).closest('a')).toHaveAttribute('href', 'https://grnet.gr/');
     expect(screen.getByText(/srce/i).closest('a')).toHaveAttribute('href', 'http://www.srce.unizg.hr/');
     expect(screen.getByText(/eosc-hub/i).closest('a')).toHaveAttribute('href', 'https://www.eosc-hub.eu');
