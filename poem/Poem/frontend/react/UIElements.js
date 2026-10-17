@@ -97,6 +97,7 @@ link_title.set('groupofaggregations', 'Groups of aggregations');
 link_title.set('groupofmetricprofiles', 'Groups of metric profiles');
 link_title.set('groupofmetrics', 'Groups of metrics');
 link_title.set('groupofthresholdsprofiles', 'Groups of thresholds profiles');
+link_title.set('home', 'Dashboard');
 link_title.set('metricprofiles', 'Metric profiles');
 link_title.set('metrics', 'Metrics');
 link_title.set("metrictags", "Metric tags")
@@ -408,7 +409,10 @@ export const CustomBreadcrumb = ({publicView=false}) =>
   let breadcrumb_elements = new Array()
   let two_level = new Object()
 
-  breadcrumb_elements.push({'url': `/ui/${publicView ? 'public_' : ''}home`, 'title': 'Home'});
+  breadcrumb_elements.push({
+    'url': `/ui/${publicView ? 'public_' : ''}home`,
+    'title': publicView ? 'Home' : 'Dashboard'
+  });
   if (!publicView)
     spliturl = location.pathname.split('/');
 
@@ -417,7 +421,9 @@ export const CustomBreadcrumb = ({publicView=false}) =>
 
   two_level['url'] = '/ui/' + spliturl[2];
   two_level['title'] = link_title.get(spliturl[2]);
-  breadcrumb_elements.push(two_level);
+
+  if (spliturl[2] !== 'home' && spliturl[2] !== 'public_home')
+    breadcrumb_elements.push(two_level);
 
   if (spliturl.length > 3) {
     var three_level = new Object({'url': two_level['url'] + '/' + spliturl[3]});

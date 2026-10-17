@@ -201,7 +201,7 @@ const TenantHome = ({ isTenantAdmin = false }) => {
 
   return (
     <div>
-      <h2 className='ms-3 mt-1 mb-4'>Home</h2>
+      <h2 className='ms-3 mt-1 mb-4'>Dashboard</h2>
 
       <HomeSection title='Reporting'>
         <Col lg={ 4 } md={ 6 }>

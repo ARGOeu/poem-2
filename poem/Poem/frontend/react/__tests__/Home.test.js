@@ -87,6 +87,7 @@ describe('Tests for tenant home page', () => {
     renderHome();
 
     await waitFor(() => {
+      expect(screen.getByText('Dashboard')).toBeInTheDocument();
       expect(screen.getByText('Reporting')).toBeInTheDocument();
     })
 
@@ -142,6 +143,7 @@ describe('Tests for tenant home page', () => {
     renderHome(true, false);
 
     await waitFor(() => {
+      expect(screen.getByText('Dashboard')).toBeInTheDocument();
       expect(screen.getByText('Reporting')).toBeInTheDocument();
     })
 
