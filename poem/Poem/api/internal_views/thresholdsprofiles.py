@@ -3,6 +3,13 @@ from Poem.api.internal_views.utils import sync_webapi
 from Poem.api.views import NotFound
 from Poem.helpers.history_helpers import create_profile_history
 from Poem.poem import models as poem_models
+from Poem.services.profile_operations import (
+    create_profile,
+    update_profile,
+    delete_profile,
+    thresholds_to_string,
+    ProfileOperationError,
+)
 from django.conf import settings
 from django.contrib.contenttypes.models import ContentType
 from rest_framework import status
@@ -94,6 +101,26 @@ class ListThresholdsProfiles(APIView):
                         group in userprofile_groups
 
                     if change_perm:
+                        # Perform the upstream update before persisting local
+                        # metadata.
+                        upstream_payload = {
+                            'id': request.data['apiid'],
+                            'name': request.data['name'],
+                            'rules': thresholds_to_string(
+                                request.data['rules']
+                            ),
+                        }
+                        try:
+                            update_profile(
+                                'thresholdsprofiles', request.tenant.name,
+                                request.data['apiid'], upstream_payload
+                            )
+                        except ProfileOperationError as exc:
+                            return error_response(
+                                status_code=status.HTTP_502_BAD_GATEWAY,
+                                detail=exc.detail
+                            )
+
                         profile.groupname = request.data['groupname']
                         profile.save()
 
@@ -145,8 +172,6 @@ class ListThresholdsProfiles(APIView):
             )
 
     def post(self, request):
-        serializer = serializers.ThresholdsProfileSerializer(data=request.data)
-
         try:
             userprofile = poem_models.UserProfile.objects.get(user=request.user)
             userprofile_groups = userprofile.groupsofthresholdsprofiles.all()
@@ -159,49 +184,64 @@ class ListThresholdsProfiles(APIView):
                            'profiles.'
                 )
 
-            else:
-                group = None
-                if 'groupname' in request.data and request.data['groupname']:
-                    group = poem_models.GroupOfThresholdsProfiles.objects.get(
-                        name=request.data['groupname']
+            group = None
+            if 'groupname' in request.data and request.data['groupname']:
+                group = poem_models.GroupOfThresholdsProfiles.objects.get(
+                    name=request.data['groupname']
+                )
+
+            add_perm = request.user.is_superuser or \
+                group and group in userprofile_groups
+
+            if not add_perm:
+                return error_response(
+                    status_code=status.HTTP_401_UNAUTHORIZED,
+                    detail='You do not have permission to assign thresholds '
+                           'profiles to the given group.'
+                )
+
+            # Validate the local fields with a placeholder apiid; the real id
+            # is derived from the upstream create below.
+            data = dict(request.data)
+            data['apiid'] = ''
+            serializer = serializers.ThresholdsProfileSerializer(data=data)
+            if not serializer.is_valid():
+                details = []
+                for error in serializer.errors:
+                    details.append(
+                        '{}: {}'.format(error, serializer.errors[error][0])
                     )
+                return error_response(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail=' '.join(details)
+                )
 
-                add_perm = request.user.is_superuser or \
-                    group and group in userprofile_groups
+            # Perform the upstream create first so the local row stores the
+            # real WEB-API id.
+            upstream_payload = {
+                'name': request.data['name'],
+                'rules': thresholds_to_string(request.data['rules']),
+            }
+            try:
+                upstream_id = create_profile(
+                    'thresholdsprofiles', request.tenant.name,
+                    upstream_payload
+                )
+            except ProfileOperationError as exc:
+                return error_response(
+                    status_code=status.HTTP_502_BAD_GATEWAY, detail=exc.detail
+                )
 
-                if add_perm:
-                    if serializer.is_valid():
-                        tp = serializer.save()
+            tp = serializer.save(apiid=upstream_id)
 
-                        if group:
-                            group.thresholdsprofiles.add(tp)
+            if group:
+                group.thresholdsprofiles.add(tp)
 
-                        data = {'rules': request.data['rules']}
+            data = {'rules': request.data['rules']}
 
-                        create_profile_history(tp, data, request.user)
+            create_profile_history(tp, data, request.user)
 
-                        return Response(
-                            serializer.data, status=status.HTTP_201_CREATED
-                        )
-
-                    else:
-                        details = []
-                        for error in serializer.errors:
-                            details.append(
-                                '{}: {}'.format(error,
-                                                serializer.errors[error][0])
-                            )
-                        return error_response(
-                            status_code=status.HTTP_400_BAD_REQUEST,
-                            detail=' '.join(details)
-                        )
-
-                else:
-                    return error_response(
-                        status_code=status.HTTP_401_UNAUTHORIZED,
-                        detail='You do not have permission to assign '
-                               'thresholds profiles to the given group.'
-                    )
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
 
         except poem_models.UserProfile.DoesNotExist:
             return error_response(
@@ -250,6 +290,19 @@ class ListThresholdsProfiles(APIView):
                             )
 
                     if delete_perm:
+                        # Perform the upstream delete before removing the
+                        # local row and history.
+                        try:
+                            delete_profile(
+                                'thresholdsprofiles', request.tenant.name,
+                                name
+                            )
+                        except ProfileOperationError as exc:
+                            return error_response(
+                                status_code=status.HTTP_502_BAD_GATEWAY,
+                                detail=exc.detail
+                            )
+
                         poem_models.TenantHistory.objects.filter(
                             object_id=tp.id,
                             content_type=ContentType.objects.get_for_model(tp)
