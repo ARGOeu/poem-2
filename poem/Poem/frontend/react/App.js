@@ -58,7 +58,7 @@ import {
   DocumentTitle,
 } from "./UIElements";
 import { NotificationContainer } from "react-notifications";
-import { Backend, WebApi } from "./DataManager";
+import { Backend } from "./DataManager";
 import { YumRepoList, YumRepoComponent } from "./YumRepos";
 import {
   ThresholdsProfilesList,
@@ -149,13 +149,6 @@ export const RedirectAfterLogin = ({ isSuperUser }) => {
 };
 
 const TenantRouteSwitch = ({
-  webApiAggregation,
-  webApiMetric,
-  webApiThresholds,
-  webApiOperations,
-  webApiReports,
-  webApiServiceTypes,
-  token,
   tenantName,
   showServiceTitle,
   isSuperUser,
@@ -200,8 +193,6 @@ const TenantRouteSwitch = ({
         <ListOfMetrics
           type="metrics"
           isTenantSchema={true}
-          webapimetric={webApiMetric}
-          webapitoken={token}
         />
       }
     />
@@ -222,7 +213,7 @@ const TenantRouteSwitch = ({
     <Route
       path="/ui/metricprofiles"
       element={
-        <MetricProfilesList webapimetric={webApiMetric} webapitoken={token} />
+        <MetricProfilesList />
       }
     />
     <Route element={<AddRoute usergroups={userGroups.metricprofiles} />}>
@@ -230,10 +221,7 @@ const TenantRouteSwitch = ({
         path="/ui/metricprofiles/add"
         element={
           <MetricProfilesChange
-            webapimetric={webApiMetric}
-            webapitoken={token}
             tenantname={tenantName}
-            webapiservicetypes={webApiServiceTypes}
             addview={true}
             tenantDetails={tenantDetails}
           />
@@ -244,11 +232,6 @@ const TenantRouteSwitch = ({
       path="/ui/metricprofiles/:name"
       element={
         <MetricProfilesChange
-          webapimetric={webApiMetric}
-          webapiaggregation={webApiAggregation}
-          webapireports={webApiReports}
-          webapiservicetypes={webApiServiceTypes}
-          webapitoken={token}
           tenantname={tenantName}
           tenantDetails={tenantDetails}
         />
@@ -258,9 +241,6 @@ const TenantRouteSwitch = ({
       path="/ui/metricprofiles/:name/clone"
       element={
         <MetricProfilesClone
-          webapimetric={webApiMetric}
-          webapiservicetypes={webApiServiceTypes}
-          webapitoken={token}
           tenantname={tenantName}
           tenantDetails={tenantDetails}
         />
@@ -283,9 +263,6 @@ const TenantRouteSwitch = ({
       path="/ui/aggregationprofiles"
       element={
         <AggregationProfilesList
-          webapiaggregation={webApiAggregation}
-          webapimetric={webApiMetric}
-          webapitoken={token}
         />
       }
     />
@@ -293,10 +270,6 @@ const TenantRouteSwitch = ({
       path="/ui/aggregationprofiles/:name"
       element={
         <AggregationProfilesChange
-          webapiaggregation={webApiAggregation}
-          webapimetric={webApiMetric}
-          webapireports={webApiReports}
-          webapitoken={token}
           tenantname={tenantName}
         />
       }
@@ -306,9 +279,6 @@ const TenantRouteSwitch = ({
         path="/ui/aggregationprofiles/add"
         element={
           <AggregationProfilesChange
-            webapiaggregation={webApiAggregation}
-            webapimetric={webApiMetric}
-            webapitoken={token}
             tenantname={tenantName}
             addview={true}
           />
@@ -332,9 +302,6 @@ const TenantRouteSwitch = ({
       path="/ui/thresholdsprofiles"
       element={
         <ThresholdsProfilesList
-          webapithresholds={webApiThresholds}
-          webapimetric={webApiMetric}
-          webapitoken={token}
         />
       }
     />
@@ -343,10 +310,6 @@ const TenantRouteSwitch = ({
         path="/ui/thresholdsprofiles/add"
         element={
           <ThresholdsProfilesChange
-            webapithresholds={webApiThresholds}
-            webapimetric={webApiMetric}
-            webapireports={webApiReports}
-            webapitoken={token}
             tenantname={tenantName}
             addview={true}
           />
@@ -357,10 +320,6 @@ const TenantRouteSwitch = ({
       path="/ui/thresholdsprofiles/:name"
       element={
         <ThresholdsProfilesChange
-          webapithresholds={webApiThresholds}
-          webapimetric={webApiMetric}
-          webapireports={webApiReports}
-          webapitoken={token}
           tenantname={tenantName}
         />
       }
@@ -382,8 +341,6 @@ const TenantRouteSwitch = ({
       path="/ui/operationsprofiles"
       element={
         <OperationsProfilesList
-          webapioperations={webApiOperations}
-          webapitoken={token}
         />
       }
     />
@@ -391,8 +348,6 @@ const TenantRouteSwitch = ({
       path="/ui/operationsprofiles/:name"
       element={
         <OperationsProfileDetails
-          webapioperations={webApiOperations}
-          webapitoken={token}
         />
       }
     />
@@ -737,12 +692,6 @@ const TenantRouteSwitch = ({
       path="/ui/reports"
       element={
         <ReportsList
-          webapitoken={token}
-          webapireports={webApiReports}
-          webapimetric={webApiMetric}
-          webapiaggregation={webApiAggregation}
-          webapioperations={webApiOperations}
-          webapithresholds={webApiThresholds}
         />
       }
     />
@@ -752,12 +701,6 @@ const TenantRouteSwitch = ({
         path="/ui/reports/add"
         element={
           <ReportsAdd
-            webapitoken={token}
-            webapireports={webApiReports}
-            webapimetric={webApiMetric}
-            webapiaggregation={webApiAggregation}
-            webapioperations={webApiOperations}
-            webapithresholds={webApiThresholds}
           />
         }
       />
@@ -767,12 +710,6 @@ const TenantRouteSwitch = ({
       path="/ui/reports/:name"
       element={
         <ReportsChange
-          webapitoken={token}
-          webapireports={webApiReports}
-          webapimetric={webApiMetric}
-          webapiaggregation={webApiAggregation}
-          webapioperations={webApiOperations}
-          webapithresholds={webApiThresholds}
         />
       }
     />
@@ -781,8 +718,6 @@ const TenantRouteSwitch = ({
       path="/ui/servicetypes/"
       element={
         <ServiceTypesList
-          webapitoken={token}
-          webapiservicetypes={webApiServiceTypes}
           showtitles={showServiceTitle}
         />
       }
@@ -793,8 +728,6 @@ const TenantRouteSwitch = ({
         path="/ui/servicetypes/add"
         element={
           <ServiceTypesBulkAdd
-            webapitoken={token}
-            webapiservicetypes={webApiServiceTypes}
             showtitles={showServiceTitle}
           />
         }
@@ -927,17 +860,10 @@ const App = () => {
   let [isSessionActive, setIsSessionActive] = useState(undefined);
   const [areYouSureModal, setAreYouSureModal] = useState(false);
   const [userDetails, setUserDetails] = useState(undefined);
-  const [webApiAggregation, setWebApiAggregation] = useState(undefined);
-  const [webApiMetric, setWebApiMetric] = useState(undefined);
-  const [webApiThresholds, setWebApiThresholds] = useState(undefined);
-  const [webApiOperations, setWebApiOperations] = useState(undefined);
-  const [webApiServiceTypes, setWebApiServiceTypes] = useState(undefined);
-  const [webApiReports, setWebApiReports] = useState(undefined);
   let [publicView, setPublicView] = useState(undefined);
   const [tenantName, setTenantName] = useState(undefined);
   const [privacyLink, setPrivacyLink] = useState(undefined);
   const [termsLink, setTermsLink] = useState(undefined);
-  const [token, setToken] = useState(undefined);
   const [version, setVersion] = useState(undefined);
   const [isTenantSchema, setIsTenantSchema] = useState(null);
   const [showServiceTitle, setShowServiceTitle] = useState(undefined)
@@ -969,49 +895,28 @@ const App = () => {
     setTermsLink(options && options.result.terms_privacy_links.terms);
     setPublicView(false);
     if (poemType) {
-      setToken(response && response.userdetails.token);
-      setWebApiMetric(options && options.result.webapimetric);
-      setWebApiAggregation(options && options.result.webapiaggregation);
-      setWebApiThresholds(options && options.result.webapithresholds);
-      setWebApiOperations(options && options.result.webapioperations);
-      setWebApiReports(options && options.result.webapireports);
-      setWebApiServiceTypes(options && options.result.webapiservicetypes);
       setTenantName(options && options.result.tenant_name);
       setShowServiceTitle(options && options.result.use_service_title);
     }
-    options &&
-      prefetchData(
-        false,
-        poemType,
-        options,
-        poemType ? response.userdetails.token : null
-      );
+    options && prefetchData(false, poemType, options);
   }
 
   async function initalizePublicState() {
-    let token = await backend.fetchPublicToken();
     let options = await backend.fetchConfigOptions();
     let isTenantSchema = await backend.isTenantSchema();
 
     setIsTenantSchema(isTenantSchema);
     setIsSessionActive(false);
     setUserDetails({ username: "Anonymous" });
-    setToken(token);
-    setWebApiMetric(options && options.result.webapimetric);
-    setWebApiAggregation(options && options.result.webapiaggregation);
-    setWebApiThresholds(options && options.result.webapithresholds);
-    setWebApiOperations(options && options.result.webapioperations);
-    setWebApiReports(options && options.result.webapireports);
-    setWebApiServiceTypes(options && options.result.webapiservicetypes);
     setPrivacyLink(options && options.result.terms_privacy_links.privacy);
     setTermsLink(options && options.result.terms_privacy_links.terms);
     setTenantName(options && options.result.tenant_name);
     setShowServiceTitle(options && options.result.use_service_title);
     setPublicView(true);
-    options && prefetchData(true, isTenantSchema, options, token);
+    options && prefetchData(true, isTenantSchema, options);
   }
 
-  function prefetchData(isPublic, isTenant, options, token) {
+  function prefetchData(isPublic, isTenant, options) {
     if (!isPublic) {
       queryClient.prefetchQuery("user", () => fetchUsers());
       queryClient.prefetchQuery("yumrepo", () => fetchYumRepos());
@@ -1043,16 +948,6 @@ const App = () => {
     );
 
     if (isTenant) {
-      let webapi = new WebApi({
-        token: token,
-        metricProfiles: options.result.webapimetric,
-        aggregationProfiles: options.result.webapiaggregation,
-        thresholdsProfiles: options.result.webapithresholds,
-        operationsProfiles: options.result.webapioperations,
-        reportsConfigurations: options.result.webapireports,
-        serviceTypes: options.result.webapiservicetypes,
-      });
-
       if (!isPublic)
         queryClient.prefetchQuery("usergroups", () =>
           fetchUserGroups(isTenant)
@@ -1071,7 +966,7 @@ const App = () => {
       );
       queryClient.prefetchQuery(
         [`${isPublic ? "public_" : ""}report`, "webapi"],
-        () => fetchReports(webapi)
+        () => fetchReports(isPublic)
       );
       queryClient.prefetchQuery(
         [`${isPublic ? "public_" : ""}metricprofile`, "backend"],
@@ -1079,7 +974,7 @@ const App = () => {
       );
       queryClient.prefetchQuery(
         [`${isPublic ? "public_" : ""}metricprofile`, "webapi"],
-        () => fetchMetricProfiles(webapi)
+        () => fetchMetricProfiles(isPublic)
       );
       queryClient.prefetchQuery(
         [`${isPublic ? "public_" : ""}aggregationprofile`, "backend"],
@@ -1087,7 +982,7 @@ const App = () => {
       );
       queryClient.prefetchQuery(
         [`${isPublic ? "public_" : ""}aggregationprofile`, "webapi"],
-        () => fetchAggregationProfiles(webapi)
+        () => fetchAggregationProfiles(isPublic)
       );
       queryClient.prefetchQuery(
         [`${isPublic ? "public_" : ""}thresholdsprofile`, "backend"],
@@ -1095,29 +990,29 @@ const App = () => {
       );
       queryClient.prefetchQuery(
         [`${isPublic ? "public_" : ""}thresholdsprofile`, "webapi"],
-        () => fetchThresholdsProfiles(webapi)
+        () => fetchThresholdsProfiles(isPublic)
       );
       queryClient.prefetchQuery(
         [`${isPublic ? "public_" : ""}servicetypes`, "webapi"],
-        () => fetchServiceTypes(webapi)
+        () => fetchServiceTypes(isPublic)
       );
       queryClient.prefetchQuery(
         `${isPublic ? "public_" : ""}operationsprofile`,
-        () => fetchOperationsProfiles(webapi)
+        () => fetchOperationsProfiles(isPublic)
       );
       if (options.result.webapireports) {
         if (!isPublic)
           queryClient.prefetchQuery("topologytags", () =>
-            fetchTopologyTags(webapi)
+            fetchTopologyTags(isPublic)
           );
 
         queryClient.prefetchQuery(
           `${isPublic ? "public_" : ""}topologygroups`,
-          () => fetchTopologyGroups(webapi)
+          () => fetchTopologyGroups(isPublic)
         );
         queryClient.prefetchQuery(
           `${isPublic ? "public_" : ""}topologyendpoints`,
-          () => fetchTopologyEndpoints(webapi)
+          () => fetchTopologyEndpoints(isPublic)
         );
       }
     } else {
@@ -1291,8 +1186,6 @@ const App = () => {
                       type="metrics"
                       publicView={true}
                       isTenantSchema={true}
-                      webapitoken={token}
-                      webapimetric={webApiMetric}
                     />
                   </PublicPage>
                 }
@@ -1313,12 +1206,6 @@ const App = () => {
                   <PublicPage privacyLink={privacyLink} termsLink={termsLink}>
                     <ReportsList
                       publicView={true}
-                      webapitoken={token}
-                      webapireports={webApiReports}
-                      webapimetric={webApiMetric}
-                      webapiaggregation={webApiAggregation}
-                      webapioperations={webApiOperations}
-                      webapithresholds={webApiThresholds}
                     />
                   </PublicPage>
                 }
@@ -1330,12 +1217,6 @@ const App = () => {
                   <PublicPage privacyLink={privacyLink} termsLink={termsLink}>
                     <ReportsChange
                       publicView={true}
-                      webapitoken={token}
-                      webapireports={webApiReports}
-                      webapimetric={webApiMetric}
-                      webapiaggregation={webApiAggregation}
-                      webapioperations={webApiOperations}
-                      webapithresholds={webApiThresholds}
                     />
                   </PublicPage>
                 }
@@ -1346,8 +1227,6 @@ const App = () => {
                 element={
                   <PublicPage privacyLink={privacyLink} termsLink={termsLink}>
                     <MetricProfilesList
-                      webapimetric={webApiMetric}
-                      webapitoken={token}
                       publicView={true}
                     />
                   </PublicPage>
@@ -1359,8 +1238,6 @@ const App = () => {
                 element={
                   <PublicPage privacyLink={privacyLink} termsLink={termsLink}>
                     <MetricProfilesChange
-                      webapimetric={webApiMetric}
-                      webapitoken={token}
                       tenantname={tenantName}
                       publicView={true}
                       tenantDetails={tenantDetails}
@@ -1375,9 +1252,6 @@ const App = () => {
                   <PublicPage privacyLink={privacyLink} termsLink={termsLink}>
                     <AggregationProfilesList
                       publicView={true}
-                      webapimetric={webApiMetric}
-                      webapiaggregation={webApiAggregation}
-                      webapitoken={token}
                     />
                   </PublicPage>
                 }
@@ -1388,9 +1262,6 @@ const App = () => {
                 element={
                   <PublicPage privacyLink={privacyLink} termsLink={termsLink}>
                     <AggregationProfilesChange
-                      webapimetric={webApiMetric}
-                      webapiaggregation={webApiAggregation}
-                      webapitoken={token}
                       tenantname={tenantName}
                       publicView={true}
                     />
@@ -1404,9 +1275,6 @@ const App = () => {
                   <PublicPage privacyLink={privacyLink} termsLink={termsLink}>
                     <ThresholdsProfilesList
                       publicView={true}
-                      webapithresholds={webApiThresholds}
-                      webapimetric={webApiMetric}
-                      webapitoken={token}
                     />
                   </PublicPage>
                 }
@@ -1417,10 +1285,6 @@ const App = () => {
                 element={
                   <PublicPage privacyLink={privacyLink} termsLink={termsLink}>
                     <ThresholdsProfilesChange
-                      webapithresholds={webApiThresholds}
-                      webapimetric={webApiMetric}
-                      webapireports={webApiReports}
-                      webapitoken={token}
                       tenantname={tenantName}
                       publicView={true}
                     />
@@ -1434,8 +1298,6 @@ const App = () => {
                   <PublicPage privacyLink={privacyLink} termsLink={termsLink}>
                     <OperationsProfilesList
                       publicView={true}
-                      webapitoken={token}
-                      webapioperations={webApiOperations}
                     />
                   </PublicPage>
                 }
@@ -1447,8 +1309,6 @@ const App = () => {
                   <PublicPage privacyLink={privacyLink} termsLink={termsLink}>
                     <OperationsProfileDetails
                       publicView={true}
-                      webapitoken={token}
-                      webapioperations={webApiOperations}
                     />
                   </PublicPage>
                 }
@@ -1459,8 +1319,6 @@ const App = () => {
                 element={
                   <PublicPage privacyLink={privacyLink} termsLink={termsLink}>
                     <ServiceTypesList
-                      webapitoken={token}
-                      webapiservicetypes={webApiServiceTypes}
                       showtitles={showServiceTitle}
                       publicView={true}
                     />
@@ -1660,13 +1518,6 @@ const App = () => {
                 <CustomBreadcrumb />
                 {isTenantSchema ? (
                   <TenantRouteSwitch
-                    webApiMetric={webApiMetric}
-                    webApiAggregation={webApiAggregation}
-                    webApiThresholds={webApiThresholds}
-                    webApiOperations={webApiOperations}
-                    webApiReports={webApiReports}
-                    webApiServiceTypes={webApiServiceTypes}
-                    token={token}
                     tenantName={tenantName}
                     showServiceTitle={showServiceTitle}
                     isSuperUser={userDetails.is_superuser}
