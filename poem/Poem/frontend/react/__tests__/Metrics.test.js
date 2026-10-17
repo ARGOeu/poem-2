@@ -3,7 +3,7 @@ import '@testing-library/jest-dom';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { MemoryRouter, Routes, Route } from 'react-router-dom';
 import { CompareMetrics, ListOfMetrics, MetricChange, MetricVersionDetails } from '../Metrics';
-import { Backend, WebApi } from '../DataManager';
+import { Backend } from '../DataManager';
 import { NotificationManager } from 'react-notifications';
 import { QueryClientProvider, QueryClient, setLogger } from 'react-query';
 import  selectEvent from 'react-select-event';
@@ -391,8 +391,7 @@ const mockDeleteObject = jest.fn();
 
 jest.mock('../DataManager', () => {
   return {
-    Backend: jest.fn(),
-    WebApi: jest.fn()
+    Backend: jest.fn()
   }
 })
 
@@ -422,8 +421,6 @@ function renderListView(publicView=false) {
               type='metrics'
               isTenantSchema={ true }
               publicView={ true }
-              webapimetric='https://mock.metrics.com'
-              webapitoken='token'
             />
           </MemoryRouter>
         </QueryClientProvider>
@@ -437,8 +434,6 @@ function renderListView(publicView=false) {
             <ListOfMetrics
               type='metrics'
               isTenantSchema={ true }
-              webapimetric='https://mock.metrics.com'
-              webapitoken='token'
             />
           </MemoryRouter>
         </QueryClientProvider>
@@ -560,9 +555,9 @@ describe('Tests for metrics listview', () => {
         isActiveSession: () => Promise.resolve(mockActiveSession)
       }
     })
-    WebApi.mockImplementation(() => {
+    Backend.mockImplementation(() => {
       return {
-        fetchMetricProfiles: () => Promise.resolve(mockMetricProfiles)
+        fetchWebApiMetricProfiles: () => Promise.resolve(mockMetricProfiles)
       }
     })
   })
@@ -721,9 +716,9 @@ describe('Tests for metrics listview', () => {
       }
     })
 
-    WebApi.mockImplementation(() => {
+    Backend.mockImplementation(() => {
       return {
-        fetchMetricProfiles: () => Promise.resolve(mockMetricProfiles)
+        fetchWebApiMetricProfiles: () => Promise.resolve(mockMetricProfiles)
       }
     })
 

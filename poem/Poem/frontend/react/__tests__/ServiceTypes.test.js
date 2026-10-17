@@ -3,7 +3,7 @@ import { fireEvent, render, screen, waitFor, within } from '@testing-library/rea
 import '@testing-library/jest-dom';
 import { MemoryRouter } from 'react-router-dom';
 import { ServiceTypesList, ServiceTypesBulkAdd } from '../ServiceTypes';
-import { WebApi } from '../DataManager';
+import { Backend } from '../DataManager';
 import { fetchUserDetails } from '../QueryFunctions';
 import { QueryClient, QueryClientProvider } from 'react-query';
 import useEvent from '@testing-library/user-event';
@@ -11,7 +11,7 @@ import useEvent from '@testing-library/user-event';
 
 jest.mock('../DataManager', () => {
   return {
-    WebApi: jest.fn()
+    Backend: jest.fn()
   }
 })
 
@@ -135,8 +135,6 @@ function renderAddView(withServiceTypesTitles=undefined) {
       <QueryClientProvider client={queryClient}>
         <MemoryRouter initialEntries={ [ route ] }>
           <ServiceTypesBulkAdd
-            webapitoken="token"
-            webapiservicetypes="https://mock.servicetypes.com"
             showtitles={ withServiceTypesTitles }
           />
         </MemoryRouter>
@@ -154,8 +152,6 @@ function renderListView(withServiceTypesTitles=undefined) {
       <QueryClientProvider client={queryClient}>
         <MemoryRouter initialEntries={ [ route ] }>
           <ServiceTypesList
-            webapitoken='token'
-            webapiservicetypes="https://mock.servicetypes.com"
             showtitles={ withServiceTypesTitles }
             tenantName="TENANT"
             devel={ true }
@@ -175,8 +171,6 @@ function renderListViewPublic(withServiceTypesTitles=false) {
       <QueryClientProvider client={queryClient}>
         <MemoryRouter initialEntries={ [ route ] }>
           <ServiceTypesList
-            webapitoken="token"
-            webapiservicetypes="https://mock.servicetypes.com"
             showtitles={ withServiceTypesTitles }
             publicView={ true }
           />
@@ -189,10 +183,10 @@ function renderListViewPublic(withServiceTypesTitles=false) {
 
 describe('Test service types list - Read Only', () => {
   beforeAll(() => {
-    WebApi.mockImplementation(() => {
+    Backend.mockImplementation(() => {
       return {
-        fetchServiceTypes: () => Promise.resolve(mockServTypes),
-        addServiceTypes: mockAddServiceTypes
+        fetchWebApiServiceTypes: () => Promise.resolve(mockServTypes),
+        replaceServiceTypes: mockAddServiceTypes
       }
     })
     fetchUserDetails.mockReturnValue(mockUserDetailsTenantUser)
@@ -418,9 +412,9 @@ describe('Test service types list - Read Only', () => {
 
 describe("Test service types list if empty", () => {
   beforeAll(() => {
-    WebApi.mockImplementation(() => {
+    Backend.mockImplementation(() => {
       return {
-        fetchServiceTypes: () => Promise.resolve([])
+        fetchWebApiServiceTypes: () => Promise.resolve([])
       }
     })
     fetchUserDetails.mockReturnValue(mockUserDetailsTenantUser)
@@ -470,9 +464,9 @@ describe("Test service types list if empty", () => {
 
 describe('Test service types list - Bulk change and delete', () => {
   beforeAll(() => {
-    WebApi.mockImplementation(() => Object({
-      fetchServiceTypes: () => Promise.resolve(mockServTypes),
-      addServiceTypes: mockAddServiceTypes,
+    Backend.mockImplementation(() => Object({
+      fetchWebApiServiceTypes: () => Promise.resolve(mockServTypes),
+      replaceServiceTypes: mockAddServiceTypes,
     })),
     fetchUserDetails.mockReturnValue(mockUserDetailsTenantAdmin)
   })
@@ -1550,9 +1544,9 @@ describe('Test service types list - Bulk change and delete', () => {
 
 describe('Test service types list - Bulk add', () => {
   beforeAll(() => {
-    WebApi.mockImplementation(() => Object({
-      fetchServiceTypes: () => Promise.resolve(mockServTypes),
-      addServiceTypes: mockAddServiceTypes,
+    Backend.mockImplementation(() => Object({
+      fetchWebApiServiceTypes: () => Promise.resolve(mockServTypes),
+      replaceServiceTypes: mockAddServiceTypes,
     })),
     fetchUserDetails.mockReturnValue(mockUserDetailsTenantAdmin)
   })
