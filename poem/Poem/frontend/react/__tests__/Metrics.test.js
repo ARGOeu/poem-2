@@ -552,11 +552,7 @@ describe('Tests for metrics listview', () => {
           }
         },
         fetchResult: () => Promise.resolve(mockUserGroups),
-        isActiveSession: () => Promise.resolve(mockActiveSession)
-      }
-    })
-    Backend.mockImplementation(() => {
-      return {
+        isActiveSession: () => Promise.resolve(mockActiveSession),
         fetchWebApiMetricProfiles: () => Promise.resolve(mockMetricProfiles)
       }
     })
@@ -712,12 +708,7 @@ describe('Tests for metrics listview', () => {
         },
         fetchResult: () => Promise.resolve(mockUserGroups),
         isTenantSchema: () => Promise.resolve(true),
-        isActiveSession: () => Promise.resolve(mockActiveSession)
-      }
-    })
-
-    Backend.mockImplementation(() => {
-      return {
+        isActiveSession: () => Promise.resolve(mockActiveSession),
         fetchWebApiMetricProfiles: () => Promise.resolve(mockMetricProfiles)
       }
     })

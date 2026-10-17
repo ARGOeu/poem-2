@@ -2202,11 +2202,10 @@ describe('Tests for reports changeview - sites', () => {
     backendReport.name = 'new-report-name'
     backendReport.groupname = 'TEST'
     backendReport.description = 'Some new description'
-    const expectedPayload = frontendReport;
 
     await waitFor(() => {
       expect(mockChangeObject).toHaveBeenCalledWith(
-        '/api/v2/internal/reports/', reportPayload(expectedPayload, backendReport)
+        '/api/v2/internal/reports/', reportPayload(frontendReport, backendReport)
       )
     })
 
@@ -2237,11 +2236,10 @@ describe('Tests for reports changeview - sites', () => {
 
     let frontendReport = JSON.parse(JSON.stringify(report4sending))
     frontendReport.disabled = true
-    const expectedPayload = frontendReport;
 
     await waitFor(() => {
       expect(mockChangeObject).toHaveBeenCalledWith(
-        '/api/v2/internal/reports/', reportPayload(expectedPayload, backendReport4sending)
+        '/api/v2/internal/reports/', reportPayload(frontendReport, backendReport4sending)
       )
     })
 
@@ -2292,11 +2290,10 @@ describe('Tests for reports changeview - sites', () => {
       type: 'thresholds'
     })
 
-    const expectedPayload = frontendReport;
 
     await waitFor(() => {
       expect(mockChangeObject).toHaveBeenCalledWith(
-        '/api/v2/internal/reports/', reportPayload(expectedPayload, backendReport4sending)
+        '/api/v2/internal/reports/', reportPayload(frontendReport, backendReport4sending)
       )
     })
 
@@ -2466,11 +2463,10 @@ describe('Tests for reports changeview - sites', () => {
       context: 'argo.group.filter.fields'
     })
 
-    const expectedPayload = frontendReport;
 
     await waitFor(() => {
       expect(mockChangeObject).toHaveBeenCalledWith(
-        '/api/v2/internal/reports/', reportPayload(expectedPayload, backendReport4sending)
+        '/api/v2/internal/reports/', reportPayload(frontendReport, backendReport4sending)
       )
     })
 
@@ -2571,11 +2567,10 @@ describe('Tests for reports changeview - sites', () => {
       context: 'argo.endpoint.filter.tags.array'
     })
 
-    const expectedPayload = frontendReport;
 
     await waitFor(() => {
       expect(mockChangeObject).toHaveBeenCalledWith(
-        '/api/v2/internal/reports/', reportPayload(expectedPayload, backendReport4sending)
+        '/api/v2/internal/reports/', reportPayload(frontendReport, backendReport4sending)
       )
     })
 
@@ -2615,11 +2610,10 @@ describe('Tests for reports changeview - sites', () => {
     frontendReport.thresholds.unknown = 0.2
     frontendReport.thresholds.downtime = 0.3
 
-    const expectedPayload = frontendReport;
 
     await waitFor(() => {
       expect(mockChangeObject).toHaveBeenCalledWith(
-        '/api/v2/internal/reports/', reportPayload(expectedPayload, backendReport4sending)
+        '/api/v2/internal/reports/', reportPayload(frontendReport, backendReport4sending)
       )
     })
 
@@ -2654,11 +2648,10 @@ describe('Tests for reports changeview - sites', () => {
     let backendReport = JSON.parse(JSON.stringify(backendReport4sending))
     backendReport.description = 'More elaborate description of the critical report.'
 
-    const expectedPayload = frontendReport;
 
     await waitFor(() => {
       expect(mockChangeObject).toHaveBeenCalledWith(
-        '/api/v2/internal/reports/', reportPayload(expectedPayload, backendReport)
+        '/api/v2/internal/reports/', reportPayload(frontendReport, backendReport)
       )
     })
 
@@ -2697,11 +2690,10 @@ describe('Tests for reports changeview - sites', () => {
     let backendReport = JSON.parse(JSON.stringify(backendReport4sending))
     backendReport.description = 'More elaborate description of the critical report.'
 
-    const expectedPayload = frontendReport;
 
     await waitFor(() => {
       expect(mockChangeObject).toHaveBeenCalledWith(
-        '/api/v2/internal/reports/', reportPayload(expectedPayload, backendReport)
+        '/api/v2/internal/reports/', reportPayload(frontendReport, backendReport)
       )
     })
 
@@ -6956,11 +6948,10 @@ describe('Tests for reports addview', () => {
     frontendReport.disabled = true
     frontendReport.filter_tags = []
 
-    const expectedPayload = frontendReport;
 
     await waitFor(() => {
       expect(mockAddObject).toHaveBeenCalledWith(
-        "/api/v2/internal/reports/", reportPayload(expectedPayload, newBackendReport4Sending)
+        "/api/v2/internal/reports/", reportPayload(frontendReport, newBackendReport4Sending)
       )
     })
 
@@ -8416,11 +8407,10 @@ describe('Tests for reports addview', () => {
     })
     fireEvent.click(screen.getByRole('button', { name: /yes/i }));
 
-    const expectedPayload = newReport4Sending;
 
     await waitFor(() => {
       expect(mockAddObject).toHaveBeenCalledWith(
-        '/api/v2/internal/reports/', reportPayload(expectedPayload, newBackendReport4Sending)
+        '/api/v2/internal/reports/', reportPayload(newReport4Sending, newBackendReport4Sending)
       )
     })
 
@@ -8528,11 +8518,10 @@ describe('Tests for reports addview', () => {
     })
     fireEvent.click(screen.getByRole('button', { name: /yes/i }));
 
-    const expectedPayload = newReport4Sending;
 
     await waitFor(() => {
       expect(mockAddObject).toHaveBeenCalledWith(
-        '/api/v2/internal/reports/', reportPayload(expectedPayload, newBackendReport4Sending)
+        '/api/v2/internal/reports/', reportPayload(newReport4Sending, newBackendReport4Sending)
       )
     })
 
@@ -8644,11 +8633,10 @@ describe('Tests for reports addview', () => {
     })
     fireEvent.click(screen.getByRole('button', { name: /yes/i }));
 
-    const expectedPayload = newReport4Sending;
 
     await waitFor(() => {
       expect(mockAddObject).toHaveBeenCalledWith(
-        '/api/v2/internal/reports/', reportPayload(expectedPayload, newBackendReport4Sending)
+        '/api/v2/internal/reports/', reportPayload(newReport4Sending, newBackendReport4Sending)
       )
     })
 

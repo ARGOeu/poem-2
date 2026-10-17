@@ -29,8 +29,7 @@ const mockTenantActiveSession = {
       "metricprofiles": ["TEST4", "TEST5"],
       "thresholdsprofiles": ["TEST6"],
       "reports": ["TEST7"]
-    },
-
+    }
   }
 };
 
@@ -49,20 +48,12 @@ const mockSuperActiveSession = {
 };
 
 const mockConfigOptions = {
-  'result': {
-    'saml_login_string': 'Log in using B2ACCESS',
-    'webapimetric': 'https://metric.profile.com',
-    'webapiaggregation': 'https://aggregations.com',
-    'webapithresholds': 'https://thresholds.com',
-    'webapioperations': 'https://operations.com',
-    'version': '1.0.0',
-    'webapireports': {
-        'main': 'https://reports.com',
-        'tags': 'https://reports-tags.com',
-        'topologygroups': 'https://topology-groups.com',
-        'topologyendpoints': 'https://endpoints.com'
-    },
-    'tenant_name': 'Tenant'
+  result: {
+    saml_login_string: 'Log in using B2ACCESS',
+    use_service_title: false,
+    terms_privacy_links: {},
+    version: '1.0.0',
+    tenant_name: 'Tenant'
   }
 };
 
@@ -1068,7 +1059,7 @@ describe('Tests for backend WebAPI proxy', () => {
   ];
 
   describe.each([false, true])('public view: %s', publicView => {
-    test.each(resources)('fetch %s through the backend', async (method, path, id) => {
+    test.each(resources.map(([method, path, id]) => [method, path, id]))('fetch %s through the backend', async (method, path, id) => {
       const data = [{ name: 'test' }];
       fetch.mockResolvedValueOnce({ ok: true, json: async () => ({ data }) });
       const backend = new Backend();

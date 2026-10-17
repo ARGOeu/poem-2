@@ -62,7 +62,8 @@ const mockUserDetailsTenantAdmin = {
 
 jest.mock('../QueryFunctions', () => {
   return {
-    fetchUserDetails : jest.fn()
+    ...jest.requireActual('../QueryFunctions'),
+    fetchUserDetails: jest.fn()
   }
 })
 

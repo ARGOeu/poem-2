@@ -1249,7 +1249,7 @@ describe('Tests for threshols profile changeview', () => {
             endpoint_group: null,
             metric: 'org.bdii.Entries',
             host: 'bdii.grid.cesnet.cz',
-            thresholds: [{label: 'entries', value: '2', uom: 'B', warn1: '0', warn2: '', crit1: '2', crit2: ''}]
+            thresholds: [{label: 'entries', value: '2', uom: 'B', warn1: '0', warn2: '', crit1: '2', crit2: '', min: '', max: ''}]
           }
           ]
         }
@@ -1372,7 +1372,7 @@ describe('Tests for threshols profile changeview', () => {
               endpoint_group: null,
               metric: 'org.bdii.Entries',
               host: 'bdii.grid.cesnet.cz',
-              thresholds: [{label: 'entries', value: '0', uom: '', warn1: '0', warn2: '', crit1: '2', crit2: ''}]
+              thresholds: [{label: 'entries', value: '', uom: '', warn1: '0', warn2: '', crit1: '2', crit2: '', min: '', max: ''}]
             }
           ]
         }
@@ -1610,7 +1610,7 @@ describe('Tests for threshols profile changeview', () => {
             endpoint_group: null,
             metric: 'org.bdii.Entries',
             host: 'bdii.grid.cesnet.cz',
-            thresholds: [{label: 'entries', value: '2', uom: 'B', warn1: '0', warn2: '', crit1: '2', crit2: ''}]
+            thresholds: [{label: 'entries', value: '2', uom: 'B', warn1: '0', warn2: '', crit1: '2', crit2: '', min: '', max: ''}]
           }
           ]
         }
@@ -1848,7 +1848,7 @@ describe('Tests for threshols profile changeview', () => {
             endpoint_group: null,
             metric: 'org.bdii.Entries',
             host: 'bdii.grid.cesnet.cz',
-            thresholds: [{label: 'entries', value: '2', uom: 'B', warn1: '0', warn2: '', crit1: '2', crit2: ''}]
+            thresholds: [{label: 'entries', value: '2', uom: 'B', warn1: '0', warn2: '', crit1: '2', crit2: '', min: '', max: ''}]
           }
           ]
         }
@@ -2304,7 +2304,6 @@ describe('Tests for thresholds profiles addview', () => {
       expect(mockAddObject).toHaveBeenCalledWith(
         '/api/v2/internal/thresholdsprofiles/',
         {
-          apiid: '00000000-oooo-kkkk-aaaa-aaeekkccnnee',
           name: 'TEST_PROFILE2',
           groupname: 'TEST',
           rules: [
@@ -2312,7 +2311,7 @@ describe('Tests for thresholds profiles addview', () => {
             endpoint_group: 'EOSC_Messaging',
             host: 'msg.argo.grnet.gr',
             metric: 'argo.AMS-Check',
-            thresholds: [{label: 'freshness', value: '1', uom: 's', warn1: '1', warn2: '15', crit1: '10', crit2: '20'}]
+            thresholds: [{label: 'freshness', value: '1', uom: 's', warn1: '1', warn2: '15', crit1: '10', crit2: '20', min: '', max: ''}]
           },
           {
             endpoint_group: 'BUDAPEST',
@@ -2438,7 +2437,6 @@ describe('Tests for thresholds profiles addview', () => {
       expect(mockAddObject).toHaveBeenCalledWith(
         '/api/v2/internal/thresholdsprofiles/',
         {
-          apiid: '00000000-oooo-kkkk-aaaa-aaeekkccnnee',
           name: 'TEST_PROFILE2',
           groupname: 'TEST',
           rules: [
@@ -2446,7 +2444,7 @@ describe('Tests for thresholds profiles addview', () => {
             endpoint_group: 'EOSC_Messaging',
             host: 'msg.argo.grnet.gr',
             metric: 'argo.AMS-Check',
-            thresholds: [{label: 'freshness', value: '1', uom: 's', warn1: '1', warn2: '15', crit1: '10', crit2: '20'}, {label: 'entries', value: '0', uom: '', warn1: '0', warn2: '', crit1: '2', crit2: ''}]
+            thresholds: [{label: 'freshness', value: '1', uom: 's', warn1: '1', warn2: '15', crit1: '10', crit2: '20', min: '', max: ''}, {label: 'entries', value: '', uom: '', warn1: '0', warn2: '', crit1: '2', crit2: '', min: '', max: ''}]
           },
           {
             endpoint_group: 'BUDAPEST',
@@ -2696,7 +2694,6 @@ describe('Tests for thresholds profiles addview', () => {
       expect(mockAddObject).toHaveBeenCalledWith(
         '/api/v2/internal/thresholdsprofiles/',
         {
-          apiid: '00000000-oooo-kkkk-aaaa-aaeekkccnnee',
           name: 'TEST_PROFILE2',
           groupname: 'TEST',
           rules: [
@@ -2704,7 +2701,7 @@ describe('Tests for thresholds profiles addview', () => {
             endpoint_group: 'EOSC_Messaging',
             host: 'msg.argo.grnet.gr',
             metric: 'argo.AMS-Check',
-            thresholds: [{label: 'freshness', value: '1', uom: 's', warn1: '1', warn2: '15', crit1: '10', crit2: '20'}]
+            thresholds: [{label: 'freshness', value: '1', uom: 's', warn1: '1', warn2: '15', crit1: '10', crit2: '20', min: '', max: ''}]
           },
           {
             endpoint_group: 'BUDAPEST',
@@ -2955,7 +2952,6 @@ describe('Tests for thresholds profiles addview', () => {
       expect(mockAddObject).toHaveBeenCalledWith(
         '/api/v2/internal/thresholdsprofiles/',
         {
-          apiid: '00000000-oooo-kkkk-aaaa-aaeekkccnnee',
           name: 'TEST_PROFILE2',
           groupname: 'TEST',
           rules: [
@@ -2963,7 +2959,7 @@ describe('Tests for thresholds profiles addview', () => {
             endpoint_group: 'EOSC_Messaging',
             host: 'msg.argo.grnet.gr',
             metric: 'argo.AMS-Check',
-            thresholds: [{label: 'freshness', value: '1', uom: 's', warn1: '1', warn2: '15', crit1: '10', crit2: '20'}]
+            thresholds: [{label: 'freshness', value: '1', uom: 's', warn1: '1', warn2: '15', crit1: '10', crit2: '20', min: '', max: ''}]
           },
           {
             endpoint_group: 'BUDAPEST',

@@ -11,8 +11,7 @@ import { NotificationManager } from "react-notifications";
 
 jest.mock("../DataManager", () => {
   return {
-    Backend: jest.fn(), 
-    WebApi: jest.fn()
+    Backend: jest.fn()
   }
 })
 
@@ -495,11 +494,7 @@ describe("Test probe candidate changeview", () => {
         }, 
         isActiveSession: () => Promise.resolve(mockActiveSession),
         changeObject: mockChangeObject,
-        deleteObject: mockDeleteObject
-      }
-    })
-    Backend.mockImplementation(() => {
-      return {
+        deleteObject: mockDeleteObject,
         fetchWebApiServiceTypes: () => Promise.resolve(mockServiceTypes)
       }
     })
