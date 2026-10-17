@@ -185,9 +185,9 @@ class ListThresholdsProfiles(APIView):
                 )
 
             group = None
-            if 'groupname' in request.data and request.data['groupname']:
+            if 'groupname' in request.data and request.data.get('groupname', ''):
                 group = poem_models.GroupOfThresholdsProfiles.objects.get(
-                    name=request.data['groupname']
+                    name=request.data.get('groupname', '')
                 )
 
             add_perm = request.user.is_superuser or \
@@ -202,8 +202,8 @@ class ListThresholdsProfiles(APIView):
 
             # Validate the local fields with a placeholder apiid; the real id
             # is derived from the upstream create below.
-            data = dict(request.data)
-            data['apiid'] = ''
+            data = request.data.copy()
+            data['apiid'] = 'placeholder'
             serializer = serializers.ThresholdsProfileSerializer(data=data)
             if not serializer.is_valid():
                 details = []

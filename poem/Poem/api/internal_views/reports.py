@@ -44,34 +44,17 @@ class ListReports(APIView):
                 detail='You do not have permission to add reports.'
             )
 
-        try:
-            groupreports = poem_models.GroupOfReports.objects.get(
-                name=request.data['groupname']
-            )
-
-        except poem_models.GroupOfReports.DoesNotExist:
-            return error_response(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail='Group of reports not found.'
-            )
-
-        if not self._check_onchange_groupperm(
-                request.data['groupname'], user
-        ):
-            return error_response(
-                status_code=status.HTTP_401_UNAUTHORIZED,
-                detail='You do not have permission to assign reports to the '
-                       'given group.'
-            )
-
         # Validate the local fields with a placeholder apiid; name and
-        # description come from the report's ``info`` block.
+        # description come from the report's ``info`` block (falling back to
+        # top-level fields for backward compatibility).
         info = request.data.get('info', {})
         data = {
-            'name': info.get('name', ''),
-            'description': info.get('description', ''),
-            'apiid': '',
-            'groupname': request.data['groupname'],
+            'name': info.get('name', request.data.get('name', '')),
+            'description': info.get(
+                'description', request.data.get('description', '')
+            ),
+            'apiid': 'placeholder',
+            'groupname': request.data.get('groupname', ''),
         }
         serializer = serializers.ReportsSerializer(data=data)
         if not serializer.is_valid():
@@ -83,6 +66,26 @@ class ListReports(APIView):
             return Response(
                 {'detail': ' '.join(details)},
                 status=status.HTTP_400_BAD_REQUEST
+            )
+
+        try:
+            groupreports = poem_models.GroupOfReports.objects.get(
+                name=request.data.get('groupname', '')
+            )
+
+        except poem_models.GroupOfReports.DoesNotExist:
+            return error_response(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail='Group of reports not found.'
+            )
+
+        if not self._check_onchange_groupperm(
+                request.data.get('groupname', ''), user
+        ):
+            return error_response(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail='You do not have permission to assign reports to the '
+                       'given group.'
             )
 
         # Perform the upstream create first so the local row stores the real

@@ -9,6 +9,7 @@ from Poem.services.profile_operations import (
     update_profile,
     delete_profile,
     group_services,
+    extract_services,
     ProfileOperationError,
 )
 from django.conf import settings
@@ -90,9 +91,25 @@ class ListMetricProfiles(APIView):
                 detail='No user profile for authenticated user.'
             )
 
+        # Validate the local fields with a placeholder apiid; the real id is
+        # derived from the upstream create below.
+        data = request.data.copy()
+        data['apiid'] = 'placeholder'
+        serializer = serializers.MetricProfileSerializer(data=data)
+        if not serializer.is_valid():
+            details = []
+            for error in serializer.errors:
+                details.append(
+                    '{}: {}'.format(error, serializer.errors[error][0])
+                )
+            return Response(
+                {'detail': ' '.join(details)},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
         try:
             groupprofile = poem_models.GroupOfMetricProfiles.objects.get(
-                name=request.data['groupname']
+                name=request.data.get('groupname', '')
             )
 
         except poem_models.GroupOfMetricProfiles.DoesNotExist:
@@ -111,28 +128,12 @@ class ListMetricProfiles(APIView):
                        'to the given group.'
             )
 
-        # Validate the local fields with a placeholder apiid; the real id is
-        # derived from the upstream create below.
-        data = dict(request.data)
-        data['apiid'] = ''
-        serializer = serializers.MetricProfileSerializer(data=data)
-        if not serializer.is_valid():
-            details = []
-            for error in serializer.errors:
-                details.append(
-                    '{}: {}'.format(error, serializer.errors[error][0])
-                )
-            return Response(
-                {'detail': ' '.join(details)},
-                status=status.HTTP_400_BAD_REQUEST
-            )
-
         # Perform the upstream create first so the local row stores the real
         # WEB-API id.
         upstream_payload = {
             'name': request.data['name'],
             'description': request.data.get('description', ''),
-            'services': group_services(request.data['services']),
+            'services': group_services(extract_services(request.data)),
         }
         try:
             upstream_id = create_profile(
@@ -203,7 +204,7 @@ class ListMetricProfiles(APIView):
 
         try:
             groupprofile = poem_models.GroupOfMetricProfiles.objects.get(
-                name=request.data['groupname']
+                name=request.data.get('groupname', '')
             )
 
             change_permission = request.user.is_superuser or \
@@ -269,7 +270,7 @@ class ListMetricProfiles(APIView):
                 'id': request.data['apiid'],
                 'name': request.data['name'],
                 'description': request.data.get('description', ''),
-                'services': group_services(request.data['services']),
+                'services': group_services(extract_services(request.data)),
             }
             try:
                 update_profile(
@@ -282,7 +283,7 @@ class ListMetricProfiles(APIView):
                 )
 
             profile.description = request.data['description']
-            profile.groupname = request.data['groupname']
+            profile.groupname = request.data.get('groupname', '')
             profile.save()
 
             groupprofile.metricprofiles.add(profile)

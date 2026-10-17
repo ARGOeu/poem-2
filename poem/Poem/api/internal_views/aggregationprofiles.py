@@ -56,9 +56,9 @@ class ListAggregations(APIView):
 
     def post(self, request):
         try:
-            if request.data['groupname']:
+            if request.data.get('groupname', ''):
                 groupaggr = poem_models.GroupOfAggregations.objects.get(
-                    name=request.data['groupname']
+                    name=request.data.get('groupname', '')
                 )
 
             else:
@@ -93,8 +93,8 @@ class ListAggregations(APIView):
 
         # Validate the local fields with a placeholder apiid; the real id is
         # derived from the upstream create below.
-        data = dict(request.data)
-        data['apiid'] = ''
+        data = request.data.copy()
+        data['apiid'] = 'placeholder'
         serializer = serializers.AggregationProfileSerializer(data=data)
         if not serializer.is_valid():
             details = []
@@ -191,10 +191,10 @@ class ListAggregations(APIView):
                 if init_groupaggr in userprofile.groupsofaggregations.all() or \
                         request.user.is_superuser:
                     try:
-                        if request.data['groupname']:
+                        if request.data.get('groupname', ''):
                             groupaggr = \
                                 poem_models.GroupOfAggregations.objects.get(
-                                    name=request.data['groupname']
+                                    name=request.data.get('groupname', '')
                                 )
 
                         else:
@@ -245,7 +245,7 @@ class ListAggregations(APIView):
                                     detail=exc.detail
                                 )
 
-                            aggr.groupname = request.data['groupname']
+                            aggr.groupname = request.data.get('groupname', '')
                             aggr.save()
 
                             groupaggr.aggregations.add(aggr)
