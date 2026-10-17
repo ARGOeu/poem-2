@@ -97,7 +97,7 @@ link_title.set('groupofaggregations', 'Groups of aggregations');
 link_title.set('groupofmetricprofiles', 'Groups of metric profiles');
 link_title.set('groupofmetrics', 'Groups of metrics');
 link_title.set('groupofthresholdsprofiles', 'Groups of thresholds profiles');
-link_title.set('home', 'Dashboard');
+link_title.set('home', 'Home');
 link_title.set('metricprofiles', 'Metric profiles');
 link_title.set('metrics', 'Metrics');
 link_title.set("metrictags", "Metric tags")
@@ -411,7 +411,7 @@ export const CustomBreadcrumb = ({publicView=false}) =>
 
   breadcrumb_elements.push({
     'url': `/ui/${publicView ? 'public_' : ''}home`,
-    'title': publicView ? 'Home' : 'Dashboard'
+    'title': 'Home'
   });
   if (!publicView)
     spliturl = location.pathname.split('/');
