@@ -6,7 +6,7 @@ import { Backend } from '../DataManager';
 import { ReportsList, ReportsChange, ReportsAdd } from '../Reports';
 import { QueryClient, QueryClientProvider, setLogger } from 'react-query';
 import { NotificationManager } from 'react-notifications';
-import selectEvent from 'react-select-event';
+import selectEvent from '../testUtils/selectEvent';
 
 
 jest.mock('../DataManager', () => {
@@ -1598,10 +1598,10 @@ function renderChangeView(publicView=false) {
             <Routes>
               <Route
                 path="/ui/public_reports/:name"
-                element={ 
+                element={
                   <ReportsChange
                     publicView={ true }
-                  /> 
+                  />
                 }
               />
             </Routes>
@@ -1618,9 +1618,9 @@ function renderChangeView(publicView=false) {
             <Routes>
               <Route
                 path="/ui/reports/:name"
-                element={ 
+                element={
                   <ReportsChange
-                  /> 
+                  />
                 }
               />
             </Routes>
@@ -1876,7 +1876,7 @@ describe('Tests for reports changeview - sites', () => {
     expect(groupField).toBeEnabled();
 
     expect(screen.queryByText('TEST')).not.toBeInTheDocument()
-    selectEvent.openMenu(groupField)
+    await selectEvent.openMenu(groupField)
     expect(screen.getByText('TEST')).toBeInTheDocument()
 
     const metricProfileField = screen.getByText('ARGO_MON_CRITICAL')
@@ -1892,7 +1892,7 @@ describe('Tests for reports changeview - sites', () => {
     expect(screen.queryByText('FEDCLOUD')).not.toBeInTheDocument()
     expect(screen.queryByText('OPS_MONITOR_RHEL7')).not.toBeInTheDocument()
 
-    selectEvent.openMenu(metricProfileField)
+    await selectEvent.openMenu(metricProfileField)
 
     expect(screen.getByText('FEDCLOUD')).toBeInTheDocument()
     expect(screen.getByText('OPS_MONITOR_RHEL7')).toBeInTheDocument()
@@ -1902,7 +1902,7 @@ describe('Tests for reports changeview - sites', () => {
 
     expect(screen.queryByText('ops-mon-critical')).not.toBeInTheDocument()
 
-    selectEvent.openMenu(aggrProfileField)
+    await selectEvent.openMenu(aggrProfileField)
 
     expect(screen.getByText('ops-mon-critical')).toBeInTheDocument()
 
@@ -1915,14 +1915,14 @@ describe('Tests for reports changeview - sites', () => {
     expect(screen.queryByText('TEST_PROFILE')).not.toBeInTheDocument()
     expect(screen.queryByText('test-thresholds')).not.toBeInTheDocument()
 
-    selectEvent.openMenu(thresholdsProfileField)
+    await selectEvent.openMenu(thresholdsProfileField)
 
     expect(screen.getByText('TEST_PROFILE')).toBeInTheDocument()
     expect(screen.getByText('test-thresholds')).toBeInTheDocument()
 
     expect(topologyTypeField).toBeEnabled()
     expect(screen.queryByText('ServiceGroups')).not.toBeInTheDocument()
-    selectEvent.openMenu(topologyTypeField)
+    await selectEvent.openMenu(topologyTypeField)
     expect(screen.getByText('ServiceGroups')).toBeInTheDocument()
 
     expect(screen.getAllByTestId(/card/i)).toHaveLength(2);
@@ -1934,7 +1934,7 @@ describe('Tests for reports changeview - sites', () => {
     expect(card_groups.queryByText('monitored')).not.toBeInTheDocument()
     expect(card_groups.getByText("scope")).toBeInTheDocument()
 
-    selectEvent.openMenu(card_groups.getByText('certification'));
+    await selectEvent.openMenu(card_groups.getByText('certification'));
     expect(card_groups.getByText('monitored')).toBeInTheDocument();
     expect(card_groups.getByText('infrastructure')).toBeInTheDocument();
     expect(card_groups.getByText('Production')).toBeInTheDocument();
@@ -1945,7 +1945,7 @@ describe('Tests for reports changeview - sites', () => {
     expect(card_groups.queryByText("Suspended")).not.toBeInTheDocument()
     expect(card_groups.queryByText("Uncertified")).not.toBeInTheDocument()
 
-    selectEvent.openMenu(card_groups.getByText('Certified'));
+    await selectEvent.openMenu(card_groups.getByText('Certified'));
     expect(card_groups.getByText('Candidate')).toBeInTheDocument();
     expect(card_groups.getByText('Closed')).toBeInTheDocument();
     expect(card_groups.getByText('Suspended')).toBeInTheDocument();
@@ -1954,7 +1954,7 @@ describe('Tests for reports changeview - sites', () => {
     expect(card_groups.queryByText("PPS")).not.toBeInTheDocument()
     expect(card_groups.queryByText("Test")).not.toBeInTheDocument()
 
-    selectEvent.openMenu(card_groups.getByText('Production'));
+    await selectEvent.openMenu(card_groups.getByText('Production'));
     expect(card_groups.getByText('PPS')).toBeInTheDocument();
     expect(card_groups.getByText('Test')).toBeInTheDocument();
 
@@ -1967,7 +1967,7 @@ describe('Tests for reports changeview - sites', () => {
     expect(card_groups.queryByText("tier2")).not.toBeInTheDocument()
     expect(card_groups.queryByText("wlcg")).not.toBeInTheDocument()
 
-    selectEvent.openMenu(card_groups.getByText('EGI'));
+    await selectEvent.openMenu(card_groups.getByText('EGI'));
     expect(card_groups.queryByText("atlas")).toBeInTheDocument()
     expect(card_groups.queryByText("cms")).toBeInTheDocument()
     expect(card_groups.queryByText("EGICore")).toBeInTheDocument()
@@ -1996,7 +1996,7 @@ describe('Tests for reports changeview - sites', () => {
     expect(card_groups.queryByText("CSCS-LCG2")).not.toBeInTheDocument()
     expect(card_groups.queryByText("SWITCH")).not.toBeInTheDocument()
 
-    selectEvent.openMenu(card_groups.getByText("NGI_AEGIS"))
+    await selectEvent.openMenu(card_groups.getByText("NGI_AEGIS"))
     expect(card_groups.queryByText("NGI_AEGIS_SERVICES")).not.toBeInTheDocument()
     expect(card_groups.queryByText("NGI_ARMGRID_SERVICES")).not.toBeInTheDocument()
     expect(card_groups.queryByText("NGI_BG_SERVICES")).not.toBeInTheDocument()
@@ -2012,7 +2012,7 @@ describe('Tests for reports changeview - sites', () => {
     expect(card_groups.queryByText("CSCS-LCG2")).not.toBeInTheDocument()
     expect(card_groups.queryByText("SWITCH")).not.toBeInTheDocument()
 
-    selectEvent.openMenu(card_groups.getByText("AEGIS11-MISANU"))
+    await selectEvent.openMenu(card_groups.getByText("AEGIS11-MISANU"))
     expect(card_groups.queryByText("NGI_AEGIS_SERVICES")).not.toBeInTheDocument()
     expect(card_groups.queryByText("NGI_ARMGRID_SERVICES")).not.toBeInTheDocument()
     expect(card_groups.queryByText("NGI_BG_SERVICES")).not.toBeInTheDocument()
@@ -2036,10 +2036,10 @@ describe('Tests for reports changeview - sites', () => {
     expect(card_groups.queryByText('nordugrid-arc')).not.toBeInTheDocument();
     expect(card_groups.queryByText('GLUE2EndpointImplementationName')).not.toBeInTheDocument();
 
-    selectEvent.openMenu(card_groups.getByText('GLUE2ComputingShareMappingQueue'));
+    await selectEvent.openMenu(card_groups.getByText('GLUE2ComputingShareMappingQueue'));
     expect(card_groups.getByText('GLUE2EndpointImplementationName')).toBeInTheDocument();
 
-    selectEvent.openMenu(card_groups.getByText('condor'));
+    await selectEvent.openMenu(card_groups.getByText('condor'));
     expect(card_groups.getByText('condor_q2d')).toBeInTheDocument();
     expect(card_groups.getByText('eddie')).toBeInTheDocument();
     expect(card_groups.queryByText('ARC-CE')).not.toBeInTheDocument();
@@ -2052,7 +2052,7 @@ describe('Tests for reports changeview - sites', () => {
     expect(card_endpoints.getAllByText('yes')).toHaveLength(2);
     expect(card_endpoints.queryByText("no")).not.toBeInTheDocument()
 
-    selectEvent.openMenu(card_endpoints.getAllByText("yes")[0])
+    await selectEvent.openMenu(card_endpoints.getAllByText("yes")[0])
     expect(card_endpoints.queryByText("no")).toBeInTheDocument()
 
     expect(card_endpoints.queryByText("alice")).not.toBeInTheDocument()
@@ -2070,7 +2070,7 @@ describe('Tests for reports changeview - sites', () => {
     expect(card_endpoints.queryByText(/ac.uk/i)).not.toBeInTheDocument()
     expect(card_endpoints.queryByText(/dpm/i)).not.toBeInTheDocument();
 
-    selectEvent.openMenu(card_endpoints.getByText('scope'))
+    await selectEvent.openMenu(card_endpoints.getByText('scope'))
     expect(card_endpoints.queryByText("alice")).not.toBeInTheDocument()
     expect(card_endpoints.queryByText("cms")).not.toBeInTheDocument()
     expect(card_endpoints.queryByText("EOSC")).not.toBeInTheDocument()
@@ -2086,7 +2086,7 @@ describe('Tests for reports changeview - sites', () => {
     expect(card_endpoints.queryByText(/ac.uk/i)).not.toBeInTheDocument()
     expect(card_endpoints.queryByText(/dpm/i)).not.toBeInTheDocument();
 
-    selectEvent.openMenu(card_endpoints.getByText('EGI'))
+    await selectEvent.openMenu(card_endpoints.getByText('EGI'))
     expect(card_endpoints.queryByText("alice")).toBeInTheDocument()
     expect(card_endpoints.queryByText("cms")).toBeInTheDocument()
     expect(card_endpoints.queryByText("EOSC")).toBeInTheDocument()
@@ -2123,7 +2123,7 @@ describe('Tests for reports changeview - sites', () => {
     expect(card_endpoints.queryByText("eu.eosc.core-aai.saml.login.edugain")).not.toBeInTheDocument();
     expect(card_endpoints.queryByText("eu.eosc.core-aai.oidc.login.edugain")).not.toBeInTheDocument();
 
-    selectEvent.openMenu(card_endpoints.queryByText("AEGIS11-MISANU"))
+    await selectEvent.openMenu(card_endpoints.queryByText("AEGIS11-MISANU"))
     expect(card_endpoints.queryByText("NGI_AEGIS_SERVICES")).not.toBeInTheDocument();
     expect(card_endpoints.queryByText("WMS")).not.toBeInTheDocument();
     expect(card_endpoints.queryByText("Top-BDII")).not.toBeInTheDocument();
@@ -2142,7 +2142,7 @@ describe('Tests for reports changeview - sites', () => {
     expect(card_endpoints.getByText("APEL")).toBeInTheDocument()
     expect(card_endpoints.getByText("Site-BDII")).toBeInTheDocument()
 
-    selectEvent.openMenu(card_endpoints.getByText("APEL"))
+    await selectEvent.openMenu(card_endpoints.getByText("APEL"))
     expect(card_endpoints.queryByText("NGI_AEGIS_SERVICES")).not.toBeInTheDocument();
     expect(card_endpoints.queryByText("WMS")).not.toBeInTheDocument();
     expect(card_endpoints.queryByText("Top-BDII")).not.toBeInTheDocument();
@@ -2290,7 +2290,6 @@ describe('Tests for reports changeview - sites', () => {
       type: 'thresholds'
     })
 
-
     await waitFor(() => {
       expect(mockChangeObject).toHaveBeenCalledWith(
         '/api/v2/internal/reports/', reportPayload(frontendReport, backendReport4sending)
@@ -2319,7 +2318,7 @@ describe('Tests for reports changeview - sites', () => {
 
     await waitFor(() => {
       expect(screen.getByText(/projects/i)).toBeInTheDocument()
-    }) 
+    })
     expect(screen.getAllByText(/service groups/i)).toHaveLength(2)
     expect(screen.queryByText(/sites/i)).not.toBeInTheDocument()
     expect(screen.queryByText(/ngis/i)).not.toBeInTheDocument()
@@ -2353,9 +2352,7 @@ describe('Tests for reports changeview - sites', () => {
       expect(card_groups.queryByText(/required/i)).not.toBeInTheDocument()
     })
 
-    await waitFor(() => {
-      selectEvent.select(card_groups.getByText('Certified'), 'Candidate')
-    })
+    await selectEvent.select(card_groups.getByText('Certified'), 'Candidate')
 
     await waitFor(() => {
       expect(card_groups.queryByText(/required/i)).not.toBeInTheDocument()
@@ -2377,22 +2374,18 @@ describe('Tests for reports changeview - sites', () => {
     await waitFor(() => {
       expect(screen.queryByRole('dialog', { title: /change/i })).not.toBeInTheDocument()
     })
-    
+
     await waitFor(() => {
       expect(card_groups.queryAllByText(/required/i)).toHaveLength(2)
     })
 
-    await waitFor(() => {
-      selectEvent.select(card_groups.getAllByText("Select...")[0], 'monitored')
-    })
+    await selectEvent.select(card_groups.getAllByText("Select...")[0], 'monitored')
 
     await waitFor(() => {
       expect(card_groups.getAllByText("Select...")).toHaveLength(1)
     })
 
-    await waitFor(() => {
-      selectEvent.select(card_groups.getByText("Select..."), 'yes')
-    })
+    await selectEvent.select(card_groups.getByText("Select..."), 'yes')
 
     await waitFor(() => {
       expect(card_groups.queryByText(/required/i)).not.toBeInTheDocument()
@@ -2402,25 +2395,17 @@ describe('Tests for reports changeview - sites', () => {
 
     fireEvent.click(card_groups.getByText(/add new extension/i))
 
-    await waitFor(() => {
-      selectEvent.select(card_groups.getAllByText("Select...")[0], 'GLUE2EndpointImplementationName')
-    })
+    await selectEvent.select(card_groups.getAllByText("Select...")[0], 'GLUE2EndpointImplementationName')
 
     await waitFor(() => {
       expect(card_groups.getAllByText("Select...")).toHaveLength(1)
     })
 
-    await waitFor(() => {
-      selectEvent.select(card_groups.getByText("Select..."), 'ARC-CE')
-    })
+    await selectEvent.select(card_groups.getByText("Select..."), 'ARC-CE')
 
-    await waitFor(() => {
-      selectEvent.select(card_groups.getByText("NGI_AEGIS"), "NGI_CH")
-    })
+    await selectEvent.select(card_groups.getByText("NGI_AEGIS"), "NGI_CH")
 
-    await waitFor(() => {
-      selectEvent.select(card_groups.getByText("AEGIS11-MISANU"), "CSCS-LCG2")
-    })
+    await selectEvent.select(card_groups.getByText("AEGIS11-MISANU"), "CSCS-LCG2")
 
     fireEvent.click(screen.getByRole('button', { name: /save/i }));
     await waitFor(() => {
@@ -2463,7 +2448,6 @@ describe('Tests for reports changeview - sites', () => {
       context: 'argo.group.filter.fields'
     })
 
-
     await waitFor(() => {
       expect(mockChangeObject).toHaveBeenCalledWith(
         '/api/v2/internal/reports/', reportPayload(frontendReport, backendReport4sending)
@@ -2489,62 +2473,46 @@ describe('Tests for reports changeview - sites', () => {
 
     const endpoint_groups = within(screen.getByTestId('card-group-of-endpoints'));
 
-    await waitFor(() => {
-      selectEvent.select(endpoint_groups.getAllByText('yes')[0], 'no')
-    })
+    await selectEvent.select(endpoint_groups.getAllByText('yes')[0], 'no')
 
     fireEvent.click(endpoint_groups.getByTestId('removeTag-1'))
     fireEvent.click(endpoint_groups.getByTestId('removeTag-1'))
 
     fireEvent.click(endpoint_groups.getByRole('button', { name: /add new tag/i }))
 
-    await waitFor(() => {
-      selectEvent.select(endpoint_groups.getAllByText("Select...")[0], 'monitored')
-    })
+    await selectEvent.select(endpoint_groups.getAllByText("Select...")[0], 'monitored')
 
     await waitFor(() => {
       expect(endpoint_groups.getAllByText("Select...")).toHaveLength(1)
     })
 
-    await waitFor(() => {
-      selectEvent.select(endpoint_groups.getByText("Select..."), 'yes')
-    })
-    
+    await selectEvent.select(endpoint_groups.getByText("Select..."), 'yes')
+
     await waitFor(() => {
       expect(endpoint_groups.queryAllByText("Select...")).toHaveLength(0)
     })
 
     fireEvent.click(endpoint_groups.getByText(/add new extension/i))
 
-    await waitFor(() => {
-      selectEvent.select(endpoint_groups.getAllByText("Select...")[0], 'GLUE2EndpointID')
-    })
+    await selectEvent.select(endpoint_groups.getAllByText("Select...")[0], 'GLUE2EndpointID')
 
     await waitFor(() => {
       expect(endpoint_groups.getAllByText("Select...")).toHaveLength(1)
     })
 
-    await waitFor(() => {
-      selectEvent.select(endpoint_groups.getByText("Select..."), 'ce1.gridpp.ecdf.ed.ac.uk')
-    })
+    await selectEvent.select(endpoint_groups.getByText("Select..."), 'ce1.gridpp.ecdf.ed.ac.uk')
 
-    await waitFor(() => {
-      selectEvent.select(endpoint_groups.getByText('ce1.gridpp.ecdf.ed.ac.uk'), 'svr009.gla.scotgrid.ac.uk')
-    })
+    await selectEvent.select(endpoint_groups.getByText('ce1.gridpp.ecdf.ed.ac.uk'), 'svr009.gla.scotgrid.ac.uk')
 
     fireEvent.click(endpoint_groups.getByText(/add new extension/i))
 
-    await waitFor(() => {
-      selectEvent.select(endpoint_groups.getAllByText("Select...")[0], 'GLUE2EndpointImplementationName')
-    })
+    await selectEvent.select(endpoint_groups.getAllByText("Select...")[0], 'GLUE2EndpointImplementationName')
 
     await waitFor(() => {
       expect(endpoint_groups.getAllByText("Select...")).toHaveLength(1)
     })
 
-    await waitFor(() => {
-      selectEvent.select(endpoint_groups.getByText("Select..."), 'ARC-CE')
-    })
+    await selectEvent.select(endpoint_groups.getByText("Select..."), 'ARC-CE')
 
     await waitFor(() => {
       expect(endpoint_groups.queryAllByText("Select...")).toHaveLength(0)
@@ -2566,7 +2534,6 @@ describe('Tests for reports changeview - sites', () => {
       value: 'ARC-CE',
       context: 'argo.endpoint.filter.tags.array'
     })
-
 
     await waitFor(() => {
       expect(mockChangeObject).toHaveBeenCalledWith(
@@ -2610,7 +2577,6 @@ describe('Tests for reports changeview - sites', () => {
     frontendReport.thresholds.unknown = 0.2
     frontendReport.thresholds.downtime = 0.3
 
-
     await waitFor(() => {
       expect(mockChangeObject).toHaveBeenCalledWith(
         '/api/v2/internal/reports/', reportPayload(frontendReport, backendReport4sending)
@@ -2647,7 +2613,6 @@ describe('Tests for reports changeview - sites', () => {
 
     let backendReport = JSON.parse(JSON.stringify(backendReport4sending))
     backendReport.description = 'More elaborate description of the critical report.'
-
 
     await waitFor(() => {
       expect(mockChangeObject).toHaveBeenCalledWith(
@@ -2690,7 +2655,6 @@ describe('Tests for reports changeview - sites', () => {
     let backendReport = JSON.parse(JSON.stringify(backendReport4sending))
     backendReport.description = 'More elaborate description of the critical report.'
 
-
     await waitFor(() => {
       expect(mockChangeObject).toHaveBeenCalledWith(
         '/api/v2/internal/reports/', reportPayload(frontendReport, backendReport)
@@ -2723,7 +2687,6 @@ describe('Tests for reports changeview - sites', () => {
     })
     fireEvent.click(screen.getByRole('button', { name: /yes/i }));
 
-
     await waitFor(() => {
       expect(mockDeleteObject).toHaveBeenCalledWith(
         '/api/v2/internal/reports/yee9chel-5o4u-l4j4-410b-eipi3ohrah5i'
@@ -2752,7 +2715,6 @@ describe('Tests for reports changeview - sites', () => {
       expect(screen.getByRole('dialog', { title: /delete/i })).toBeInTheDocument();
     })
     fireEvent.click(screen.getByRole('button', { name: /yes/i }));
-
 
     await waitFor(() => {
       expect(mockDeleteObject).toHaveBeenCalledWith(
@@ -2786,7 +2748,6 @@ describe('Tests for reports changeview - sites', () => {
       expect(screen.getByRole('dialog', { title: /delete/i })).toBeInTheDocument();
     })
     fireEvent.click(screen.getByRole('button', { name: /yes/i }));
-
 
     await waitFor(() => {
       expect(mockDeleteObject).toHaveBeenCalledWith(
@@ -2847,7 +2808,7 @@ describe("Tests for reports changeview - servicegroups", () => {
     const aggrProfileField = screen.getByText("critical")
     const operationsProfileField = screen.getByText("egi_ops")
     const thresholdsProfileField = screen.getAllByText(/select/i)[0]
-    
+
     const topologyTypeField = screen.getByText("ServiceGroups")
 
     expect(nameField.value).toBe("Critical")
@@ -2859,19 +2820,19 @@ describe("Tests for reports changeview - servicegroups", () => {
 
     expect(groupField).toBeEnabled()
     expect(screen.queryByText("TEST")).not.toBeInTheDocument()
-    selectEvent.openMenu(groupField)
+    await selectEvent.openMenu(groupField)
     expect(screen.queryByText("TEST")).toBeInTheDocument()
 
     expect(metricProfileField).toBeEnabled()
     expect(screen.queryByText("FEDCLOUD")).not.toBeInTheDocument()
     expect(screen.queryByText("OPS_MONITOR_RHEL7")).not.toBeInTheDocument()
-    selectEvent.openMenu(metricProfileField)
+    await selectEvent.openMenu(metricProfileField)
     expect(screen.queryByText("FEDCLOUD")).toBeInTheDocument()
     expect(screen.queryByText("OPS_MONITOR_RHEL7")).toBeInTheDocument()
 
     expect(aggrProfileField).toBeEnabled()
     expect(screen.queryByText("ops-mon-critical")).not.toBeInTheDocument()
-    selectEvent.openMenu(aggrProfileField)
+    await selectEvent.openMenu(aggrProfileField)
     expect(screen.queryByText("ops-mon-critical")).toBeInTheDocument()
 
     expect(operationsProfileField).toBeEnabled()
@@ -2879,13 +2840,13 @@ describe("Tests for reports changeview - servicegroups", () => {
     expect(thresholdsProfileField).toBeEnabled()
     expect(screen.queryByText("TEST_PROFILE")).not.toBeInTheDocument()
     expect(screen.queryByText("test-thresholds")).not.toBeInTheDocument()
-    selectEvent.openMenu(thresholdsProfileField)
+    await selectEvent.openMenu(thresholdsProfileField)
     expect(screen.queryByText("TEST_PROFILE")).toBeInTheDocument()
     expect(screen.queryByText("test-thresholds")).toBeInTheDocument()
 
     expect(topologyTypeField).toBeEnabled()
     expect(screen.queryByText("Sites")).not.toBeInTheDocument()
-    selectEvent.openMenu(topologyTypeField)
+    await selectEvent.openMenu(topologyTypeField)
     expect(screen.queryByText("Sites")).toBeInTheDocument()
 
     expect(availabilityThresholdField.value).toBe("80")
@@ -2994,7 +2955,7 @@ describe("Tests for reports changeview - servicegroups", () => {
     expect(card_groups.queryByText("eu.eosc.core-aai.saml.login.edugain")).not.toBeInTheDocument()
     expect(card_groups.queryByText("eu.eosc.core-aai.oidc.login.edugain")).not.toBeInTheDocument()
 
-    selectEvent.openMenu(card_groups.queryByText("certification"))
+    await selectEvent.openMenu(card_groups.queryByText("certification"))
     expect(card_groups.queryByText("infrastructure")).toBeInTheDocument()
     expect(card_groups.queryByText("monitored")).toBeInTheDocument()
     expect(card_groups.queryByText("scope")).toBeInTheDocument()
@@ -3025,7 +2986,7 @@ describe("Tests for reports changeview - servicegroups", () => {
     expect(card_groups.queryByText("tier2")).not.toBeInTheDocument()
     expect(card_groups.queryByText("wlcg")).not.toBeInTheDocument()
 
-    selectEvent.openMenu(card_groups.queryByText("Certified"))
+    await selectEvent.openMenu(card_groups.queryByText("Certified"))
     expect(card_groups.queryByText("certification")).toBeInTheDocument()
     expect(card_groups.queryByText("infrastructure")).toBeInTheDocument()
     expect(card_groups.queryByText("monitored")).toBeInTheDocument()
@@ -3057,7 +3018,7 @@ describe("Tests for reports changeview - servicegroups", () => {
     expect(card_groups.queryByText("tier2")).not.toBeInTheDocument()
     expect(card_groups.queryByText("wlcg")).not.toBeInTheDocument()
 
-    selectEvent.openMenu(card_groups.queryByText("Production"))
+    await selectEvent.openMenu(card_groups.queryByText("Production"))
     expect(card_groups.queryByText("certification")).toBeInTheDocument()
     expect(card_groups.queryByText("infrastructure")).toBeInTheDocument()
     expect(card_groups.queryByText("monitored")).toBeInTheDocument()
@@ -3089,7 +3050,7 @@ describe("Tests for reports changeview - servicegroups", () => {
     expect(card_groups.queryByText("tier2")).not.toBeInTheDocument()
     expect(card_groups.queryByText("wlcg")).not.toBeInTheDocument()
 
-    selectEvent.openMenu(card_groups.queryAllByText("EGI")[0])
+    await selectEvent.openMenu(card_groups.queryAllByText("EGI")[0])
     expect(card_groups.queryByText("certification")).toBeInTheDocument()
     expect(card_groups.queryByText("infrastructure")).toBeInTheDocument()
     expect(card_groups.queryByText("monitored")).toBeInTheDocument()
@@ -3135,7 +3096,7 @@ describe("Tests for reports changeview - servicegroups", () => {
     expect(card_groups.queryByText("svr009.gla.scotgrid.ac.uk")).not.toBeInTheDocument()
     expect(card_groups.queryByText("t3-mw1.ph.ed.ac.uk")).not.toBeInTheDocument()
 
-    selectEvent.openMenu(card_groups.queryByText("GLUE2ComputingShareMappingQueue"))
+    await selectEvent.openMenu(card_groups.queryByText("GLUE2ComputingShareMappingQueue"))
     expect(card_groups.queryByText(/info_ext_/i)).not.toBeInTheDocument()
     expect(card_groups.queryByText("GLUE2ComputingShareMappingQueue")).toBeInTheDocument()
     expect(card_groups.queryByText("GLUE2EndpointImplementationName")).toBeInTheDocument()
@@ -3150,7 +3111,7 @@ describe("Tests for reports changeview - servicegroups", () => {
     expect(card_groups.queryByText("svr009.gla.scotgrid.ac.uk")).not.toBeInTheDocument()
     expect(card_groups.queryByText("t3-mw1.ph.ed.ac.uk")).not.toBeInTheDocument()
 
-    selectEvent.openMenu(card_groups.queryByText("condor"))
+    await selectEvent.openMenu(card_groups.queryByText("condor"))
     expect(card_groups.queryByText(/info_ext_/i)).not.toBeInTheDocument()
     expect(card_groups.queryByText("GLUE2ComputingShareMappingQueue")).toBeInTheDocument()
     expect(card_groups.queryByText("GLUE2EndpointImplementationName")).toBeInTheDocument()
@@ -3195,7 +3156,7 @@ describe("Tests for reports changeview - servicegroups", () => {
     expect(card_groups.queryByText("eu.eosc.core-aai.saml.login.edugain")).not.toBeInTheDocument()
     expect(card_groups.queryByText("eu.eosc.core-aai.oidc.login.edugain")).not.toBeInTheDocument()
 
-    selectEvent.openMenu(card_groups.queryAllByText("EGI")[1])
+    await selectEvent.openMenu(card_groups.queryAllByText("EGI")[1])
     expect(card_groups.queryByText("NGI_AEGIS_SERVICES")).toBeInTheDocument()
     expect(card_groups.queryByText("NGI_ARMGRID_SERVICES")).not.toBeInTheDocument()
     expect(card_groups.queryByText("NGI_BG_SERVICES")).not.toBeInTheDocument()
@@ -3226,7 +3187,7 @@ describe("Tests for reports changeview - servicegroups", () => {
     expect(card_groups.queryByText("eu.eosc.core-aai.saml.login.edugain")).not.toBeInTheDocument()
     expect(card_groups.queryByText("eu.eosc.core-aai.oidc.login.edugain")).not.toBeInTheDocument()
 
-    selectEvent.openMenu(card_groups.queryByText("NGI_AEGIS_SERVICES"))
+    await selectEvent.openMenu(card_groups.queryByText("NGI_AEGIS_SERVICES"))
     expect(card_groups.queryByText("NGI_AEGIS_SERVICES")).toBeInTheDocument()
     expect(card_groups.queryByText("NGI_ARMGRID_SERVICES")).toBeInTheDocument()
     expect(card_groups.queryByText("NGI_BG_SERVICES")).toBeInTheDocument()
@@ -3361,7 +3322,7 @@ describe("Tests for reports changeview - servicegroups", () => {
     expect(card_endpoints.queryByText("eu.eosc.core-aai.saml.login.edugain")).not.toBeInTheDocument()
     expect(card_endpoints.queryByText("eu.eosc.core-aai.oidc.login.edugain")).not.toBeInTheDocument()
 
-    selectEvent.openMenu(card_endpoints.queryByText("monitored"))
+    await selectEvent.openMenu(card_endpoints.queryByText("monitored"))
     expect(card_endpoints.queryByText("certification")).not.toBeInTheDocument()
     expect(card_endpoints.queryByText("infrastructure")).not.toBeInTheDocument()
     expect(card_endpoints.queryByText("monitored")).toBeInTheDocument()
@@ -3422,7 +3383,7 @@ describe("Tests for reports changeview - servicegroups", () => {
     expect(card_endpoints.queryByText("/dpm/farm.particle.cz/home/aaa")).not.toBeInTheDocument()
     expect(card_endpoints.queryByText("/dpm/fis.puc.cl/home/afigrid")).not.toBeInTheDocument()
 
-    selectEvent.openMenu(card_endpoints.queryByText("EOSC"))
+    await selectEvent.openMenu(card_endpoints.queryByText("EOSC"))
     expect(card_endpoints.queryByText("certification")).not.toBeInTheDocument()
     expect(card_endpoints.queryByText("infrastructure")).not.toBeInTheDocument()
     expect(card_endpoints.queryByText("monitored")).toBeInTheDocument()
@@ -3469,7 +3430,7 @@ describe("Tests for reports changeview - servicegroups", () => {
     expect(card_endpoints.queryByText("svr009.gla.scotgrid.ac.uk")).not.toBeInTheDocument()
     expect(card_endpoints.queryByText("t3-mw1.ph.ed.ac.uk")).not.toBeInTheDocument()
 
-    selectEvent.openMenu(card_endpoints.queryByText("NGI_AEGIS_SERVICES"))
+    await selectEvent.openMenu(card_endpoints.queryByText("NGI_AEGIS_SERVICES"))
     expect(card_endpoints.queryByText("NGI_AEGIS_SERVICES")).toBeInTheDocument()
     expect(card_endpoints.queryByText("NGI_ARMGRID_SERVICES")).toBeInTheDocument()
     expect(card_endpoints.queryByText("NGI_BG_SERVICES")).toBeInTheDocument()
@@ -3500,7 +3461,7 @@ describe("Tests for reports changeview - servicegroups", () => {
     expect(card_endpoints.queryByText("eu.eosc.core-aai.saml.login.edugain")).not.toBeInTheDocument()
     expect(card_endpoints.queryByText("eu.eosc.core-aai.oidc.login.edugain")).not.toBeInTheDocument()
 
-    selectEvent.openMenu(card_endpoints.queryByText("WMS"))
+    await selectEvent.openMenu(card_endpoints.queryByText("WMS"))
     expect(card_endpoints.queryByText("NGI_AEGIS_SERVICES")).toBeInTheDocument()
     expect(card_endpoints.queryByText("NGI_ARMGRID_SERVICES")).toBeInTheDocument()
     expect(card_endpoints.queryByText("NGI_BG_SERVICES")).toBeInTheDocument()
@@ -3587,7 +3548,7 @@ describe("Tests for reports changeview with wildcard - servicegroups", () => {
     const aggrProfileField = screen.getByText("critical")
     const operationsProfileField = screen.getByText("egi_ops")
     const thresholdsProfileField = screen.getAllByText(/select/i)[0]
-    
+
     const topologyTypeField = screen.getByText("ServiceGroups")
 
     expect(nameField.value).toBe("Critical")
@@ -3599,19 +3560,19 @@ describe("Tests for reports changeview with wildcard - servicegroups", () => {
 
     expect(groupField).toBeEnabled()
     expect(screen.queryByText("TEST")).not.toBeInTheDocument()
-    selectEvent.openMenu(groupField)
+    await selectEvent.openMenu(groupField)
     expect(screen.queryByText("TEST")).toBeInTheDocument()
 
     expect(metricProfileField).toBeEnabled()
     expect(screen.queryByText("FEDCLOUD")).not.toBeInTheDocument()
     expect(screen.queryByText("OPS_MONITOR_RHEL7")).not.toBeInTheDocument()
-    selectEvent.openMenu(metricProfileField)
+    await selectEvent.openMenu(metricProfileField)
     expect(screen.queryByText("FEDCLOUD")).toBeInTheDocument()
     expect(screen.queryByText("OPS_MONITOR_RHEL7")).toBeInTheDocument()
 
     expect(aggrProfileField).toBeEnabled()
     expect(screen.queryByText("ops-mon-critical")).not.toBeInTheDocument()
-    selectEvent.openMenu(aggrProfileField)
+    await selectEvent.openMenu(aggrProfileField)
     expect(screen.queryByText("ops-mon-critical")).toBeInTheDocument()
 
     expect(operationsProfileField).toBeEnabled()
@@ -3619,13 +3580,13 @@ describe("Tests for reports changeview with wildcard - servicegroups", () => {
     expect(thresholdsProfileField).toBeEnabled()
     expect(screen.queryByText("TEST_PROFILE")).not.toBeInTheDocument()
     expect(screen.queryByText("test-thresholds")).not.toBeInTheDocument()
-    selectEvent.openMenu(thresholdsProfileField)
+    await selectEvent.openMenu(thresholdsProfileField)
     expect(screen.queryByText("TEST_PROFILE")).toBeInTheDocument()
     expect(screen.queryByText("test-thresholds")).toBeInTheDocument()
 
     expect(topologyTypeField).toBeEnabled()
     expect(screen.queryByText("Sites")).not.toBeInTheDocument()
-    selectEvent.openMenu(topologyTypeField)
+    await selectEvent.openMenu(topologyTypeField)
     expect(screen.queryByText("Sites")).toBeInTheDocument()
 
     expect(availabilityThresholdField.value).toBe("80")
@@ -3737,7 +3698,7 @@ describe("Tests for reports changeview with wildcard - servicegroups", () => {
     expect(card_groups.getByText("EGI*")).toBeInTheDocument()
     expect(card_groups.getByText("NGI_A*")).toBeInTheDocument()
 
-    selectEvent.openMenu(card_groups.queryByText("certification"))
+    await selectEvent.openMenu(card_groups.queryByText("certification"))
     expect(card_groups.queryByText("infrastructure")).toBeInTheDocument()
     expect(card_groups.queryByText("monitored")).toBeInTheDocument()
     expect(card_groups.queryByText("scope")).toBeInTheDocument()
@@ -3768,7 +3729,7 @@ describe("Tests for reports changeview with wildcard - servicegroups", () => {
     expect(card_groups.queryByText("tier2")).not.toBeInTheDocument()
     expect(card_groups.queryByText("wlcg")).not.toBeInTheDocument()
 
-    selectEvent.openMenu(card_groups.queryByText("Certified"))
+    await selectEvent.openMenu(card_groups.queryByText("Certified"))
     expect(card_groups.queryByText("certification")).toBeInTheDocument()
     expect(card_groups.queryByText("infrastructure")).toBeInTheDocument()
     expect(card_groups.queryByText("monitored")).toBeInTheDocument()
@@ -3800,7 +3761,7 @@ describe("Tests for reports changeview with wildcard - servicegroups", () => {
     expect(card_groups.queryByText("tier2")).not.toBeInTheDocument()
     expect(card_groups.queryByText("wlcg")).not.toBeInTheDocument()
 
-    selectEvent.openMenu(card_groups.queryByText("Production"))
+    await selectEvent.openMenu(card_groups.queryByText("Production"))
     expect(card_groups.queryByText("certification")).toBeInTheDocument()
     expect(card_groups.queryByText("infrastructure")).toBeInTheDocument()
     expect(card_groups.queryByText("monitored")).toBeInTheDocument()
@@ -3832,7 +3793,7 @@ describe("Tests for reports changeview with wildcard - servicegroups", () => {
     expect(card_groups.queryByText("tier2")).not.toBeInTheDocument()
     expect(card_groups.queryByText("wlcg")).not.toBeInTheDocument()
 
-    selectEvent.openMenu(card_groups.queryByText("EGI*"))
+    await selectEvent.openMenu(card_groups.queryByText("EGI*"))
     expect(card_groups.queryByText("certification")).toBeInTheDocument()
     expect(card_groups.queryByText("infrastructure")).toBeInTheDocument()
     expect(card_groups.queryByText("monitored")).toBeInTheDocument()
@@ -3878,7 +3839,7 @@ describe("Tests for reports changeview with wildcard - servicegroups", () => {
     expect(card_groups.queryByText("svr009.gla.scotgrid.ac.uk")).not.toBeInTheDocument()
     expect(card_groups.queryByText("t3-mw1.ph.ed.ac.uk")).not.toBeInTheDocument()
 
-    selectEvent.openMenu(card_groups.queryByText("GLUE2ComputingShareMappingQueue"))
+    await selectEvent.openMenu(card_groups.queryByText("GLUE2ComputingShareMappingQueue"))
     expect(card_groups.queryByText(/info_ext_/i)).not.toBeInTheDocument()
     expect(card_groups.queryByText("GLUE2ComputingShareMappingQueue")).toBeInTheDocument()
     expect(card_groups.queryByText("GLUE2EndpointImplementationName")).toBeInTheDocument()
@@ -3893,7 +3854,7 @@ describe("Tests for reports changeview with wildcard - servicegroups", () => {
     expect(card_groups.queryByText("svr009.gla.scotgrid.ac.uk")).not.toBeInTheDocument()
     expect(card_groups.queryByText("t3-mw1.ph.ed.ac.uk")).not.toBeInTheDocument()
 
-    selectEvent.openMenu(card_groups.queryByText("condor"))
+    await selectEvent.openMenu(card_groups.queryByText("condor"))
     expect(card_groups.queryByText(/info_ext_/i)).not.toBeInTheDocument()
     expect(card_groups.queryByText("GLUE2ComputingShareMappingQueue")).toBeInTheDocument()
     expect(card_groups.queryByText("GLUE2EndpointImplementationName")).toBeInTheDocument()
@@ -3938,7 +3899,7 @@ describe("Tests for reports changeview with wildcard - servicegroups", () => {
     expect(card_groups.queryByText("eu.eosc.core-aai.saml.login.edugain")).not.toBeInTheDocument()
     expect(card_groups.queryByText("eu.eosc.core-aai.oidc.login.edugain")).not.toBeInTheDocument()
 
-    selectEvent.openMenu(card_groups.queryAllByText("EGI")[1])
+    await selectEvent.openMenu(card_groups.queryAllByText("EGI")[1])
     expect(card_groups.queryByText("NGI_AEGIS_SERVICES")).not.toBeInTheDocument()
     expect(card_groups.queryByText("NGI_ARMGRID_SERVICES")).not.toBeInTheDocument()
     expect(card_groups.queryByText("NGI_BG_SERVICES")).not.toBeInTheDocument()
@@ -3969,7 +3930,7 @@ describe("Tests for reports changeview with wildcard - servicegroups", () => {
     expect(card_groups.queryByText("eu.eosc.core-aai.saml.login.edugain")).not.toBeInTheDocument()
     expect(card_groups.queryByText("eu.eosc.core-aai.oidc.login.edugain")).not.toBeInTheDocument()
 
-    selectEvent.openMenu(card_groups.queryByText("NGI_A*"))
+    await selectEvent.openMenu(card_groups.queryByText("NGI_A*"))
     expect(card_groups.queryByText("NGI_AEGIS_SERVICES")).toBeInTheDocument()
     expect(card_groups.queryByText("NGI_ARMGRID_SERVICES")).toBeInTheDocument()
     expect(card_groups.queryByText("NGI_BG_SERVICES")).toBeInTheDocument()
@@ -4108,7 +4069,7 @@ describe("Tests for reports changeview with wildcard - servicegroups", () => {
     expect(card_endpoints.queryByText("Top-*")).toBeInTheDocument()
     expect(card_endpoints.queryByText(/search/i)).not.toBeInTheDocument()
 
-    selectEvent.openMenu(card_endpoints.queryByText("monitored"))
+    await selectEvent.openMenu(card_endpoints.queryByText("monitored"))
     expect(card_endpoints.queryByText("certification")).not.toBeInTheDocument()
     expect(card_endpoints.queryByText("infrastructure")).not.toBeInTheDocument()
     expect(card_endpoints.queryByText("monitored")).toBeInTheDocument()
@@ -4169,7 +4130,7 @@ describe("Tests for reports changeview with wildcard - servicegroups", () => {
     expect(card_endpoints.queryByText("/dpm/farm.particle.cz/home/aaa")).not.toBeInTheDocument()
     expect(card_endpoints.queryByText("/dpm/fis.puc.cl/home/afigrid")).not.toBeInTheDocument()
 
-    selectEvent.openMenu(card_endpoints.queryByText("EOSC*"))
+    await selectEvent.openMenu(card_endpoints.queryByText("EOSC*"))
     expect(card_endpoints.queryByText("certification")).not.toBeInTheDocument()
     expect(card_endpoints.queryByText("infrastructure")).not.toBeInTheDocument()
     expect(card_endpoints.queryByText("monitored")).toBeInTheDocument()
@@ -4216,7 +4177,7 @@ describe("Tests for reports changeview with wildcard - servicegroups", () => {
     expect(card_endpoints.queryByText("svr009.gla.scotgrid.ac.uk")).not.toBeInTheDocument()
     expect(card_endpoints.queryByText("t3-mw1.ph.ed.ac.uk")).not.toBeInTheDocument()
 
-    selectEvent.openMenu(card_endpoints.queryByText("NGI_*"))
+    await selectEvent.openMenu(card_endpoints.queryByText("NGI_*"))
     expect(card_endpoints.queryByText("NGI_AEGIS_SERVICES")).toBeInTheDocument()
     expect(card_endpoints.queryByText("NGI_ARMGRID_SERVICES")).toBeInTheDocument()
     expect(card_endpoints.queryByText("NGI_BG_SERVICES")).toBeInTheDocument()
@@ -4247,7 +4208,7 @@ describe("Tests for reports changeview with wildcard - servicegroups", () => {
     expect(card_endpoints.queryByText("eu.eosc.core-aai.saml.login.edugain")).not.toBeInTheDocument()
     expect(card_endpoints.queryByText("eu.eosc.core-aai.oidc.login.edugain")).not.toBeInTheDocument()
 
-    selectEvent.openMenu(card_endpoints.queryByText("Top-*"))
+    await selectEvent.openMenu(card_endpoints.queryByText("Top-*"))
     expect(card_endpoints.queryByText("NGI_AEGIS_SERVICES")).toBeInTheDocument()
     expect(card_endpoints.queryByText("NGI_ARMGRID_SERVICES")).toBeInTheDocument()
     expect(card_endpoints.queryByText("NGI_BG_SERVICES")).toBeInTheDocument()
@@ -4300,13 +4261,11 @@ describe("Tests for reports changeview with wildcard - servicegroups", () => {
       expect(screen.getByRole("button", { name: /save/i })).toBeInTheDocument()
     })
 
-    await waitFor(() => {
-      selectEvent.select(screen.queryByText("NGI_*"), "EGI_NBISBILS_SLA")
-    })
+    await selectEvent.select(screen.queryByText("NGI_*"), "EGI_NBISBILS_SLA")
 
     const card_endpoints = within(screen.getByTestId("card-group-of-endpoints"))
 
-    selectEvent.openMenu(card_endpoints.queryByText("Top-*"))
+    await selectEvent.openMenu(card_endpoints.queryByText("Top-*"))
     await waitFor(() => {
       expect(card_endpoints.queryByText("WMS")).toBeInTheDocument()
     })
@@ -4397,7 +4356,7 @@ describe("Tests for reports changeview with wildcards - sites", () => {
     expect(groupField).toBeEnabled()
 
     expect(screen.queryByText("TEST")).not.toBeInTheDocument()
-    selectEvent.openMenu(groupField)
+    await selectEvent.openMenu(groupField)
     expect(screen.queryByText("TEST")).toBeInTheDocument()
 
     const metricProfileField = screen.getByText("ARGO_MON_CRITICAL")
@@ -4410,27 +4369,27 @@ describe("Tests for reports changeview with wildcards - sites", () => {
     expect(metricProfileField).toBeEnabled()
     expect(screen.queryByText("FEDCLOUD")).not.toBeInTheDocument()
     expect(screen.queryByText("OPS_MONITOR_RHEL7")).not.toBeInTheDocument()
-    selectEvent.openMenu(metricProfileField)
+    await selectEvent.openMenu(metricProfileField)
     expect(screen.queryByText("FEDCLOUD")).toBeInTheDocument()
     expect(screen.queryByText("OPS_MONITOR_RHEL7")).toBeInTheDocument()
 
     expect(aggrProfileField).toBeEnabled()
     expect(screen.queryByText("ops-mon-critical")).not.toBeInTheDocument()
-    selectEvent.openMenu(aggrProfileField)
+    await selectEvent.openMenu(aggrProfileField)
     expect(screen.queryByText("ops-mon-critical")).toBeInTheDocument()
 
     expect(operationsProfileField).toBeEnabled()
-    
+
     expect(thresholdsProfileField).toBeEnabled()
     expect(screen.queryByText("TEST_PROFILE")).not.toBeInTheDocument()
     expect(screen.queryByText("test-thresholds")).not.toBeInTheDocument()
-    selectEvent.openMenu(thresholdsProfileField)
+    await selectEvent.openMenu(thresholdsProfileField)
     expect(screen.queryByText("TEST_PROFILE")).toBeInTheDocument()
     expect(screen.queryByText("test-thresholds")).toBeInTheDocument()
 
     expect(topologyTypeField).toBeEnabled()
     expect(screen.queryByText("ServiceGroups")).not.toBeInTheDocument()
-    selectEvent.openMenu(topologyTypeField)
+    await selectEvent.openMenu(topologyTypeField)
     expect(screen.queryByText("ServiceGroups")).toBeInTheDocument()
 
     expect(screen.getAllByTestId(/card/i)).toHaveLength(2)
@@ -4446,7 +4405,7 @@ describe("Tests for reports changeview with wildcards - sites", () => {
     expect(card_groups.queryByText(/glue2/i)).not.toBeInTheDocument()
     expect(card_groups.queryByText(/vo_/i)).not.toBeInTheDocument()
 
-    selectEvent.openMenu(card_groups.queryByText("certification"))
+    await selectEvent.openMenu(card_groups.queryByText("certification"))
     expect(card_groups.queryByText("certification")).toBeInTheDocument()
     expect(card_groups.queryByText("infrastructure")).toBeInTheDocument()
     expect(card_groups.queryByText("monitored")).toBeInTheDocument()
@@ -4498,7 +4457,7 @@ describe("Tests for reports changeview with wildcards - sites", () => {
     expect(card_groups.queryByText("Local")).not.toBeInTheDocument()
     expect(card_groups.queryByText("SLA")).not.toBeInTheDocument()
 
-    selectEvent.openMenu(card_groups.queryByText("Certified"))
+    await selectEvent.openMenu(card_groups.queryByText("Certified"))
     expect(card_groups.queryByText("Candidate")).toBeInTheDocument()
     expect(card_groups.queryByText("Certified")).toBeInTheDocument()
     expect(card_groups.queryByText("Closed")).toBeInTheDocument()
@@ -4512,7 +4471,7 @@ describe("Tests for reports changeview with wildcards - sites", () => {
     expect(card_groups.queryByText("Local")).not.toBeInTheDocument()
     expect(card_groups.queryByText("SLA")).not.toBeInTheDocument()
 
-    selectEvent.openMenu(card_groups.queryByText("Production"))
+    await selectEvent.openMenu(card_groups.queryByText("Production"))
     expect(card_groups.queryByText("Candidate")).toBeInTheDocument()
     expect(card_groups.queryByText("Certified")).toBeInTheDocument()
     expect(card_groups.queryByText("Closed")).toBeInTheDocument()
@@ -4652,7 +4611,7 @@ describe("Tests for reports changeview with wildcards - sites", () => {
     expect(card_groups.queryByText("eu.eosc.core-aai.saml.login.edugain")).not.toBeInTheDocument()
     expect(card_groups.queryByText("eu.eosc.core-aai.oidc.login.edugain")).not.toBeInTheDocument()
 
-    selectEvent.openMenu(card_groups.getByText("EOSC_*"))
+    await selectEvent.openMenu(card_groups.getByText("EOSC_*"))
     expect(card_groups.queryByText("NGI_AEGIS_SERVICES")).not.toBeInTheDocument()
     expect(card_groups.queryByText("NGI_ARMGRID_SERVICES")).not.toBeInTheDocument()
     expect(card_groups.queryByText("NGI_BG_SERVICES")).not.toBeInTheDocument()
@@ -4683,7 +4642,7 @@ describe("Tests for reports changeview with wildcards - sites", () => {
     expect(card_groups.queryByText("eu.eosc.core-aai.saml.login.edugain")).not.toBeInTheDocument()
     expect(card_groups.queryByText("eu.eosc.core-aai.oidc.login.edugain")).not.toBeInTheDocument()
 
-    selectEvent.openMenu(card_groups.getByText("EOSC*"))
+    await selectEvent.openMenu(card_groups.getByText("EOSC*"))
     expect(card_groups.queryByText("NGI_AEGIS_SERVICES")).not.toBeInTheDocument()
     expect(card_groups.queryByText("NGI_ARMGRID_SERVICES")).not.toBeInTheDocument()
     expect(card_groups.queryByText("NGI_BG_SERVICES")).not.toBeInTheDocument()
@@ -4746,7 +4705,7 @@ describe("Tests for reports changeview with wildcards - sites", () => {
     expect(card_endpoints.queryByText("eu.eosc.core-aai.saml.login.edugain")).not.toBeInTheDocument()
     expect(card_endpoints.queryByText("eu.eosc.core-aai.oidc.login.edugain")).not.toBeInTheDocument()
 
-    selectEvent.openMenu(card_endpoints.getByText("EOSC_Core*"))
+    await selectEvent.openMenu(card_endpoints.getByText("EOSC_Core*"))
     expect(card_endpoints.queryByText("EGI")).not.toBeInTheDocument()
 
     expect(card_endpoints.queryByText("NGI_AEGIS_SERVICES")).not.toBeInTheDocument()
@@ -4779,7 +4738,7 @@ describe("Tests for reports changeview with wildcards - sites", () => {
     expect(card_endpoints.queryByText("eu.eosc.core-aai.saml.login.edugain")).not.toBeInTheDocument()
     expect(card_endpoints.queryByText("eu.eosc.core-aai.oidc.login.edugain")).not.toBeInTheDocument()
 
-    selectEvent.openMenu(card_endpoints.getByText(/search/i))
+    await selectEvent.openMenu(card_endpoints.getByText(/search/i))
     expect(card_endpoints.queryByText("EGI")).not.toBeInTheDocument()
 
     expect(card_endpoints.queryByText("NGI_AEGIS_SERVICES")).not.toBeInTheDocument()
@@ -4885,7 +4844,7 @@ describe("Tests for reports changeview with negation - sites", () => {
     expect(groupField).toBeEnabled()
 
     expect(screen.queryByText("TEST")).not.toBeInTheDocument()
-    selectEvent.openMenu(groupField)
+    await selectEvent.openMenu(groupField)
     expect(screen.queryByText("TEST")).toBeInTheDocument()
 
     const metricProfileField = screen.getByText("ARGO_MON_CRITICAL")
@@ -4898,27 +4857,27 @@ describe("Tests for reports changeview with negation - sites", () => {
     expect(metricProfileField).toBeEnabled()
     expect(screen.queryByText("FEDCLOUD")).not.toBeInTheDocument()
     expect(screen.queryByText("OPS_MONITOR_RHEL7")).not.toBeInTheDocument()
-    selectEvent.openMenu(metricProfileField)
+    await selectEvent.openMenu(metricProfileField)
     expect(screen.queryByText("FEDCLOUD")).toBeInTheDocument()
     expect(screen.queryByText("OPS_MONITOR_RHEL7")).toBeInTheDocument()
 
     expect(aggrProfileField).toBeEnabled()
     expect(screen.queryByText("ops-mon-critical")).not.toBeInTheDocument()
-    selectEvent.openMenu(aggrProfileField)
+    await selectEvent.openMenu(aggrProfileField)
     expect(screen.queryByText("ops-mon-critical")).toBeInTheDocument()
 
     expect(operationsProfileField).toBeEnabled()
-    
+
     expect(thresholdsProfileField).toBeEnabled()
     expect(screen.queryByText("TEST_PROFILE")).not.toBeInTheDocument()
     expect(screen.queryByText("test-thresholds")).not.toBeInTheDocument()
-    selectEvent.openMenu(thresholdsProfileField)
+    await selectEvent.openMenu(thresholdsProfileField)
     expect(screen.queryByText("TEST_PROFILE")).toBeInTheDocument()
     expect(screen.queryByText("test-thresholds")).toBeInTheDocument()
 
     expect(topologyTypeField).toBeEnabled()
     expect(screen.queryByText("ServiceGroups")).not.toBeInTheDocument()
-    selectEvent.openMenu(topologyTypeField)
+    await selectEvent.openMenu(topologyTypeField)
     expect(screen.queryByText("ServiceGroups")).toBeInTheDocument()
 
     expect(availabilityThresholdField.value).toBe("80")
@@ -4942,7 +4901,7 @@ describe("Tests for reports changeview with negation - sites", () => {
     expect(card_groups.queryByText("scope")).toBeInTheDocument()
     expect(card_groups.queryByText("production")).not.toBeInTheDocument()
 
-    selectEvent.openMenu(card_groups.getByText("certification"))
+    await selectEvent.openMenu(card_groups.getByText("certification"))
 
     expect(card_groups.queryByText("certification")).toBeInTheDocument()
     expect(card_groups.queryByText("infrastructure")).toBeInTheDocument()
@@ -4976,7 +4935,7 @@ describe("Tests for reports changeview with negation - sites", () => {
     expect(card_groups.queryByText("tier2")).not.toBeInTheDocument()
     expect(card_groups.queryByText("wlcg")).not.toBeInTheDocument()
 
-    selectEvent.openMenu(card_groups.getByText("Certified"))
+    await selectEvent.openMenu(card_groups.getByText("Certified"))
     expect(card_groups.queryByText("Candidate")).toBeInTheDocument()
     expect(card_groups.queryByText("Certified")).toBeInTheDocument()
     expect(card_groups.queryByText("Closed")).toBeInTheDocument()
@@ -5003,7 +4962,7 @@ describe("Tests for reports changeview with negation - sites", () => {
     expect(card_groups.queryByText("tier2")).not.toBeInTheDocument()
     expect(card_groups.queryByText("wlcg")).not.toBeInTheDocument()
 
-    selectEvent.openMenu(card_groups.getByText("Production"))
+    await selectEvent.openMenu(card_groups.getByText("Production"))
     expect(card_groups.queryByText("Candidate")).toBeInTheDocument()
     expect(card_groups.queryByText("Certified")).toBeInTheDocument()
     expect(card_groups.queryByText("Closed")).toBeInTheDocument()
@@ -5030,7 +4989,7 @@ describe("Tests for reports changeview with negation - sites", () => {
     expect(card_groups.queryByText("tier2")).not.toBeInTheDocument()
     expect(card_groups.queryByText("wlcg")).not.toBeInTheDocument()
 
-    selectEvent.openMenu(card_groups.getByText("EGI"))
+    await selectEvent.openMenu(card_groups.getByText("EGI"))
     expect(card_groups.queryByText("Candidate")).toBeInTheDocument()
     expect(card_groups.queryByText("Certified")).toBeInTheDocument()
     expect(card_groups.queryByText("Closed")).toBeInTheDocument()
@@ -5105,7 +5064,7 @@ describe("Tests for reports changeview with negation - sites", () => {
     expect(card_groups.queryByText("SWITCH")).not.toBeInTheDocument()
     expect(card_groups.queryByText("~CSCS-LCG2")).toBeInTheDocument()
 
-    selectEvent.openMenu(card_groups.getByText("~NGI_AEGIS"))
+    await selectEvent.openMenu(card_groups.getByText("~NGI_AEGIS"))
     expect(card_groups.queryByText("EOSC_AAI")).toBeInTheDocument()
     expect(card_groups.queryByText("EOSC_Accounting")).toBeInTheDocument()
     expect(card_groups.queryByText("NGI_AEGIS")).toBeInTheDocument()
@@ -5119,7 +5078,7 @@ describe("Tests for reports changeview with negation - sites", () => {
     expect(card_groups.queryByText("CSCS-LCG2")).not.toBeInTheDocument()
     expect(card_groups.queryByText("SWITCH")).not.toBeInTheDocument()
 
-    selectEvent.openMenu(card_groups.getByText("~CSCS-LCG2"))
+    await selectEvent.openMenu(card_groups.getByText("~CSCS-LCG2"))
     expect(card_groups.queryByText("RCauth")).toBeInTheDocument()
     expect(card_groups.queryByText("EOSC_Core_Infrastracture_proxy")).toBeInTheDocument()
     expect(card_groups.queryByText("EOSC_Accounting_Services")).toBeInTheDocument()
@@ -5145,7 +5104,7 @@ describe("Tests for reports changeview with negation - sites", () => {
     expect(card_endpoints.queryByText("scope")).toBeInTheDocument()
     expect(card_endpoints.queryByText("production")).toBeInTheDocument()
 
-    selectEvent.openMenu(card_endpoints.getByText("monitored"))
+    await selectEvent.openMenu(card_endpoints.getByText("monitored"))
     expect(card_endpoints.queryByText("certification")).not.toBeInTheDocument()
     expect(card_endpoints.queryByText("infrastructure")).not.toBeInTheDocument()
     expect(card_endpoints.queryByText("monitored")).toBeInTheDocument()
@@ -5178,7 +5137,7 @@ describe("Tests for reports changeview with negation - sites", () => {
     expect(card_endpoints.queryByText("tier2")).not.toBeInTheDocument()
     expect(card_endpoints.queryByText("wlcg")).not.toBeInTheDocument()
 
-    selectEvent.openMenu(card_endpoints.getAllByText("yes")[0])
+    await selectEvent.openMenu(card_endpoints.getAllByText("yes")[0])
     expect(card_endpoints.queryByText("Candidate")).not.toBeInTheDocument()
     expect(card_endpoints.queryByText("Certified")).not.toBeInTheDocument()
     expect(card_endpoints.queryByText("Closed")).not.toBeInTheDocument()
@@ -5204,8 +5163,8 @@ describe("Tests for reports changeview with negation - sites", () => {
     expect(card_endpoints.queryByText("SLA")).not.toBeInTheDocument()
     expect(card_endpoints.queryByText("tier2")).not.toBeInTheDocument()
     expect(card_endpoints.queryByText("wlcg")).not.toBeInTheDocument()
-    
-    selectEvent.openMenu(card_endpoints.getByText("EOSC"))
+
+    await selectEvent.openMenu(card_endpoints.getByText("EOSC"))
     expect(card_endpoints.queryByText("Candidate")).not.toBeInTheDocument()
     expect(card_endpoints.queryByText("Certified")).not.toBeInTheDocument()
     expect(card_endpoints.queryByText("Closed")).not.toBeInTheDocument()
@@ -5290,7 +5249,7 @@ describe("Tests for reports changeview with negation - sites", () => {
     expect(card_endpoints.queryByText("eu.eosc.core-aai.saml.login.edugain")).toBeInTheDocument()
     expect(card_endpoints.queryByText("eu.eosc.core-aai.oidc.login.edugain")).not.toBeInTheDocument()
 
-    selectEvent.openMenu(card_endpoints.queryByText("~EOSC_Accounting_Services"))
+    await selectEvent.openMenu(card_endpoints.queryByText("~EOSC_Accounting_Services"))
     expect(card_endpoints.queryByText("NGI_AEGIS_SERVICES")).not.toBeInTheDocument()
     expect(card_endpoints.queryByText("NGI_ARMGRID_SERVICES")).not.toBeInTheDocument()
     expect(card_endpoints.queryByText("NGI_BG_SERVICES")).not.toBeInTheDocument()
@@ -5321,7 +5280,7 @@ describe("Tests for reports changeview with negation - sites", () => {
     expect(card_endpoints.queryByText("eu.eosc.core-aai.saml.login.edugain")).toBeInTheDocument()
     expect(card_endpoints.queryByText("eu.eosc.core-aai.oidc.login.edugain")).not.toBeInTheDocument()
 
-    selectEvent.openMenu(card_endpoints.queryByText("eu.eosc.core-aai.saml.login.edugain"))
+    await selectEvent.openMenu(card_endpoints.queryByText("eu.eosc.core-aai.saml.login.edugain"))
     expect(card_endpoints.queryByText("NGI_AEGIS_SERVICES")).not.toBeInTheDocument()
     expect(card_endpoints.queryByText("NGI_ARMGRID_SERVICES")).not.toBeInTheDocument()
     expect(card_endpoints.queryByText("NGI_BG_SERVICES")).not.toBeInTheDocument()
@@ -5377,10 +5336,10 @@ describe("Tests for reports changeview with negation - sites", () => {
       expect(card_groups.queryAllByText("You cannot select negated value")).toHaveLength(2)
     })
 
-    expect(card_endpoints.queryByText("You cannot select negated value"))
+    expect(card_endpoints.queryByText("You cannot select negated value")).not.toBeInTheDocument()
 
     await selectEvent.select(card_endpoints.getByText("~EOSC_Accounting_Services"), "EOSC_Accounting_Services")
-    
+
     await waitFor(() => {
       expect(card_endpoints.queryAllByText("You cannot select negated value")).toHaveLength(1)
     })
@@ -5431,7 +5390,7 @@ describe("Tests for reports changeview with negation - servicegroups", () => {
     expect(groupField).toBeEnabled()
 
     expect(screen.queryByText("TEST")).not.toBeInTheDocument()
-    selectEvent.openMenu(groupField)
+    await selectEvent.openMenu(groupField)
     expect(screen.queryByText("TEST")).toBeInTheDocument()
 
     const metricProfileField = screen.getByText("ARGO_MON_CRITICAL")
@@ -5444,27 +5403,27 @@ describe("Tests for reports changeview with negation - servicegroups", () => {
     expect(metricProfileField).toBeEnabled()
     expect(screen.queryByText("FEDCLOUD")).not.toBeInTheDocument()
     expect(screen.queryByText("OPS_MONITOR_RHEL7")).not.toBeInTheDocument()
-    selectEvent.openMenu(metricProfileField)
+    await selectEvent.openMenu(metricProfileField)
     expect(screen.queryByText("FEDCLOUD")).toBeInTheDocument()
     expect(screen.queryByText("OPS_MONITOR_RHEL7")).toBeInTheDocument()
 
     expect(aggrProfileField).toBeEnabled()
     expect(screen.queryByText("ops-mon-critical")).not.toBeInTheDocument()
-    selectEvent.openMenu(aggrProfileField)
+    await selectEvent.openMenu(aggrProfileField)
     expect(screen.queryByText("ops-mon-critical")).toBeInTheDocument()
 
     expect(operationsProfileField).toBeEnabled()
-    
+
     expect(thresholdsProfileField).toBeEnabled()
     expect(screen.queryByText("TEST_PROFILE")).not.toBeInTheDocument()
     expect(screen.queryByText("test-thresholds")).not.toBeInTheDocument()
-    selectEvent.openMenu(thresholdsProfileField)
+    await selectEvent.openMenu(thresholdsProfileField)
     expect(screen.queryByText("TEST_PROFILE")).toBeInTheDocument()
     expect(screen.queryByText("test-thresholds")).toBeInTheDocument()
 
     expect(topologyTypeField).toBeEnabled()
     expect(screen.queryByText("Sites")).not.toBeInTheDocument()
-    selectEvent.openMenu(topologyTypeField)
+    await selectEvent.openMenu(topologyTypeField)
     expect(screen.queryByText("Sites")).toBeInTheDocument()
 
     expect(availabilityThresholdField.value).toBe("80")
@@ -5488,7 +5447,7 @@ describe("Tests for reports changeview with negation - servicegroups", () => {
     expect(card_groups.queryByText("scope")).toBeInTheDocument()
     expect(card_groups.queryByText("production")).not.toBeInTheDocument()
 
-    selectEvent.openMenu(card_groups.getByText("certification"))
+    await selectEvent.openMenu(card_groups.getByText("certification"))
 
     expect(card_groups.queryByText("certification")).toBeInTheDocument()
     expect(card_groups.queryByText("infrastructure")).toBeInTheDocument()
@@ -5522,7 +5481,7 @@ describe("Tests for reports changeview with negation - servicegroups", () => {
     expect(card_groups.queryByText("tier2")).not.toBeInTheDocument()
     expect(card_groups.queryByText("wlcg")).not.toBeInTheDocument()
 
-    selectEvent.openMenu(card_groups.getByText("Certified"))
+    await selectEvent.openMenu(card_groups.getByText("Certified"))
     expect(card_groups.queryByText("Candidate")).toBeInTheDocument()
     expect(card_groups.queryByText("Certified")).toBeInTheDocument()
     expect(card_groups.queryByText("Closed")).toBeInTheDocument()
@@ -5549,7 +5508,7 @@ describe("Tests for reports changeview with negation - servicegroups", () => {
     expect(card_groups.queryByText("tier2")).not.toBeInTheDocument()
     expect(card_groups.queryByText("wlcg")).not.toBeInTheDocument()
 
-    selectEvent.openMenu(card_groups.getByText("Production"))
+    await selectEvent.openMenu(card_groups.getByText("Production"))
     expect(card_groups.queryByText("Candidate")).toBeInTheDocument()
     expect(card_groups.queryByText("Certified")).toBeInTheDocument()
     expect(card_groups.queryByText("Closed")).toBeInTheDocument()
@@ -5576,7 +5535,7 @@ describe("Tests for reports changeview with negation - servicegroups", () => {
     expect(card_groups.queryByText("tier2")).not.toBeInTheDocument()
     expect(card_groups.queryByText("wlcg")).not.toBeInTheDocument()
 
-    selectEvent.openMenu(card_groups.getAllByText("EGI")[0])
+    await selectEvent.openMenu(card_groups.getAllByText("EGI")[0])
     expect(card_groups.queryByText("Candidate")).toBeInTheDocument()
     expect(card_groups.queryByText("Certified")).toBeInTheDocument()
     expect(card_groups.queryByText("Closed")).toBeInTheDocument()
@@ -5650,7 +5609,7 @@ describe("Tests for reports changeview with negation - servicegroups", () => {
     expect(card_groups.queryByText("CSCS-LCG2")).not.toBeInTheDocument()
     expect(card_groups.queryByText("SWITCH")).not.toBeInTheDocument()
 
-    selectEvent.openMenu(card_groups.getByText("~NGI_AEGIS_SERVICES"))
+    await selectEvent.openMenu(card_groups.getByText("~NGI_AEGIS_SERVICES"))
     expect(card_groups.queryByText("NGI_AEGIS_SERVICES")).toBeInTheDocument()
     expect(card_groups.queryByText("NGI_ARMGRID_SERVICES")).toBeInTheDocument()
     expect(card_groups.queryByText("NGI_BG_SERVICES")).toBeInTheDocument()
@@ -5687,7 +5646,7 @@ describe("Tests for reports changeview with negation - servicegroups", () => {
     expect(card_endpoints.queryByText("scope")).toBeInTheDocument()
     expect(card_endpoints.queryByText("production")).toBeInTheDocument()
 
-    selectEvent.openMenu(card_endpoints.getByText("monitored"))
+    await selectEvent.openMenu(card_endpoints.getByText("monitored"))
     expect(card_endpoints.queryByText("certification")).not.toBeInTheDocument()
     expect(card_endpoints.queryByText("infrastructure")).not.toBeInTheDocument()
     expect(card_endpoints.queryByText("monitored")).toBeInTheDocument()
@@ -5720,7 +5679,7 @@ describe("Tests for reports changeview with negation - servicegroups", () => {
     expect(card_endpoints.queryByText("tier2")).not.toBeInTheDocument()
     expect(card_endpoints.queryByText("wlcg")).not.toBeInTheDocument()
 
-    selectEvent.openMenu(card_endpoints.getAllByText("yes")[0])
+    await selectEvent.openMenu(card_endpoints.getAllByText("yes")[0])
     expect(card_endpoints.queryByText("Candidate")).not.toBeInTheDocument()
     expect(card_endpoints.queryByText("Certified")).not.toBeInTheDocument()
     expect(card_endpoints.queryByText("Closed")).not.toBeInTheDocument()
@@ -5746,8 +5705,8 @@ describe("Tests for reports changeview with negation - servicegroups", () => {
     expect(card_endpoints.queryByText("SLA")).not.toBeInTheDocument()
     expect(card_endpoints.queryByText("tier2")).not.toBeInTheDocument()
     expect(card_endpoints.queryByText("wlcg")).not.toBeInTheDocument()
-    
-    selectEvent.openMenu(card_endpoints.getByText("EOSC"))
+
+    await selectEvent.openMenu(card_endpoints.getByText("EOSC"))
     expect(card_endpoints.queryByText("Candidate")).not.toBeInTheDocument()
     expect(card_endpoints.queryByText("Certified")).not.toBeInTheDocument()
     expect(card_endpoints.queryByText("Closed")).not.toBeInTheDocument()
@@ -5832,7 +5791,7 @@ describe("Tests for reports changeview with negation - servicegroups", () => {
     expect(card_endpoints.queryByText("eu.eosc.core-aai.saml.login.edugain")).not.toBeInTheDocument()
     expect(card_endpoints.queryByText("eu.eosc.core-aai.oidc.login.edugain")).not.toBeInTheDocument()
 
-    selectEvent.openMenu(card_endpoints.queryByText("~NGI_AEGIS_SERVICES"))
+    await selectEvent.openMenu(card_endpoints.queryByText("~NGI_AEGIS_SERVICES"))
     expect(card_endpoints.queryByText("NGI_AEGIS_SERVICES")).toBeInTheDocument()
     expect(card_endpoints.queryByText("NGI_ARMGRID_SERVICES")).toBeInTheDocument()
     expect(card_endpoints.queryByText("NGI_BG_SERVICES")).toBeInTheDocument()
@@ -5863,7 +5822,7 @@ describe("Tests for reports changeview with negation - servicegroups", () => {
     expect(card_endpoints.queryByText("eu.eosc.core-aai.saml.login.edugain")).not.toBeInTheDocument()
     expect(card_endpoints.queryByText("eu.eosc.core-aai.oidc.login.edugain")).not.toBeInTheDocument()
 
-    selectEvent.openMenu(card_endpoints.queryByText("ngi.SAM"))
+    await selectEvent.openMenu(card_endpoints.queryByText("ngi.SAM"))
     expect(card_endpoints.queryByText("NGI_AEGIS_SERVICES")).toBeInTheDocument()
     expect(card_endpoints.queryByText("NGI_ARMGRID_SERVICES")).toBeInTheDocument()
     expect(card_endpoints.queryByText("NGI_BG_SERVICES")).toBeInTheDocument()
@@ -5913,10 +5872,10 @@ describe("Tests for reports changeview with negation - servicegroups", () => {
       expect(card_groups.queryAllByText("You cannot select negated value")).toHaveLength(1)
     })
 
-    expect(card_endpoints.queryByText("You cannot select negated value"))
+    expect(card_endpoints.queryByText("You cannot select negated value")).not.toBeInTheDocument()
 
     await selectEvent.select(card_endpoints.getByText("~NGI_AEGIS_SERVICES"), "NGI_AEGIS_SERVICES")
-    
+
     await waitFor(() => {
       expect(card_endpoints.queryAllByText("You cannot select negated value")).toHaveLength(1)
     })
@@ -5967,7 +5926,7 @@ describe("Tests for reports changeview with combination of negation and wildcard
     expect(groupField).toBeEnabled()
 
     expect(screen.queryByText("TEST")).not.toBeInTheDocument()
-    selectEvent.openMenu(groupField)
+    await selectEvent.openMenu(groupField)
     expect(screen.queryByText("TEST")).toBeInTheDocument()
 
     const metricProfileField = screen.getByText("ARGO_MON_CRITICAL")
@@ -5980,27 +5939,27 @@ describe("Tests for reports changeview with combination of negation and wildcard
     expect(metricProfileField).toBeEnabled()
     expect(screen.queryByText("FEDCLOUD")).not.toBeInTheDocument()
     expect(screen.queryByText("OPS_MONITOR_RHEL7")).not.toBeInTheDocument()
-    selectEvent.openMenu(metricProfileField)
+    await selectEvent.openMenu(metricProfileField)
     expect(screen.queryByText("FEDCLOUD")).toBeInTheDocument()
     expect(screen.queryByText("OPS_MONITOR_RHEL7")).toBeInTheDocument()
 
     expect(aggrProfileField).toBeEnabled()
     expect(screen.queryByText("ops-mon-critical")).not.toBeInTheDocument()
-    selectEvent.openMenu(aggrProfileField)
+    await selectEvent.openMenu(aggrProfileField)
     expect(screen.queryByText("ops-mon-critical")).toBeInTheDocument()
 
     expect(operationsProfileField).toBeEnabled()
-    
+
     expect(thresholdsProfileField).toBeEnabled()
     expect(screen.queryByText("TEST_PROFILE")).not.toBeInTheDocument()
     expect(screen.queryByText("test-thresholds")).not.toBeInTheDocument()
-    selectEvent.openMenu(thresholdsProfileField)
+    await selectEvent.openMenu(thresholdsProfileField)
     expect(screen.queryByText("TEST_PROFILE")).toBeInTheDocument()
     expect(screen.queryByText("test-thresholds")).toBeInTheDocument()
 
     expect(topologyTypeField).toBeEnabled()
     expect(screen.queryByText("ServiceGroups")).not.toBeInTheDocument()
-    selectEvent.openMenu(topologyTypeField)
+    await selectEvent.openMenu(topologyTypeField)
     expect(screen.queryByText("ServiceGroups")).toBeInTheDocument()
 
     expect(availabilityThresholdField.value).toBe("80")
@@ -6024,7 +5983,7 @@ describe("Tests for reports changeview with combination of negation and wildcard
     expect(card_groups.queryByText("scope")).toBeInTheDocument()
     expect(card_groups.queryByText("production")).not.toBeInTheDocument()
 
-    selectEvent.openMenu(card_groups.getByText("certification"))
+    await selectEvent.openMenu(card_groups.getByText("certification"))
 
     expect(card_groups.queryByText("certification")).toBeInTheDocument()
     expect(card_groups.queryByText("infrastructure")).toBeInTheDocument()
@@ -6058,7 +6017,7 @@ describe("Tests for reports changeview with combination of negation and wildcard
     expect(card_groups.queryByText("tier2")).not.toBeInTheDocument()
     expect(card_groups.queryByText("wlcg")).not.toBeInTheDocument()
 
-    selectEvent.openMenu(card_groups.getByText("Certified"))
+    await selectEvent.openMenu(card_groups.getByText("Certified"))
     expect(card_groups.queryByText("Candidate")).toBeInTheDocument()
     expect(card_groups.queryByText("Certified")).toBeInTheDocument()
     expect(card_groups.queryByText("Closed")).toBeInTheDocument()
@@ -6085,7 +6044,7 @@ describe("Tests for reports changeview with combination of negation and wildcard
     expect(card_groups.queryByText("tier2")).not.toBeInTheDocument()
     expect(card_groups.queryByText("wlcg")).not.toBeInTheDocument()
 
-    selectEvent.openMenu(card_groups.getByText("Production"))
+    await selectEvent.openMenu(card_groups.getByText("Production"))
     expect(card_groups.queryByText("Candidate")).toBeInTheDocument()
     expect(card_groups.queryByText("Certified")).toBeInTheDocument()
     expect(card_groups.queryByText("Closed")).toBeInTheDocument()
@@ -6112,7 +6071,7 @@ describe("Tests for reports changeview with combination of negation and wildcard
     expect(card_groups.queryByText("tier2")).not.toBeInTheDocument()
     expect(card_groups.queryByText("wlcg")).not.toBeInTheDocument()
 
-    selectEvent.openMenu(card_groups.getByText("EGI"))
+    await selectEvent.openMenu(card_groups.getByText("EGI"))
     expect(card_groups.queryByText("Candidate")).toBeInTheDocument()
     expect(card_groups.queryByText("Certified")).toBeInTheDocument()
     expect(card_groups.queryByText("Closed")).toBeInTheDocument()
@@ -6187,7 +6146,7 @@ describe("Tests for reports changeview with combination of negation and wildcard
     expect(card_groups.queryByText("SWITCH")).not.toBeInTheDocument()
     expect(card_groups.queryByText("~EOSC_*")).toBeInTheDocument()
 
-    selectEvent.openMenu(card_groups.getByText("~NGI_*"))
+    await selectEvent.openMenu(card_groups.getByText("~NGI_*"))
     expect(card_groups.queryByText("EOSC_AAI")).toBeInTheDocument()
     expect(card_groups.queryByText("EOSC_Accounting")).toBeInTheDocument()
     expect(card_groups.queryByText("NGI_AEGIS")).toBeInTheDocument()
@@ -6201,7 +6160,7 @@ describe("Tests for reports changeview with combination of negation and wildcard
     expect(card_groups.queryByText("CSCS-LCG2")).not.toBeInTheDocument()
     expect(card_groups.queryByText("SWITCH")).not.toBeInTheDocument()
 
-    selectEvent.openMenu(card_groups.getByText("~EOSC_*"))
+    await selectEvent.openMenu(card_groups.getByText("~EOSC_*"))
     expect(card_groups.queryByText("RCauth")).toBeInTheDocument()
     expect(card_groups.queryByText("EOSC_Core_Infrastracture_proxy")).toBeInTheDocument()
     expect(card_groups.queryByText("EOSC_Accounting_Services")).toBeInTheDocument()
@@ -6227,7 +6186,7 @@ describe("Tests for reports changeview with combination of negation and wildcard
     expect(card_endpoints.queryByText("scope")).toBeInTheDocument()
     expect(card_endpoints.queryByText("production")).toBeInTheDocument()
 
-    selectEvent.openMenu(card_endpoints.getByText("monitored"))
+    await selectEvent.openMenu(card_endpoints.getByText("monitored"))
     expect(card_endpoints.queryByText("certification")).not.toBeInTheDocument()
     expect(card_endpoints.queryByText("infrastructure")).not.toBeInTheDocument()
     expect(card_endpoints.queryByText("monitored")).toBeInTheDocument()
@@ -6260,7 +6219,7 @@ describe("Tests for reports changeview with combination of negation and wildcard
     expect(card_endpoints.queryByText("tier2")).not.toBeInTheDocument()
     expect(card_endpoints.queryByText("wlcg")).not.toBeInTheDocument()
 
-    selectEvent.openMenu(card_endpoints.getAllByText("yes")[0])
+    await selectEvent.openMenu(card_endpoints.getAllByText("yes")[0])
     expect(card_endpoints.queryByText("Candidate")).not.toBeInTheDocument()
     expect(card_endpoints.queryByText("Certified")).not.toBeInTheDocument()
     expect(card_endpoints.queryByText("Closed")).not.toBeInTheDocument()
@@ -6286,8 +6245,8 @@ describe("Tests for reports changeview with combination of negation and wildcard
     expect(card_endpoints.queryByText("SLA")).not.toBeInTheDocument()
     expect(card_endpoints.queryByText("tier2")).not.toBeInTheDocument()
     expect(card_endpoints.queryByText("wlcg")).not.toBeInTheDocument()
-    
-    selectEvent.openMenu(card_endpoints.getByText("EOSC"))
+
+    await selectEvent.openMenu(card_endpoints.getByText("EOSC"))
     expect(card_endpoints.queryByText("Candidate")).not.toBeInTheDocument()
     expect(card_endpoints.queryByText("Certified")).not.toBeInTheDocument()
     expect(card_endpoints.queryByText("Closed")).not.toBeInTheDocument()
@@ -6372,7 +6331,7 @@ describe("Tests for reports changeview with combination of negation and wildcard
     expect(card_endpoints.queryByText("eu.eosc.core-aai.saml.login.edugain")).not.toBeInTheDocument()
     expect(card_endpoints.queryByText("eu.eosc.core-aai.oidc.login.edugain")).not.toBeInTheDocument()
 
-    selectEvent.openMenu(card_endpoints.queryByText("~EOSC_*"))
+    await selectEvent.openMenu(card_endpoints.queryByText("~EOSC_*"))
     expect(card_endpoints.queryByText("NGI_AEGIS_SERVICES")).not.toBeInTheDocument()
     expect(card_endpoints.queryByText("NGI_ARMGRID_SERVICES")).not.toBeInTheDocument()
     expect(card_endpoints.queryByText("NGI_BG_SERVICES")).not.toBeInTheDocument()
@@ -6403,7 +6362,7 @@ describe("Tests for reports changeview with combination of negation and wildcard
     expect(card_endpoints.queryByText("eu.eosc.core-aai.saml.login.edugain")).not.toBeInTheDocument()
     expect(card_endpoints.queryByText("eu.eosc.core-aai.oidc.login.edugain")).not.toBeInTheDocument()
 
-    selectEvent.openMenu(card_endpoints.queryByText(/search/i))
+    await selectEvent.openMenu(card_endpoints.queryByText(/search/i))
     expect(card_endpoints.queryByText("NGI_AEGIS_SERVICES")).not.toBeInTheDocument()
     expect(card_endpoints.queryByText("NGI_ARMGRID_SERVICES")).not.toBeInTheDocument()
     expect(card_endpoints.queryByText("NGI_BG_SERVICES")).not.toBeInTheDocument()
@@ -6459,10 +6418,10 @@ describe("Tests for reports changeview with combination of negation and wildcard
       expect(card_groups.queryAllByText("You cannot select negated value")).toHaveLength(2)
     })
 
-    expect(card_endpoints.queryByText("You cannot select negated value"))
+    expect(card_endpoints.queryByText("You cannot select negated value")).not.toBeInTheDocument()
 
     await selectEvent.select(card_endpoints.getByText("~EOSC_*"), "EOSC_Accounting_Services")
-    
+
     await waitFor(() => {
       expect(card_endpoints.queryAllByText("You cannot select negated value")).toHaveLength(1)
     })
@@ -6834,7 +6793,7 @@ describe('Tests for reports addview', () => {
     expect(screen.queryByText('ARGO')).not.toBeInTheDocument()
     expect(screen.queryByText('TEST')).not.toBeInTheDocument()
 
-    selectEvent.openMenu(groupField)
+    await selectEvent.openMenu(groupField)
     expect(await screen.findByText('ARGO')).toBeInTheDocument()
     expect(await screen.findByText('TEST')).toBeInTheDocument()
 
@@ -6842,7 +6801,7 @@ describe('Tests for reports addview', () => {
     expect(screen.queryByText('FEDCLOUD')).not.toBeInTheDocument()
     expect(screen.queryByText('OPS_MONITOR_RHEL7')).not.toBeInTheDocument()
 
-    selectEvent.openMenu(metricProfileField)
+    await selectEvent.openMenu(metricProfileField)
     expect(await screen.findByText('ARGO_MON_CRITICAL')).toBeInTheDocument()
     expect(await screen.findByText('FEDCLOUD')).toBeInTheDocument()
     expect(await screen.findByText('OPS_MONITOR_RHEL7')).toBeInTheDocument()
@@ -6850,26 +6809,26 @@ describe('Tests for reports addview', () => {
     expect(screen.queryByText('critical')).not.toBeInTheDocument()
     expect(screen.queryByText('ops-mon-critical')).not.toBeInTheDocument()
 
-    selectEvent.openMenu(aggrProfileField)
+    await selectEvent.openMenu(aggrProfileField)
     expect(await screen.findByText('critical')).toBeInTheDocument()
     expect(await screen.findByText('ops-mon-critical')).toBeInTheDocument()
 
     expect(screen.queryByText('TEST_PROFILE')).not.toBeInTheDocument()
     expect(screen.queryByText('test-thresholds')).not.toBeInTheDocument()
 
-    selectEvent.openMenu(thresholdsProfileField)
+    await selectEvent.openMenu(thresholdsProfileField)
     expect(await screen.findByText('TEST_PROFILE')).toBeInTheDocument()
     expect(await screen.findByText('test-thresholds')).toBeInTheDocument()
 
     expect(screen.queryByText('egi_ops')).not.toBeInTheDocument()
 
-    selectEvent.openMenu(operationsProfileField)
+    await selectEvent.openMenu(operationsProfileField)
     expect(await screen.findByText('egi_ops')).toBeInTheDocument()
 
     expect(screen.queryByText('Sites')).not.toBeInTheDocument()
     expect(screen.queryByText('ServiceGroups')).not.toBeInTheDocument()
 
-    selectEvent.openMenu(topologyTypeField)
+    await selectEvent.openMenu(topologyTypeField)
     expect(await screen.findByText('Sites')).toBeInTheDocument()
     expect(await screen.findByText('ServiceGroups')).toBeInTheDocument()
 
@@ -6948,7 +6907,6 @@ describe('Tests for reports addview', () => {
     frontendReport.disabled = true
     frontendReport.filter_tags = []
 
-
     await waitFor(() => {
       expect(mockAddObject).toHaveBeenCalledWith(
         "/api/v2/internal/reports/", reportPayload(frontendReport, newBackendReport4Sending)
@@ -6982,7 +6940,7 @@ describe('Tests for reports addview', () => {
     expect(card_groups.queryByText('scope')).not.toBeInTheDocument()
     expect(card_groups.queryByText("production")).not.toBeInTheDocument()
 
-    selectEvent.openMenu(card_groups.getAllByText("Select...")[0])
+    await selectEvent.openMenu(card_groups.getAllByText("Select...")[0])
     expect(card_groups.queryByText('certification')).toBeInTheDocument()
     expect(card_groups.queryByText('infrastructure')).toBeInTheDocument()
     expect(card_groups.queryByText('monitored')).toBeInTheDocument()
@@ -7023,15 +6981,13 @@ describe('Tests for reports addview', () => {
       expect(card_groups.queryAllByText(/required/i)).toHaveLength(2)
     })
 
-    await waitFor(() => {
-      selectEvent.select(card_groups.getAllByText("Select...")[0], 'certification')
-    })
+    await selectEvent.select(card_groups.getAllByText("Select...")[0], 'certification')
 
     await waitFor(() => {
       expect(card_groups.queryAllByText(/required/i)).toHaveLength(1)
     })
 
-    selectEvent.openMenu(card_groups.queryByText("Select..."))
+    await selectEvent.openMenu(card_groups.queryByText("Select..."))
     expect(card_groups.queryByText('Candidate')).toBeInTheDocument()
     expect(card_groups.queryByText('Certified')).toBeInTheDocument()
     expect(card_groups.queryByText('Closed')).toBeInTheDocument()
@@ -7057,13 +7013,9 @@ describe('Tests for reports addview', () => {
     expect(card_groups.queryByText(/condor/i)).not.toBeInTheDocument()
     expect(card_groups.queryByText("eddie")).not.toBeInTheDocument()
 
-    await waitFor(() => {
-      selectEvent.select(card_groups.queryByText("Select..."), 'Candidate')
-    })
+    await selectEvent.select(card_groups.queryByText("Select..."), 'Candidate')
 
-    await waitFor(() => {
-      selectEvent.select(card_groups.queryByText('Candidate'), 'Certified')
-    })
+    await selectEvent.select(card_groups.queryByText('Candidate'), 'Certified')
 
     fireEvent.click(card_groups.getByText(/add new tag/i))
 
@@ -7077,16 +7029,14 @@ describe('Tests for reports addview', () => {
     expect(card_groups.queryByText('scope')).not.toBeInTheDocument()
     expect(card_groups.queryByText("production")).not.toBeInTheDocument()
 
-    selectEvent.openMenu(card_groups.queryAllByText("Select...")[0])
+    await selectEvent.openMenu(card_groups.queryAllByText("Select...")[0])
     expect(card_groups.queryAllByText('certification')).toHaveLength(1)
     expect(card_groups.queryByText('infrastructure')).toBeInTheDocument()
     expect(card_groups.queryByText('monitored')).toBeInTheDocument()
     expect(card_groups.queryByText('scope')).toBeInTheDocument()
     expect(card_groups.queryByText("production")).not.toBeInTheDocument()
 
-    await waitFor(() => {
-      selectEvent.select(card_groups.queryAllByText("Select...")[0], 'infrastructure')
-    })
+    await selectEvent.select(card_groups.queryAllByText("Select...")[0], 'infrastructure')
 
     await waitFor(() => {
       expect(card_groups.getAllByText("Select...")).toHaveLength(1)
@@ -7112,7 +7062,7 @@ describe('Tests for reports addview', () => {
     expect(card_groups.queryByText(/condor/i)).not.toBeInTheDocument()
     expect(card_groups.queryByText("eddie")).not.toBeInTheDocument()
 
-    selectEvent.openMenu(card_groups.getByText("Select..."))
+    await selectEvent.openMenu(card_groups.getByText("Select..."))
     expect(card_groups.queryByText('PPS')).toBeInTheDocument()
     expect(card_groups.queryByText('Production')).toBeInTheDocument()
     expect(card_groups.queryByText('Test')).toBeInTheDocument()
@@ -7133,15 +7083,13 @@ describe('Tests for reports addview', () => {
     expect(card_groups.queryByText(/condor/i)).not.toBeInTheDocument()
     expect(card_groups.queryByText("eddie")).not.toBeInTheDocument()
 
-    await waitFor(() => {
-      selectEvent.select(card_groups.getByText('infrastructure'), 'monitored')
-    })
+    await selectEvent.select(card_groups.getByText('infrastructure'), 'monitored')
 
     await waitFor(() => {
       expect(card_groups.getByText("monitored")).toBeInTheDocument()
     })
 
-    selectEvent.openMenu(card_groups.getByText("Select..."))
+    await selectEvent.openMenu(card_groups.getByText("Select..."))
     expect(card_groups.queryByText('PPS')).not.toBeInTheDocument()
     expect(card_groups.queryByText('Production')).not.toBeInTheDocument()
     expect(card_groups.queryByText('Test')).not.toBeInTheDocument()
@@ -7162,15 +7110,13 @@ describe('Tests for reports addview', () => {
     expect(card_groups.queryByText(/condor/i)).not.toBeInTheDocument()
     expect(card_groups.queryByText("eddie")).not.toBeInTheDocument()
 
-    await waitFor(() => {
-      selectEvent.select(card_groups.getByText('monitored'), 'scope')
-    })
+    await selectEvent.select(card_groups.getByText('monitored'), 'scope')
 
     await waitFor(() => {
       expect(card_groups.getByText("scope")).toBeInTheDocument()
     })
 
-    selectEvent.openMenu(card_groups.getByText("Select..."))
+    await selectEvent.openMenu(card_groups.getByText("Select..."))
     expect(card_groups.queryByText('PPS')).not.toBeInTheDocument()
     expect(card_groups.queryByText('Production')).not.toBeInTheDocument()
     expect(card_groups.queryByText('Test')).not.toBeInTheDocument()
@@ -7191,9 +7137,7 @@ describe('Tests for reports addview', () => {
     expect(card_groups.queryByText(/condor/i)).not.toBeInTheDocument()
     expect(card_groups.queryByText("eddie")).not.toBeInTheDocument()
 
-    await waitFor(() => {
-      selectEvent.select(card_groups.getByText("Select..."), 'EGI')
-    })
+    await selectEvent.select(card_groups.getByText("Select..."), 'EGI')
 
     await waitFor(() => {
       expect(card_groups.queryAllByText("Select...")).toHaveLength(0)
@@ -7231,7 +7175,7 @@ describe('Tests for reports addview', () => {
     expect(card_groups.queryByText(/GLUE2EndpointID/i)).not.toBeInTheDocument()
     expect(card_groups.queryByText(/vo_/i)).not.toBeInTheDocument()
 
-    selectEvent.openMenu(card_groups.getAllByText("Select...")[0])
+    await selectEvent.openMenu(card_groups.getAllByText("Select...")[0])
     expect(card_groups.queryByText('certification')).not.toBeInTheDocument()
     expect(card_groups.queryByText('infrastructure')).not.toBeInTheDocument()
     expect(card_groups.queryByText('monitored')).not.toBeInTheDocument()
@@ -7285,15 +7229,13 @@ describe('Tests for reports addview', () => {
     expect(card_groups.queryByText('/dpm/farm.particle.cz/home/aaa')).not.toBeInTheDocument()
     expect(card_groups.queryByText('/dpm/fis.puc.cl/home/afigrid')).not.toBeInTheDocument()
 
-    await waitFor(() => {
-      selectEvent.select(card_groups.getAllByText("Select...")[0], 'GLUE2ComputingShareMappingQueue')
-    })
+    await selectEvent.select(card_groups.getAllByText("Select...")[0], 'GLUE2ComputingShareMappingQueue')
 
     await waitFor(() => {
       expect(card_groups.getAllByText("Select...")).toHaveLength(1)
     })
 
-    selectEvent.openMenu(card_groups.getByText("Select..."))
+    await selectEvent.openMenu(card_groups.getByText("Select..."))
     expect(card_groups.queryByText('Candidate')).not.toBeInTheDocument()
     expect(card_groups.queryByText('Certified')).not.toBeInTheDocument()
     expect(card_groups.queryByText('Closed')).not.toBeInTheDocument()
@@ -7333,13 +7275,9 @@ describe('Tests for reports addview', () => {
     expect(card_groups.queryByText('/dpm/farm.particle.cz/home/aaa')).not.toBeInTheDocument()
     expect(card_groups.queryByText('/dpm/fis.puc.cl/home/afigrid')).not.toBeInTheDocument()
 
-    await waitFor(() => {
-      selectEvent.select(card_groups.getByText("Select..."), 'condor')
-    })
+    await selectEvent.select(card_groups.getByText("Select..."), 'condor')
 
-    await waitFor(() => {
-      selectEvent.select(card_groups.getByText('condor'), 'eddie')
-    })
+    await selectEvent.select(card_groups.getByText('condor'), 'eddie')
 
     fireEvent.click(card_groups.getByText(/add new extension/i))
 
@@ -7355,7 +7293,7 @@ describe('Tests for reports addview', () => {
     expect(card_groups.queryByText(/GLUE2EndpointID/i)).not.toBeInTheDocument()
     expect(card_groups.queryByText(/vo_/i)).not.toBeInTheDocument()
 
-    selectEvent.openMenu(card_groups.getAllByText("Select...")[0])
+    await selectEvent.openMenu(card_groups.getAllByText("Select...")[0])
     expect(card_groups.queryByText('certification')).not.toBeInTheDocument()
     expect(card_groups.queryByText('infrastructure')).not.toBeInTheDocument()
     expect(card_groups.queryByText('monitored')).not.toBeInTheDocument()
@@ -7368,9 +7306,7 @@ describe('Tests for reports addview', () => {
     expect(card_groups.queryByText(/GLUE2EndpointID/i)).not.toBeInTheDocument()
     expect(card_groups.queryByText(/vo_/i)).not.toBeInTheDocument()
 
-    await waitFor(() => {
-      selectEvent.select(card_groups.getAllByText("Select...")[0], 'GLUE2EndpointImplementationName')
-    })
+    await selectEvent.select(card_groups.getAllByText("Select...")[0], 'GLUE2EndpointImplementationName')
 
     await waitFor(() => {
       expect(card_groups.getAllByText("Select...")).toHaveLength(1)
@@ -7412,7 +7348,7 @@ describe('Tests for reports addview', () => {
     expect(card_groups.queryByText('/dpm/farm.particle.cz/home/aaa')).not.toBeInTheDocument()
     expect(card_groups.queryByText('/dpm/fis.puc.cl/home/afigrid')).not.toBeInTheDocument()
 
-    selectEvent.openMenu(card_groups.getByText("Select..."))
+    await selectEvent.openMenu(card_groups.getByText("Select..."))
     expect(card_groups.queryByText('Candidate')).not.toBeInTheDocument()
     expect(card_groups.queryByText('Certified')).not.toBeInTheDocument()
     expect(card_groups.queryByText('Closed')).not.toBeInTheDocument()
@@ -7449,9 +7385,7 @@ describe('Tests for reports addview', () => {
     expect(card_groups.queryByText('/dpm/farm.particle.cz/home/aaa')).not.toBeInTheDocument()
     expect(card_groups.queryByText('/dpm/fis.puc.cl/home/afigrid')).not.toBeInTheDocument()
 
-    await waitFor(() => {
-      selectEvent.select(card_groups.getByText("Select..."), 'ARC-CE')
-    })
+    await selectEvent.select(card_groups.getByText("Select..."), 'ARC-CE')
 
     fireEvent.click(card_groups.getByTestId('removeExtension-1'))
 
@@ -7484,7 +7418,7 @@ describe('Tests for reports addview', () => {
     expect(card_endpoints.queryByText('GLUE2ComputingShareMappingQueue')).not.toBeInTheDocument()
     expect(card_endpoints.queryByText(/vo_/i)).not.toBeInTheDocument()
 
-    selectEvent.openMenu(card_endpoints.getAllByText("Select...")[0])
+    await selectEvent.openMenu(card_endpoints.getAllByText("Select...")[0])
     expect(card_endpoints.queryByText('certification')).not.toBeInTheDocument()
     expect(card_endpoints.queryByText('infrastructure')).not.toBeInTheDocument()
     expect(card_endpoints.queryByText('monitored')).toBeInTheDocument()
@@ -7535,15 +7469,13 @@ describe('Tests for reports addview', () => {
     expect(card_endpoints.queryByText('1')).not.toBeInTheDocument()
     expect(card_endpoints.queryByText('0')).not.toBeInTheDocument()
 
-    await waitFor(() => {
-      selectEvent.select(card_endpoints.getAllByText("Select...")[0], 'scope')
-    })
+    await selectEvent.select(card_endpoints.getAllByText("Select...")[0], 'scope')
 
     await waitFor(() => {
       expect(card_endpoints.getAllByText("Select...")).toHaveLength(1)
     })
 
-    selectEvent.openMenu(card_endpoints.getByText("Select..."))
+    await selectEvent.openMenu(card_endpoints.getByText("Select..."))
     expect(card_endpoints.queryByText('yes')).not.toBeInTheDocument()
     expect(card_endpoints.queryByText('no')).not.toBeInTheDocument()
     expect(await card_endpoints.findByText("alice")).toBeInTheDocument()
@@ -7580,13 +7512,9 @@ describe('Tests for reports addview', () => {
     expect(card_endpoints.queryByText('1')).not.toBeInTheDocument()
     expect(card_endpoints.queryByText('0')).not.toBeInTheDocument()
 
-    await waitFor(() => {
-      selectEvent.select(card_endpoints.queryByText("Select..."), 'FedCloud')
-    })
+    await selectEvent.select(card_endpoints.queryByText("Select..."), 'FedCloud')
 
-    await waitFor(() => {
-      selectEvent.select(card_endpoints.queryByText('FedCloud'), 'EGI')
-    }) 
+    await selectEvent.select(card_endpoints.queryByText('FedCloud'), 'EGI')
 
     fireEvent.click(card_endpoints.getByText(/add new tag/i))
 
@@ -7604,7 +7532,7 @@ describe('Tests for reports addview', () => {
     expect(card_endpoints.queryByText('GLUE2ComputingShareMappingQueue')).not.toBeInTheDocument()
     expect(card_endpoints.queryByText(/vo_/i)).not.toBeInTheDocument()
 
-    selectEvent.openMenu(card_endpoints.queryAllByText(/select/i)[0])
+    await selectEvent.openMenu(card_endpoints.queryAllByText(/select/i)[0])
     expect(card_endpoints.queryByText('certification')).not.toBeInTheDocument()
     expect(card_endpoints.queryByText('infrastructure')).not.toBeInTheDocument()
     expect(await card_endpoints.findByText('monitored')).toBeInTheDocument()
@@ -7619,9 +7547,7 @@ describe('Tests for reports addview', () => {
     expect(card_endpoints.queryByText('GLUE2ComputingShareMappingQueue')).not.toBeInTheDocument()
     expect(card_endpoints.queryByText(/vo_/i)).not.toBeInTheDocument()
 
-    await waitFor(() => {
-      selectEvent.select(card_endpoints.queryAllByText("Select...")[0], 'monitored')
-    })
+    await selectEvent.select(card_endpoints.queryAllByText("Select...")[0], 'monitored')
 
     await waitFor(() => {
       expect(card_endpoints.getAllByText("Select...")).toHaveLength(1)
@@ -7654,7 +7580,7 @@ describe('Tests for reports addview', () => {
     expect(card_endpoints.queryByText('1')).not.toBeInTheDocument()
     expect(card_endpoints.queryByText('0')).not.toBeInTheDocument()
 
-    selectEvent.openMenu(card_endpoints.getByText("Select..."))
+    await selectEvent.openMenu(card_endpoints.getByText("Select..."))
     expect(await card_endpoints.findByText('yes')).toBeInTheDocument()
     expect(await card_endpoints.findByText('no')).toBeInTheDocument()
     expect(card_endpoints.queryByText('1111G0')).not.toBeInTheDocument()
@@ -7682,9 +7608,7 @@ describe('Tests for reports addview', () => {
     expect(card_endpoints.queryByText('1')).not.toBeInTheDocument()
     expect(card_endpoints.queryByText('0')).not.toBeInTheDocument()
 
-    await waitFor(() => {
-      selectEvent.select(card_endpoints.getByText("Select..."), 'yes')
-    })
+    await selectEvent.select(card_endpoints.getByText("Select..."), 'yes')
 
     fireEvent.click(card_endpoints.getByTestId('removeTag-1'))
 
@@ -7707,7 +7631,7 @@ describe('Tests for reports addview', () => {
     expect(card_endpoints.queryByText('GLUE2ComputingShareMappingQueue')).not.toBeInTheDocument()
     expect(card_endpoints.queryByText(/vo_/i)).not.toBeInTheDocument()
 
-    selectEvent.openMenu(card_endpoints.getAllByText("Select...")[0])
+    await selectEvent.openMenu(card_endpoints.getAllByText("Select...")[0])
     expect(card_endpoints.queryByText('certification')).not.toBeInTheDocument()
     expect(card_endpoints.queryByText('infrastructure')).not.toBeInTheDocument()
     expect(card_endpoints.queryByText('monitored')).not.toBeInTheDocument()
@@ -7758,15 +7682,13 @@ describe('Tests for reports addview', () => {
     expect(card_endpoints.queryByText('1')).not.toBeInTheDocument()
     expect(card_endpoints.queryByText('0')).not.toBeInTheDocument()
 
-    await waitFor(() => {
-      selectEvent.select(card_endpoints.getAllByText("Select...")[0], 'GLUE2EndpointID')
-    })
+    await selectEvent.select(card_endpoints.getAllByText("Select...")[0], 'GLUE2EndpointID')
 
     await waitFor(() => {
       expect(card_endpoints.getAllByText("Select...")).toHaveLength(1)
     })
 
-    selectEvent.openMenu(card_endpoints.queryByText("Select..."))
+    await selectEvent.openMenu(card_endpoints.queryByText("Select..."))
     expect(card_endpoints.queryByText('yes')).not.toBeInTheDocument()
     expect(card_endpoints.queryByText('no')).not.toBeInTheDocument()
     expect(card_endpoints.queryAllByText("alice")).toHaveLength(1)
@@ -7803,13 +7725,9 @@ describe('Tests for reports addview', () => {
     expect(card_endpoints.queryByText('1')).not.toBeInTheDocument()
     expect(card_endpoints.queryByText('0')).not.toBeInTheDocument()
 
-    await waitFor(() => {
-      selectEvent.select(card_endpoints.queryByText("Select..."), 'ce1.gridpp.ecdf.ed.ac.uk')
-    })
+    await selectEvent.select(card_endpoints.queryByText("Select..."), 'ce1.gridpp.ecdf.ed.ac.uk')
 
-    await waitFor(() => {
-      selectEvent.select(card_endpoints.queryByText('GLUE2EndpointID'), 'svr009.gla.scotgrid.ac.uk')
-    })
+    await selectEvent.select(card_endpoints.queryByText('GLUE2EndpointID'), 'svr009.gla.scotgrid.ac.uk')
 
     fireEvent.click(card_endpoints.getByText(/add new extension/i))
 
@@ -7827,7 +7745,7 @@ describe('Tests for reports addview', () => {
     expect(card_endpoints.queryByText('GLUE2ComputingShareMappingQueue')).not.toBeInTheDocument()
     expect(card_endpoints.queryByText(/vo_/i)).not.toBeInTheDocument()
 
-    selectEvent.openMenu(card_endpoints.queryAllByText("Select...")[0])
+    await selectEvent.openMenu(card_endpoints.queryAllByText("Select...")[0])
     expect(card_endpoints.queryByText('certification')).not.toBeInTheDocument()
     expect(card_endpoints.queryByText('infrastructure')).not.toBeInTheDocument()
     expect(card_endpoints.queryByText('monitored')).not.toBeInTheDocument()
@@ -7842,9 +7760,7 @@ describe('Tests for reports addview', () => {
     expect(card_endpoints.queryByText('GLUE2ComputingShareMappingQueue')).not.toBeInTheDocument()
     expect(card_endpoints.queryByText(/vo_/i)).not.toBeInTheDocument()
 
-    await waitFor(() => {
-      selectEvent.select(card_endpoints.queryAllByText("Select...")[0], 'GLUE2EndpointImplementationName')
-    })
+    await selectEvent.select(card_endpoints.queryAllByText("Select...")[0], 'GLUE2EndpointImplementationName')
 
     await waitFor(() => {
       expect(card_endpoints.getAllByText("Select...")).toHaveLength(1)
@@ -7883,7 +7799,7 @@ describe('Tests for reports addview', () => {
     expect(card_endpoints.queryByText('1')).not.toBeInTheDocument()
     expect(card_endpoints.queryByText('0')).not.toBeInTheDocument()
 
-    selectEvent.openMenu(card_endpoints.getByText("Select..."))
+    await selectEvent.openMenu(card_endpoints.getByText("Select..."))
     expect(card_endpoints.queryByText('yes')).not.toBeInTheDocument()
     expect(card_endpoints.queryByText('no')).not.toBeInTheDocument()
     expect(card_endpoints.queryAllByText("alice")).toHaveLength(1)
@@ -7917,9 +7833,7 @@ describe('Tests for reports addview', () => {
     expect(card_endpoints.queryByText('1')).not.toBeInTheDocument()
     expect(card_endpoints.queryByText('0')).not.toBeInTheDocument()
 
-    await waitFor(() => {
-      selectEvent.select(card_endpoints.getByText("Select..."), 'ARC-CE')
-    })
+    await selectEvent.select(card_endpoints.getByText("Select..."), 'ARC-CE')
 
     fireEvent.click(card_endpoints.getByTestId('removeExtension-1'))
 
@@ -7959,7 +7873,7 @@ describe('Tests for reports addview', () => {
     expect(card_groups.queryByText("Site-BDII")).not.toBeInTheDocument()
     expect(card_groups.queryByText("SRM")).not.toBeInTheDocument()
 
-    selectEvent.openMenu(card_groups.queryAllByText(/search/i)[0])
+    await selectEvent.openMenu(card_groups.queryAllByText(/search/i)[0])
     expect(card_groups.queryByText("EGI")).not.toBeInTheDocument()
     expect(card_groups.queryByText("NGI_AEGIS_SERVICES")).not.toBeInTheDocument()
     expect(card_groups.queryByText("NGI_ARMGRID_SERVICES")).not.toBeInTheDocument()
@@ -7982,11 +7896,9 @@ describe('Tests for reports addview', () => {
     expect(card_groups.queryByText("Site-BDII")).not.toBeInTheDocument()
     expect(card_groups.queryByText("SRM")).not.toBeInTheDocument()
 
-    await waitFor(() => {
-      selectEvent.select(topologyTypeField, "Sites")
-    })
+    await selectEvent.select(topologyTypeField, "Sites")
 
-    selectEvent.openMenu(card_groups.queryAllByText(/search/i)[0])
+    await selectEvent.openMenu(card_groups.queryAllByText(/search/i)[0])
     expect(card_groups.queryByText("EGI")).not.toBeInTheDocument()
     expect(card_groups.queryByText("NGI_AEGIS_SERVICES")).not.toBeInTheDocument()
     expect(card_groups.queryByText("NGI_ARMGRID_SERVICES")).not.toBeInTheDocument()
@@ -8011,7 +7923,7 @@ describe('Tests for reports addview', () => {
 
     await selectEvent.select(card_groups.queryAllByText(/search/i)[0], "NGI_AEGIS")
 
-    selectEvent.openMenu(card_groups.getByText(/search/i))
+    await selectEvent.openMenu(card_groups.getByText(/search/i))
     expect(await card_groups.findByText("AEGIS11-MISANU")).toBeInTheDocument()
     expect(await card_groups.findByText("AEGIS03-ELEF-LEDA")).toBeInTheDocument()
     expect(card_groups.queryByText("CSCS-LCG2")).not.toBeInTheDocument()
@@ -8025,11 +7937,9 @@ describe('Tests for reports addview', () => {
     expect(card_groups.queryByText("Site-BDII")).not.toBeInTheDocument()
     expect(card_groups.queryByText("SRM")).not.toBeInTheDocument()
 
-    await waitFor(() => {
-      selectEvent.select(card_groups.getByText("NGI_AEGIS"), "NGI_CH")
-    })
+    await selectEvent.select(card_groups.getByText("NGI_AEGIS"), "NGI_CH")
 
-    selectEvent.openMenu(card_groups.getByText(/search/i))
+    await selectEvent.openMenu(card_groups.getByText(/search/i))
     expect(await card_groups.findByText("AEGIS11-MISANU")).toBeInTheDocument()
     expect(await card_groups.findByText("AEGIS03-ELEF-LEDA")).toBeInTheDocument()
     await waitFor(() => {
@@ -8045,9 +7955,7 @@ describe('Tests for reports addview', () => {
     expect(card_groups.queryByText("Site-BDII")).not.toBeInTheDocument()
     expect(card_groups.queryByText("SRM")).not.toBeInTheDocument()
 
-    await waitFor(() => {
-      selectEvent.select(card_groups.getByText(/search/i), "AEGIS11-MISANU")
-    })
+    await selectEvent.select(card_groups.getByText(/search/i), "AEGIS11-MISANU")
 
     expect(card_endpoints.queryAllByText(/search/i)).toHaveLength(2)
 
@@ -8067,7 +7975,7 @@ describe('Tests for reports addview', () => {
     expect(card_endpoints.queryByText("Site-BDII")).not.toBeInTheDocument()
     expect(card_endpoints.queryByText("SRM")).not.toBeInTheDocument()
 
-    selectEvent.openMenu(card_endpoints.queryAllByText(/search/i)[0])
+    await selectEvent.openMenu(card_endpoints.queryAllByText(/search/i)[0])
     expect(card_endpoints.queryByText("NGI_AEGIS_SERVICES")).not.toBeInTheDocument()
     expect(card_endpoints.queryByText("NGI_BG_SERVICES")).not.toBeInTheDocument()
     expect(card_endpoints.queryByText("EGI_NBISBILS_SLA")).not.toBeInTheDocument()
@@ -8084,15 +7992,13 @@ describe('Tests for reports addview', () => {
     expect(card_endpoints.queryByText("Site-BDII")).not.toBeInTheDocument()
     expect(card_endpoints.queryByText("SRM")).not.toBeInTheDocument()
 
-    await waitFor(() => {
-      selectEvent.select(card_endpoints.queryAllByText(/search/i)[0], "CSCS-LCG2")
-    })
-    
+    await selectEvent.select(card_endpoints.queryAllByText(/search/i)[0], "CSCS-LCG2")
+
     await waitFor(() => {
       expect(card_endpoints.getAllByText(/search/i)).toHaveLength(1)
     })
 
-    selectEvent.openMenu(card_endpoints.getByText(/search/i))
+    await selectEvent.openMenu(card_endpoints.getByText(/search/i))
     expect(card_endpoints.queryByText("WMS")).not.toBeInTheDocument()
     expect(card_endpoints.queryByText("Top-BDII")).not.toBeInTheDocument()
     expect(card_endpoints.queryByText("ngi.SAM")).not.toBeInTheDocument()
@@ -8102,11 +8008,9 @@ describe('Tests for reports addview', () => {
     expect(card_endpoints.queryByText("Site-BDII")).not.toBeInTheDocument()
     expect(await card_endpoints.findByText("SRM")).toBeInTheDocument()
 
-    await waitFor(() => {
-      selectEvent.select(card_endpoints.getByText("CSCS-LCG2"), "AEGIS11-MISANU")
-    })
+    await selectEvent.select(card_endpoints.getByText("CSCS-LCG2"), "AEGIS11-MISANU")
 
-    selectEvent.openMenu(card_endpoints.getByText(/search/i))
+    await selectEvent.openMenu(card_endpoints.getByText(/search/i))
     expect(card_endpoints.queryByText("WMS")).not.toBeInTheDocument()
     expect(card_endpoints.queryByText("Top-BDII")).not.toBeInTheDocument()
     expect(card_endpoints.queryByText("ngi.SAM")).not.toBeInTheDocument()
@@ -8152,7 +8056,7 @@ describe('Tests for reports addview', () => {
     expect(card_groups.queryByText("Site-BDII")).not.toBeInTheDocument()
     expect(card_groups.queryByText("SRM")).not.toBeInTheDocument()
 
-    selectEvent.openMenu(card_groups.queryAllByText(/search/i)[0])
+    await selectEvent.openMenu(card_groups.queryAllByText(/search/i)[0])
     expect(card_groups.queryByText("EGI")).not.toBeInTheDocument()
     expect(card_groups.queryByText("NGI_AEGIS_SERVICES")).not.toBeInTheDocument()
     expect(card_groups.queryByText("NGI_ARMGRID_SERVICES")).not.toBeInTheDocument()
@@ -8175,11 +8079,9 @@ describe('Tests for reports addview', () => {
     expect(card_groups.queryByText("Site-BDII")).not.toBeInTheDocument()
     expect(card_groups.queryByText("SRM")).not.toBeInTheDocument()
 
-    await waitFor(() => {
-      selectEvent.select(topologyTypeField, "ServiceGroups")
-    })
+    await selectEvent.select(topologyTypeField, "ServiceGroups")
 
-    selectEvent.openMenu(card_groups.queryAllByText(/search/i)[0])
+    await selectEvent.openMenu(card_groups.queryAllByText(/search/i)[0])
     await waitFor(() => {
       expect(card_groups.queryByText("EGI")).toBeInTheDocument()
     })
@@ -8204,15 +8106,13 @@ describe('Tests for reports addview', () => {
     expect(card_groups.queryByText("Site-BDII")).not.toBeInTheDocument()
     expect(card_groups.queryByText("SRM")).not.toBeInTheDocument()
 
-    await waitFor(() => {
-      selectEvent.select(card_groups.queryAllByText(/search/i)[0], "EGI")
-    })
+    await selectEvent.select(card_groups.queryAllByText(/search/i)[0], "EGI")
 
     await waitFor(() => {
       expect(card_groups.getAllByText(/search/i)).toHaveLength(1)
     })
 
-    selectEvent.openMenu(card_groups.getByText(/search/i))
+    await selectEvent.openMenu(card_groups.getByText(/search/i))
     expect(await card_groups.findByText("NGI_AEGIS_SERVICES")).toBeInTheDocument()
     expect(await card_groups.findByText("NGI_ARMGRID_SERVICES")).toBeInTheDocument()
     expect(await card_groups.findByText("NGI_BG_SERVICES")).toBeInTheDocument()
@@ -8234,13 +8134,9 @@ describe('Tests for reports addview', () => {
     expect(card_groups.queryByText("Site-BDII")).not.toBeInTheDocument()
     expect(card_groups.queryByText("SRM")).not.toBeInTheDocument()
 
-    await waitFor(() => {
-      selectEvent.select(card_groups.getByText(/search/i), "NGI_BG_SERVICES")
-    })
+    await selectEvent.select(card_groups.getByText(/search/i), "NGI_BG_SERVICES")
 
-    await waitFor(() => {
-      selectEvent.select(card_groups.getByText("NGI_BG_SERVICES"), "EGI_NBISBILS_SLA")
-    })
+    await selectEvent.select(card_groups.getByText("NGI_BG_SERVICES"), "EGI_NBISBILS_SLA")
 
     expect(card_endpoints.queryAllByText(/search/i)).toHaveLength(2)
 
@@ -8260,7 +8156,7 @@ describe('Tests for reports addview', () => {
     expect(card_endpoints.queryByText("Site-BDII")).not.toBeInTheDocument()
     expect(card_endpoints.queryByText("SRM")).not.toBeInTheDocument()
 
-    selectEvent.openMenu(card_endpoints.queryAllByText(/search/i)[0])
+    await selectEvent.openMenu(card_endpoints.queryAllByText(/search/i)[0])
     expect(await card_endpoints.findByText("NGI_AEGIS_SERVICES")).toBeInTheDocument()
     expect(await card_endpoints.findByText("NGI_BG_SERVICES")).toBeInTheDocument()
     expect(await card_endpoints.findByText("EGI_NBISBILS_SLA")).toBeInTheDocument()
@@ -8277,15 +8173,13 @@ describe('Tests for reports addview', () => {
     expect(card_endpoints.queryByText("Site-BDII")).not.toBeInTheDocument()
     expect(card_endpoints.queryByText("SRM")).not.toBeInTheDocument()
 
-    await waitFor(() => {
-      selectEvent.select(card_endpoints.queryAllByText(/search/i)[0], "EGI_NBISBILS_SLA")
-    })
+    await selectEvent.select(card_endpoints.queryAllByText(/search/i)[0], "EGI_NBISBILS_SLA")
 
     await waitFor(() => {
       expect(card_endpoints.getAllByText(/search/i)).toHaveLength(1)
     })
 
-    selectEvent.openMenu(card_endpoints.getByText(/search/i))
+    await selectEvent.openMenu(card_endpoints.getByText(/search/i))
     expect(card_endpoints.queryByText("WMS")).not.toBeInTheDocument()
     expect(card_endpoints.queryByText("Top-BDII")).not.toBeInTheDocument()
     expect(card_endpoints.queryByText("ngi.SAM")).not.toBeInTheDocument()
@@ -8295,11 +8189,9 @@ describe('Tests for reports addview', () => {
     expect(card_endpoints.queryByText("Site-BDII")).not.toBeInTheDocument()
     expect(card_endpoints.queryByText("SRM")).not.toBeInTheDocument()
 
-    await waitFor(() => {
-      selectEvent.select(card_endpoints.getByText("EGI_NBISBILS_SLA"), "NGI_BG_SERVICES")
-    })
+    await selectEvent.select(card_endpoints.getByText("EGI_NBISBILS_SLA"), "NGI_BG_SERVICES")
 
-    selectEvent.openMenu(card_endpoints.getByText(/search/i))
+    await selectEvent.openMenu(card_endpoints.getByText(/search/i))
     expect(card_endpoints.queryByText("WMS")).not.toBeInTheDocument()
     await waitFor(() => {
       expect(card_endpoints.queryByText("Top-BDII")).toBeInTheDocument()
@@ -8330,9 +8222,7 @@ describe('Tests for reports addview', () => {
     await selectEvent.select(screen.getAllByText(/select/i)[0], 'egi_ops')
     await selectEvent.select(screen.getAllByText(/select/i)[0], 'TEST_PROFILE')
 
-    await waitFor(() => {
-      selectEvent.select(screen.getAllByText(/select/i)[0], 'Sites')
-    })
+    await selectEvent.select(screen.getAllByText(/select/i)[0], 'Sites')
 
     const card_groups = within(screen.getByTestId('card-group-of-groups'));
     const card_endpoints = within(screen.getByTestId('card-group-of-endpoints'));
@@ -8343,17 +8233,13 @@ describe('Tests for reports addview', () => {
       expect(card_groups.getAllByText("Select...")).toHaveLength(2)
     })
 
-    await waitFor(() => {
-      selectEvent.select(card_groups.getAllByText("Select...")[0], 'monitored')
-    })
+    await selectEvent.select(card_groups.getAllByText("Select...")[0], 'monitored')
 
     await waitFor(() => {
       expect(card_groups.getAllByText("Select...")).toHaveLength(1)
     })
 
-    await waitFor(() => {
-      selectEvent.select(card_groups.getByText("Select..."), 'yes')
-    })
+    await selectEvent.select(card_groups.getByText("Select..."), 'yes')
 
     fireEvent.click(card_groups.getByRole('button', { name: /add new extension/i }))
 
@@ -8361,17 +8247,13 @@ describe('Tests for reports addview', () => {
       expect(card_groups.getAllByText("Select...")).toHaveLength(2)
     })
 
-    await waitFor(() => {
-      selectEvent.select(card_groups.getAllByText("Select...")[0], 'GLUE2EndpointImplementationName')
-    })
+    await selectEvent.select(card_groups.getAllByText("Select...")[0], 'GLUE2EndpointImplementationName')
 
     await waitFor(() => {
       expect(card_groups.getAllByText("Select...")).toHaveLength(1)
     })
-    
-    await waitFor(() => {
-      selectEvent.select(card_groups.getAllByText("Select...")[0], 'ARC-CE')
-    })
+
+    await selectEvent.select(card_groups.getAllByText("Select...")[0], 'ARC-CE')
 
     fireEvent.click(card_endpoints.getByText(/add new extension/i))
 
@@ -8379,17 +8261,13 @@ describe('Tests for reports addview', () => {
       expect(card_endpoints.getAllByText("Select...")).toHaveLength(2)
     })
 
-    await waitFor(() => {
-      selectEvent.select(card_endpoints.getAllByText("Select...")[0], 'GLUE2EndpointID')
-    })
+    await selectEvent.select(card_endpoints.getAllByText("Select...")[0], 'GLUE2EndpointID')
 
     await waitFor(() => {
       expect(card_endpoints.getAllByText("Select...")).toHaveLength(1)
     })
 
-    await waitFor(() => {
-      selectEvent.select(card_endpoints.getAllByText("Select...")[0], 'ce1.gridpp.ecdf.ed.ac.uk')
-    })
+    await selectEvent.select(card_endpoints.getAllByText("Select...")[0], 'ce1.gridpp.ecdf.ed.ac.uk')
 
     await waitFor(() => {
       expect(card_endpoints.queryAllByText("Select...")).toHaveLength(0)
@@ -8406,7 +8284,6 @@ describe('Tests for reports addview', () => {
       expect(screen.getByRole('dialog', { title: /add/i })).toBeInTheDocument();
     })
     fireEvent.click(screen.getByRole('button', { name: /yes/i }));
-
 
     await waitFor(() => {
       expect(mockAddObject).toHaveBeenCalledWith(
@@ -8441,9 +8318,7 @@ describe('Tests for reports addview', () => {
     await selectEvent.select(screen.getAllByText(/select/i)[0], 'egi_ops')
     await selectEvent.select(screen.getAllByText(/select/i)[0], 'TEST_PROFILE')
 
-    await waitFor(() => {
-      selectEvent.select(screen.getAllByText(/select/i)[0], 'Sites')
-    })
+    await selectEvent.select(screen.getAllByText(/select/i)[0], 'Sites')
 
     const card_groups = within(screen.getByTestId('card-group-of-groups'));
     const card_endpoints = within(screen.getByTestId('card-group-of-endpoints'));
@@ -8454,17 +8329,13 @@ describe('Tests for reports addview', () => {
       expect(card_groups.getAllByText("Select...")).toHaveLength(2)
     })
 
-    await waitFor(() => {
-      selectEvent.select(card_groups.getAllByText("Select...")[0], 'monitored')
-    })
+    await selectEvent.select(card_groups.getAllByText("Select...")[0], 'monitored')
 
     await waitFor(() => {
       expect(card_groups.getAllByText("Select...")).toHaveLength(1)
     })
 
-    await waitFor(() => {
-      selectEvent.select(card_groups.getByText("Select..."), 'yes')
-    })
+    await selectEvent.select(card_groups.getByText("Select..."), 'yes')
 
     fireEvent.click(card_groups.getByRole('button', { name: /add new extension/i }))
 
@@ -8472,17 +8343,13 @@ describe('Tests for reports addview', () => {
       expect(card_groups.getAllByText("Select...")).toHaveLength(2)
     })
 
-    await waitFor(() => {
-      selectEvent.select(card_groups.getAllByText("Select...")[0], 'GLUE2EndpointImplementationName')
-    })
+    await selectEvent.select(card_groups.getAllByText("Select...")[0], 'GLUE2EndpointImplementationName')
 
     await waitFor(() => {
       expect(card_groups.getAllByText("Select...")).toHaveLength(1)
     })
-    
-    await waitFor(() => {
-      selectEvent.select(card_groups.getAllByText("Select...")[0], 'ARC-CE')
-    })
+
+    await selectEvent.select(card_groups.getAllByText("Select...")[0], 'ARC-CE')
 
     fireEvent.click(card_endpoints.getByText(/add new extension/i))
 
@@ -8490,17 +8357,13 @@ describe('Tests for reports addview', () => {
       expect(card_endpoints.getAllByText("Select...")).toHaveLength(2)
     })
 
-    await waitFor(() => {
-      selectEvent.select(card_endpoints.getAllByText("Select...")[0], 'GLUE2EndpointID')
-    })
+    await selectEvent.select(card_endpoints.getAllByText("Select...")[0], 'GLUE2EndpointID')
 
     await waitFor(() => {
       expect(card_endpoints.getAllByText("Select...")).toHaveLength(1)
     })
 
-    await waitFor(() => {
-      selectEvent.select(card_endpoints.getAllByText("Select...")[0], 'ce1.gridpp.ecdf.ed.ac.uk')
-    })
+    await selectEvent.select(card_endpoints.getAllByText("Select...")[0], 'ce1.gridpp.ecdf.ed.ac.uk')
 
     await waitFor(() => {
       expect(card_endpoints.queryAllByText("Select...")).toHaveLength(0)
@@ -8517,7 +8380,6 @@ describe('Tests for reports addview', () => {
       expect(screen.getByRole('dialog', { title: /add/i })).toBeInTheDocument();
     })
     fireEvent.click(screen.getByRole('button', { name: /yes/i }));
-
 
     await waitFor(() => {
       expect(mockAddObject).toHaveBeenCalledWith(
@@ -8556,9 +8418,7 @@ describe('Tests for reports addview', () => {
     await selectEvent.select(screen.getAllByText(/select/i)[0], 'egi_ops')
     await selectEvent.select(screen.getAllByText(/select/i)[0], 'TEST_PROFILE')
 
-    await waitFor(() => {
-      selectEvent.select(screen.getAllByText(/select/i)[0], 'Sites')
-    })
+    await selectEvent.select(screen.getAllByText(/select/i)[0], 'Sites')
 
     const card_groups = within(screen.getByTestId('card-group-of-groups'));
     const card_endpoints = within(screen.getByTestId('card-group-of-endpoints'));
@@ -8569,17 +8429,13 @@ describe('Tests for reports addview', () => {
       expect(card_groups.getAllByText("Select...")).toHaveLength(2)
     })
 
-    await waitFor(() => {
-      selectEvent.select(card_groups.getAllByText("Select...")[0], 'monitored')
-    })
+    await selectEvent.select(card_groups.getAllByText("Select...")[0], 'monitored')
 
     await waitFor(() => {
       expect(card_groups.getAllByText("Select...")).toHaveLength(1)
     })
 
-    await waitFor(() => {
-      selectEvent.select(card_groups.getByText("Select..."), 'yes')
-    })
+    await selectEvent.select(card_groups.getByText("Select..."), 'yes')
 
     fireEvent.click(card_groups.getByRole('button', { name: /add new extension/i }))
 
@@ -8587,17 +8443,13 @@ describe('Tests for reports addview', () => {
       expect(card_groups.getAllByText("Select...")).toHaveLength(2)
     })
 
-    await waitFor(() => {
-      selectEvent.select(card_groups.getAllByText("Select...")[0], 'GLUE2EndpointImplementationName')
-    })
+    await selectEvent.select(card_groups.getAllByText("Select...")[0], 'GLUE2EndpointImplementationName')
 
     await waitFor(() => {
       expect(card_groups.getAllByText("Select...")).toHaveLength(1)
     })
-    
-    await waitFor(() => {
-      selectEvent.select(card_groups.getAllByText("Select...")[0], 'ARC-CE')
-    })
+
+    await selectEvent.select(card_groups.getAllByText("Select...")[0], 'ARC-CE')
 
     fireEvent.click(card_endpoints.getByText(/add new extension/i))
 
@@ -8605,17 +8457,13 @@ describe('Tests for reports addview', () => {
       expect(card_endpoints.getAllByText("Select...")).toHaveLength(2)
     })
 
-    await waitFor(() => {
-      selectEvent.select(card_endpoints.getAllByText("Select...")[0], 'GLUE2EndpointID')
-    })
+    await selectEvent.select(card_endpoints.getAllByText("Select...")[0], 'GLUE2EndpointID')
 
     await waitFor(() => {
       expect(card_endpoints.getAllByText("Select...")).toHaveLength(1)
     })
 
-    await waitFor(() => {
-      selectEvent.select(card_endpoints.getAllByText("Select...")[0], 'ce1.gridpp.ecdf.ed.ac.uk')
-    })
+    await selectEvent.select(card_endpoints.getAllByText("Select...")[0], 'ce1.gridpp.ecdf.ed.ac.uk')
 
     await waitFor(() => {
       expect(card_endpoints.queryAllByText("Select...")).toHaveLength(0)
@@ -8632,7 +8480,6 @@ describe('Tests for reports addview', () => {
       expect(screen.getByRole('dialog', { title: /add/i })).toBeInTheDocument();
     })
     fireEvent.click(screen.getByRole('button', { name: /yes/i }));
-
 
     await waitFor(() => {
       expect(mockAddObject).toHaveBeenCalledWith(
