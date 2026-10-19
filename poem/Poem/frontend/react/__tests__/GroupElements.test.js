@@ -2,7 +2,7 @@ import '@testing-library/jest-dom';
 import React from 'react';
 import { MemoryRouter, Routes, Route } from 'react-router-dom';
 import { GroupList, GroupChange } from '../GroupElements';
-import { render, waitFor, screen, fireEvent, within } from '@testing-library/react';
+import { act, render, waitFor, screen, fireEvent, within } from '@testing-library/react';
 import useEvent from '@testing-library/user-event';
 import { Backend } from '../DataManager';
 import { NotificationManager } from 'react-notifications';
@@ -29,7 +29,7 @@ function renderListView(
     ...render(
       <QueryClientProvider client={queryClient}>
         <MemoryRouter initialEntries={ [ route ] }>
-          <GroupList 
+          <GroupList
             group={ group }
             id={ id }
             name={ name }
@@ -451,9 +451,15 @@ describe('Tests for group elements changeview', () => {
     expect(screen.getAllByRole('row')).toHaveLength(6);
 
     const selectField = screen.getByTestId('available_metrics');
-    fireEvent.change(within(selectField).getByRole('combobox'), { target: { value: 'test' } })
-    await useEvent.click(within(selectField).getByText('test.AMS-Check'))
-    await useEvent.click(screen.getByRole('button', { name: /add/i }))
+    await act(async () => {
+      fireEvent.change(within(selectField).getByRole('combobox'), { target: { value: 'test' } })
+    })
+    await act(async () => {
+      await useEvent.click(within(selectField).getByText('test.AMS-Check'))
+    })
+    await act(async () => {
+      await useEvent.click(screen.getByRole('button', { name: /add/i }))
+    })
     await waitFor(() => {
       expect(screen.getAllByRole('row')).toHaveLength(7);
     })
