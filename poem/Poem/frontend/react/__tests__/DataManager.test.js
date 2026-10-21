@@ -49,7 +49,6 @@ const mockSuperActiveSession = {
 
 const mockConfigOptions = {
   result: {
-    saml_login_string: 'Log in using B2ACCESS',
     use_service_title: false,
     terms_privacy_links: {},
     version: '1.0.0',
