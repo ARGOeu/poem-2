@@ -3,7 +3,6 @@ package-mode = false
 
 [tool.poetry.dependencies]
 python = "^3.12"
-cryptography = "*"
 deepdiff = "4.3.2"
 dj-rest-auth= "*"
 django-tenants = "*"
@@ -11,11 +10,9 @@ django-webpack-loader = "*"
 Django = "5.2.*"
 djangorestframework = "*"
 djangorestframework-api-key = "*"
-djangosaml2 = "*"
 psycopg2-binary = "*"
+requests = "*"
 safety = "*"
-pyOpenSSL = ">22.0"
-Unidecode = "*"
 
 [tool.poetry.group.devel]
 optional = true
@@ -57,7 +54,6 @@ packages = [
     'Poem.api.migrations',
     'Poem.api.tests',
     'Poem.auth_backend.cust',
-    'Poem.auth_backend.saml2',
     'Poem.helpers',
     'Poem.services',
     'Poem.poem',
@@ -66,7 +62,6 @@ packages = [
     'Poem.poem.management',
     'Poem.poem.management.commands',
     'Poem.poem.migrations',
-    'Poem.poem.saml2',
     'Poem.poem_super_admin',
     'Poem.poem_super_admin.dbmodels',
     'Poem.poem_super_admin.migrations',

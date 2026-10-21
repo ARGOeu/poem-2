@@ -43,16 +43,13 @@ RUN dnf -y install epel-release rocky-repos && \
       vim \
       wget \
       which \
-      xmlsec1-openssl \
       yum-utils \
       zsh
 RUN dnf -y makecache
 RUN dnf -y install \
       cronie \
       crontabs \
-      supervisor \
-      xmlsec1 \
-      xmlsec1-openssl
+      supervisor
 RUN passwd -d apache; usermod --shell /bin/bash apache
 ADD https://cacerts.digicert.com/TERENAeScienceSSLCA3.crt.pem /etc/pki/tls/certs/
 RUN rm -rf /etc/pki/ca-trust/source/anchors/*; \
