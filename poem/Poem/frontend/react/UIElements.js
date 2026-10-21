@@ -97,6 +97,7 @@ link_title.set('groupofaggregations', 'Groups of aggregations');
 link_title.set('groupofmetricprofiles', 'Groups of metric profiles');
 link_title.set('groupofmetrics', 'Groups of metrics');
 link_title.set('groupofthresholdsprofiles', 'Groups of thresholds profiles');
+link_title.set('home', 'Home');
 link_title.set('metricprofiles', 'Metric profiles');
 link_title.set('metrics', 'Metrics');
 link_title.set("metrictags", "Metric tags")
@@ -408,7 +409,10 @@ export const CustomBreadcrumb = ({publicView=false}) =>
   let breadcrumb_elements = new Array()
   let two_level = new Object()
 
-  breadcrumb_elements.push({'url': `/ui/${publicView ? 'public_' : ''}home`, 'title': 'Home'});
+  breadcrumb_elements.push({
+    'url': `/ui/${publicView ? 'public_' : ''}home`,
+    'title': 'Home'
+  });
   if (!publicView)
     spliturl = location.pathname.split('/');
 
@@ -417,7 +421,9 @@ export const CustomBreadcrumb = ({publicView=false}) =>
 
   two_level['url'] = '/ui/' + spliturl[2];
   two_level['title'] = link_title.get(spliturl[2]);
-  breadcrumb_elements.push(two_level);
+
+  if (spliturl[2] !== 'home' && spliturl[2] !== 'public_home')
+    breadcrumb_elements.push(two_level);
 
   if (spliturl.length > 3) {
     var three_level = new Object({'url': two_level['url'] + '/' + spliturl[3]});
@@ -650,7 +656,11 @@ export const NavigationBar = ({onLogout, isOpenModal, toggle,
         <NavbarBrand className="text-light">
           <img src={ArgoLogo} alt="ARGO logo" className="img-responsive"/>
           <span className="ps-3">
-            <strong>ARGO</strong> POEM
+            <strong>ARGO</strong>{' '}
+            {
+              isTenantSchema !== undefined &&
+                <em>{ isTenantSchema ? 'Tenant' : 'Super' }</em>
+            }POEM
           </span>
         </NavbarBrand>
         <NavbarToggler/>
@@ -724,7 +734,7 @@ export const NavigationAbout = ({ poemVersion, termsLink, privacyLink }) => {
       <Nav vertical pills id="argo-navlinks" className="border-left border-right sticky-top rounded-bottom border-bottom pb-2 mb-0">
         <NavLink
           tag="a"
-          href='http://argoeu.github.io/poem/v1/'
+          href='https://argoeu.github.io/poem-2/'
           className="text-dark"
           target="_blank" rel="noopener noreferrer"
         >
@@ -798,7 +808,6 @@ const InnerFooter = ({ termsLink, privacyLink, border=false, publicPage=false}) 
       <p className={`text-center ${publicPage ? 'mb-0' : 'mb-0 pb-1'}`}>
         <small>
           <strong>ARGO POEM</strong> is a service jointly developed and maintained by &nbsp;
-          <a href="http://www.cnrs.fr/" title="Centre national de la recherche scientifique">CNRS</a>, &nbsp;
           <a href="https://grnet.gr/" title="Greek Research and Technology Network">GRNET</a> and &nbsp;
           <a href="http://www.srce.unizg.hr/" title="University computing centre">SRCE</a>&nbsp;
           co-funded by <a href="https://www.eosc-hub.eu" title="EOSC-Hub">EOSC-Hub</a> and &nbsp;

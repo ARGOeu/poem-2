@@ -164,7 +164,10 @@ const TenantRouteSwitch = ({
       path="/ui/login"
       element={<RedirectAfterLogin isSuperUser={isSuperUser} />}
     />
-    <Route path="/ui/home" element={<Home />} />
+    <Route
+      path="/ui/home"
+      element={<Home isTenantSchema={true} isTenantAdmin={isSuperUser} />}
+    />
     <Route path="/ui/probes" element={<ProbeList isTenantSchema={true} />} />
     <Route
       path="/ui/probes/:name/history"
@@ -898,7 +901,7 @@ const App = () => {
       setTenantName(options && options.result.tenant_name);
       setShowServiceTitle(options && options.result.use_service_title);
     }
-    options && prefetchData(false, poemType, options);
+    prefetchData(false, poemType);
   }
 
   async function initalizePublicState() {
@@ -913,10 +916,10 @@ const App = () => {
     setTenantName(options && options.result.tenant_name);
     setShowServiceTitle(options && options.result.use_service_title);
     setPublicView(true);
-    options && prefetchData(true, isTenantSchema, options);
+    prefetchData(true, isTenantSchema);
   }
 
-  function prefetchData(isPublic, isTenant, options) {
+  function prefetchData(isPublic, isTenant) {
     if (!isPublic) {
       queryClient.prefetchQuery("user", () => fetchUsers());
       queryClient.prefetchQuery("yumrepo", () => fetchYumRepos());
