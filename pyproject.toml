@@ -59,6 +59,7 @@ packages = [
     'Poem.auth_backend.cust',
     'Poem.auth_backend.saml2',
     'Poem.helpers',
+    'Poem.services',
     'Poem.poem',
     'Poem.poem.dbmodels',
     'Poem.poem.fixtures',

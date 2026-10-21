@@ -1,5 +1,5 @@
 import React, { useContext, useState } from 'react';
-import { Backend, WebApi } from './DataManager';
+import { Backend } from './DataManager';
 import { useMutation, useQuery, useQueryClient } from 'react-query';
 import {
   BaseArgoTable,
@@ -43,6 +43,7 @@ import {
   fetchTopologyTags,
   fetchTopologyGroups,
   fetchTopologyEndpoints,
+  fetchReport,
 } from './QueryFunctions';
 import { Controller, FormProvider, useFieldArray, useForm, useFormContext, useWatch } from 'react-hook-form';
 import { yupResolver } from '@hookform/resolvers/yup';
@@ -409,10 +410,6 @@ const getNegationDuplicates = (values) => {
   return duplicates
 }
 
-
-const fetchReport = async (webapi, name) => {
-  return await webapi.fetchReport(name);
-}
 
 
 export const ReportsList = (props) => {
@@ -2124,14 +2121,6 @@ export const ReportsComponent = (props) => {
   const navigate = useNavigate();
 
   const backend = new Backend();
-  const webapi = new WebApi({
-    token: props.webapitoken,
-    reportsConfigurations: props.webapireports,
-    metricProfiles: props.webapimetric,
-    aggregationProfiles: props.webapiaggregation,
-    operationsProfiles: props.webapioperations,
-    thresholdsProfiles: props.webapithresholds
-  });
 
   const queryClient = useQueryClient();
 
@@ -2139,11 +2128,8 @@ export const ReportsComponent = (props) => {
 
   let topologyMaps = new Object();
 
-  const webapiAddMutation = useMutation(async (values) => await webapi.addReport(values));
   const backendAddMutation = useMutation(async (values) => await backend.addObject('/api/v2/internal/reports/', values));
-  const webapiChangeMutation = useMutation(async (values) => await webapi.changeReport(values));
   const backendChangeMutation = useMutation(async (values) => await backend.changeObject('/api/v2/internal/reports/', values));
-  const webapiDeleteMutation = useMutation(async (idReport) => await webapi.deleteReport(idReport));
   const backendDeleteMutation = useMutation(async (idReport) => await backend.deleteObject(`/api/v2/internal/reports/${idReport}`));
 
   const { data: userDetails, error: errorUserDetails, isLoading: loadingUserDetails } = useQuery(
@@ -2164,42 +2150,42 @@ export const ReportsComponent = (props) => {
   )
 
   const { data: topologyGroups, error: topologyGroupsErrors, isLoading: loadingTopologyGroups } = useQuery(
-    `${publicView ? 'public_' : ''}topologygroups`, () => fetchTopologyGroups(webapi),
+    `${publicView ? 'public_' : ''}topologygroups`, () => fetchTopologyGroups(publicView),
     { enabled: publicView || !!userDetails }
   );
 
   const { data: topologyEndpoints, error: topologyEndpointsErrors, isLoading: loadingTopologyEndpoints } = useQuery(
-    `${publicView ? 'public_' : ''}topologyendpoints`, () => fetchTopologyEndpoints(webapi),
+    `${publicView ? 'public_' : ''}topologyendpoints`, () => fetchTopologyEndpoints(publicView),
     { enabled: publicView || !!userDetails }
   );
 
   const { data: topologyTags, error: topologyTagsError, isLoading: loadingTopologyTags } = useQuery(
-    'topologytags', () => fetchTopologyTags(webapi),
+    'topologytags', () => fetchTopologyTags(publicView),
     { enabled: !publicView && !!userDetails }
   );
 
   const { data: webApiReport, error: errorWebApiReport, isLoading: loadingWebApiReport } = useQuery(
-    [`${publicView ? 'public_' : ''}report`, 'webapi', report_name], () => fetchReport(webapi, report_name),
+    [`${publicView ? 'public_' : ''}report`, 'webapi', report_name], () => fetchReport(report_name, publicView),
     { enabled: publicView || (!!userDetails && !addview) }
   )
 
   const { data: listMetricProfiles, error: listMetricProfilesError, isLoading: listMetricProfilesLoading } = useQuery(
-    [`${publicView ? 'public_' : ''}metricprofile`, 'webapi'],  () => fetchMetricProfiles(webapi),
+    [`${publicView ? 'public_' : ''}metricprofile`, 'webapi'],  () => fetchMetricProfiles(publicView),
     { enabled: !publicView && !!userDetails }
   );
 
   const { data: listAggregationProfiles, error: listAggregationProfilesError, isLoading: listAggregationProfilesLoading } = useQuery(
-    [`${publicView ? 'public_' : ''}aggregationprofile`, 'webapi'], () => fetchAggregationProfiles(webapi),
+    [`${publicView ? 'public_' : ''}aggregationprofile`, 'webapi'], () => fetchAggregationProfiles(publicView),
     { enabled: !publicView && !!userDetails }
   );
 
   const { data: listOperationsProfiles, error: listOperationsProfilesError, isLoading: listOperationsProfilesLoading } = useQuery(
-    `${publicView ? 'public_' : ''}operationsprofile`, () => fetchOperationsProfiles(webapi),
+    `${publicView ? 'public_' : ''}operationsprofile`, () => fetchOperationsProfiles(publicView),
     { enabled: !publicView && !!userDetails }
   );
 
   const { data: listThresholdsProfiles, error: listThresholdsProfilesError, isLoading: listThresholdsProfilesLoading } = useQuery(
-    [`${publicView ? 'public_' : ''}thresholdsprofile`, 'webapi'], () => fetchThresholdsProfiles(webapi),
+    [`${publicView ? 'public_' : ''}thresholdsprofile`, 'webapi'], () => fetchThresholdsProfiles(publicView),
     { enabled: !publicView && !!userDetails }
   )
 
@@ -2439,28 +2425,18 @@ export const ReportsComponent = (props) => {
   }
 
   const doDelete = (idReport) => {
-    webapiDeleteMutation.mutate(idReport, {
+    backendDeleteMutation.mutate(idReport, {
       onSuccess: () => {
-        backendDeleteMutation.mutate(idReport, {
-          onSuccess: () => {
-            NotifyOk({
-              msg: 'Report successfully deleted',
-              title: 'Deleted',
-              callback: () => navigate('/ui/reports')
-            });
-          },
-          onError: (error) => {
-            NotifyError({
-              title: 'Internal API error',
-              msg: error.message ? error.message : 'Internal API error deleting report'
-            })
-          }
-        })
+        NotifyOk({
+          msg: 'Report successfully deleted',
+          title: 'Deleted',
+          callback: () => navigate('/ui/reports')
+        });
       },
       onError: (error) => {
         NotifyError({
-          title: 'Web API error',
-          msg: error.message ? error.message : 'Web API error deleting report'
+          title: 'Internal API error',
+          msg: error.message ? error.message : 'Internal API error deleting report'
         })
       }
     })
@@ -2505,68 +2481,45 @@ export const ReportsComponent = (props) => {
     dataToSend['topology_schema'] = formatTopologySchema(formValues.topologyType)
 
     if (addview) {
-      webapiAddMutation.mutate(dataToSend, {
-        onSuccess: (data) => {
-          backendAddMutation.mutate({
-            apiid: data.data.id,
-            name: dataToSend.info.name,
-            groupname: formValues.groupname,
-            description: formValues.description,
-          }, {
-            onSuccess: () => {
-              queryClient.invalidateQueries('report');
-              NotifyOk({
-                msg: 'Report successfully added',
-                title: 'Added',
-                callback: () => navigate('/ui/reports')
-              });
-            },
-            onError: (error) => {
-              NotifyError({
-                title: 'Internal API error',
-                msg: error.message ? error.message : 'Internal API error adding report'
-              })
-            }
-          })
+      backendAddMutation.mutate({
+        ...dataToSend,
+        groupname: formValues.groupname,
+      }, {
+        onSuccess: () => {
+          queryClient.invalidateQueries('report');
+          NotifyOk({
+            msg: 'Report successfully added',
+            title: 'Added',
+            callback: () => navigate('/ui/reports')
+          });
         },
         onError: (error) => {
           NotifyError({
-            title: 'Web API error',
-            msg: error.message ? error.message : 'Web API error adding report'
+            title: 'Internal API error',
+            msg: error.message ? error.message : 'Internal API error adding report'
           })
         }
       })
     }
     else {
-      dataToSend.id = webApiReport.id
-      webapiChangeMutation.mutate(dataToSend, {
+      backendChangeMutation.mutate({
+        ...dataToSend,
+        id: webApiReport.id,
+        apiid: webApiReport.id,
+        groupname: formValues.groupname,
+      }, {
         onSuccess: () => {
-          backendChangeMutation.mutate({
-            apiid: dataToSend.id,
-            name: dataToSend.info.name,
-            groupname: formValues.groupname,
-            description: formValues.description,
-          }, {
-            onSuccess: () => {
-              queryClient.invalidateQueries('report');
-              NotifyOk({
-                msg: 'Report successfully changed',
-                title: 'Changed',
-                callback: () => navigate('/ui/reports')
-              });
-            },
-            onError: (error) => NotifyError({
-              title: 'Internal API error',
-              msg: error.message ? error.message : 'Internal API error changing report'
-            })
-          })
+          queryClient.invalidateQueries('report');
+          NotifyOk({
+            msg: 'Report successfully changed',
+            title: 'Changed',
+            callback: () => navigate('/ui/reports')
+          });
         },
-        onError: (error) => {
-          NotifyError({
-            title: 'Web API error',
-            msg: error.message ? error.message : 'Web API error changing report'
-          })
-        }
+        onError: (error) => NotifyError({
+          title: 'Internal API error',
+          msg: error.message ? error.message : 'Internal API error changing report'
+        })
       })
     }
   }

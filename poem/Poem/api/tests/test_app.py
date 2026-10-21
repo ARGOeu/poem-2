@@ -208,20 +208,7 @@ class GetConfigOptionsAPIViewTests(TenantTestCase):
                 {
                     'result': {
                         'saml_login_string': 'Log in using B2ACCESS',
-                        'webapimetric': 'https://metric.profile.com',
-                        'webapiaggregation': 'https://aggregations.com',
-                        'webapithresholds': 'https://thresholds.com',
-                        'webapioperations': 'https://operations.com',
                         'version': version('poem'),
-                        'webapireports': {
-                            'main': 'https://reports.com',
-                            'tags': 'https://reports-tags.com',
-                            'topologygroups': 'https://topology-groups.com',
-                            'topologyendpoints': 'https://endpoints.com'
-                        },
-                        'webapiservicetypes':
-                            'https://topology-servicetypes.com',
-                        "webapidatafeeds": "https://data.feeds.com",
                         'tenant_name': 'tenant',
                         'terms_privacy_links': {
                             'terms': 'https://terms.of.use.com',
@@ -337,11 +324,10 @@ class GetSessionDetailsAPIViewTests(TenantTestCase):
                         "reports": ["GROUP-reports"],
                         "thresholdsprofiles": ["GROUP-thresholds"]
                     },
-                    "token": "mocked_token_rw"
                 },
                 "tenantdetails": {
                     "combined": False,
-                    "tenants": {}
+                    "tenants": []
                 }
             }
         )
@@ -396,14 +382,13 @@ class GetSessionDetailsAPIViewTests(TenantTestCase):
                         "reports": ["GROUP-reports"],
                         "thresholdsprofiles": ["GROUP-thresholds"]
                     },
-                    "token": "mocked_token_rw"
                 },
                 "tenantdetails": {
                     "combined": True,
-                    "tenants": {
-                        "TENANT1": "mock_tenant1_ro_token",
-                        "TENANT2": "mock_tenant2_ro_token"
-                    }
+                    "tenants": [
+                        "TENANT1",
+                        "TENANT2"
+                    ]
                 }
             }
         )
@@ -435,11 +420,10 @@ class GetSessionDetailsAPIViewTests(TenantTestCase):
                         "reports": [],
                         "thresholdsprofiles": []
                     },
-                    "token": "mocked_token_ro"
                 },
                 "tenantdetails": {
                     "combined": False,
-                    "tenants": {}
+                    "tenants": []
                 }
             }
         )
@@ -471,11 +455,10 @@ class GetSessionDetailsAPIViewTests(TenantTestCase):
                         "reports": [],
                         "thresholdsprofiles": []
                     },
-                    "token": "mocked_token_ro"
                 },
                 "tenantdetails": {
                     "combined": True,
-                    "tenants": {}
+                    "tenants": []
                 }
             }
         )

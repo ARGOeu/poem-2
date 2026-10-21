@@ -4,15 +4,14 @@ import { QueryClient, QueryClientProvider, setLogger } from "react-query";
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { MemoryRouter, Routes, Route } from "react-router-dom";
 import { ProbeCandidateChange, ProbeCandidateList } from "../ProbeCandidates";
-import { Backend, WebApi } from "../DataManager";
+import { Backend } from "../DataManager";
 import selectEvent from "react-select-event";
 import { NotificationManager } from "react-notifications";
 
 
 jest.mock("../DataManager", () => {
   return {
-    Backend: jest.fn(), 
-    WebApi: jest.fn()
+    Backend: jest.fn()
   }
 })
 
@@ -202,8 +201,6 @@ const renderChangeView = () => {
               path="/ui/administration/probecandidates/:id"
               element={ 
                 <ProbeCandidateChange 
-                  webapitoken="t0k3n"
-                  webapiservicetypes="https://mock.service.types"
                   showtitles={ true }
                 /> 
               }
@@ -228,8 +225,6 @@ const renderChangeView2 = () => {
               path="/ui/administration/probecandidates/:id"
               element={ 
                 <ProbeCandidateChange 
-                  webapitoken="t0k3n"
-                  webapiservicetypes="https://mock.service.types"
                 /> 
               }
             />
@@ -253,8 +248,6 @@ const renderChangeView3 = () => {
               path="/ui/administration/probecandidates/:id"
               element={ 
                 <ProbeCandidateChange 
-                  webapitoken="t0k3n"
-                  webapiservicetypes="https://mock.service.types"
                   showtitles={ true }
                 /> 
               }
@@ -279,8 +272,6 @@ const renderChangeView4 = () => {
               path="/ui/administration/probecandidates/:id"
               element={ 
                 <ProbeCandidateChange 
-                  webapitoken="t0k3n"
-                  webapiservicetypes="https://mock.service.types"
                   showtitles={ true }
                 /> 
               }
@@ -305,8 +296,6 @@ const renderChangeView5 = () => {
               path="/ui/administration/probecandidates/:id"
               element={ 
                 <ProbeCandidateChange 
-                  webapitoken="t0k3n"
-                  webapiservicetypes="https://mock.service.types"
                   showtitles={ true }
                 /> 
               }
@@ -505,12 +494,8 @@ describe("Test probe candidate changeview", () => {
         }, 
         isActiveSession: () => Promise.resolve(mockActiveSession),
         changeObject: mockChangeObject,
-        deleteObject: mockDeleteObject
-      }
-    })
-    WebApi.mockImplementation(() => {
-      return {
-        fetchServiceTypes: () => Promise.resolve(mockServiceTypes)
+        deleteObject: mockDeleteObject,
+        fetchWebApiServiceTypes: () => Promise.resolve(mockServiceTypes)
       }
     })
   })

@@ -26,21 +26,6 @@ export class Backend {
     }
   }
 
-  async fetchPublicToken() {
-    // this one fetch token with predefined name WEB-API-RO
-    // API is not protected and is used for public views
-    try {
-      let response = await fetch('/api/v2/internal/public_apikey');
-      if (response.ok) {
-        let json = await response.json();
-        return json['token'];
-      } else
-        return null;
-    } catch(err) {
-      return null;
-    }
-  }
-
   async fetchConfigOptions() {
     const url = '/api/v2/internal/config_options';
     try {
@@ -118,6 +103,94 @@ export class Backend {
       }
     } catch(err) {
       error_msg = `${err} in fetch ${url}`;
+    }
+    if (error_msg)
+      throw Error(error_msg);
+  }
+
+  async fetchWebApiData(url) {
+    const json = await this.fetchData(url);
+    return json.data;
+  }
+
+  async fetchWebApiMetricProfiles(publicView=false) {
+    return await this.fetchWebApiData(`/api/v2/internal/${publicView ? 'public_' : ''}webapi/metricprofiles/`);
+  }
+
+  async fetchWebApiMetricProfile(id, publicView=false) {
+    return await this.fetchWebApiData(`/api/v2/internal/${publicView ? 'public_' : ''}webapi/metricprofiles/${id}`);
+  }
+
+  async fetchWebApiAggregations(publicView=false) {
+    return await this.fetchWebApiData(`/api/v2/internal/${publicView ? 'public_' : ''}webapi/aggregations/`);
+  }
+
+  async fetchWebApiAggregation(id, publicView=false) {
+    return await this.fetchWebApiData(`/api/v2/internal/${publicView ? 'public_' : ''}webapi/aggregations/${id}`);
+  }
+
+  async fetchWebApiThresholdsProfiles(publicView=false) {
+    return await this.fetchWebApiData(`/api/v2/internal/${publicView ? 'public_' : ''}webapi/thresholdsprofiles/`);
+  }
+
+  async fetchWebApiThresholdsProfile(id, publicView=false) {
+    return await this.fetchWebApiData(`/api/v2/internal/${publicView ? 'public_' : ''}webapi/thresholdsprofiles/${id}`);
+  }
+
+  async fetchWebApiOperationsProfiles(publicView=false) {
+    return await this.fetchWebApiData(`/api/v2/internal/${publicView ? 'public_' : ''}webapi/operationsprofiles/`);
+  }
+
+  async fetchWebApiOperationsProfile(name, publicView=false) {
+    return await this.fetchWebApiData(`/api/v2/internal/${publicView ? 'public_' : ''}webapi/operationsprofiles/${name}`);
+  }
+
+  async fetchWebApiReports(publicView=false) {
+    return await this.fetchWebApiData(`/api/v2/internal/${publicView ? 'public_' : ''}webapi/reports/`);
+  }
+
+  async fetchWebApiReport(name, publicView=false) {
+    return await this.fetchWebApiData(`/api/v2/internal/${publicView ? 'public_' : ''}webapi/reports/${name}`);
+  }
+
+  async fetchWebApiTopologyTags(publicView=false) {
+    return await this.fetchWebApiData(`/api/v2/internal/${publicView ? 'public_' : ''}webapi/topology/tags/`);
+  }
+
+  async fetchWebApiTopologyGroups(publicView=false) {
+    return await this.fetchWebApiData(`/api/v2/internal/${publicView ? 'public_' : ''}webapi/topology/groups/`);
+  }
+
+  async fetchWebApiTopologyEndpoints(publicView=false) {
+    return await this.fetchWebApiData(`/api/v2/internal/${publicView ? 'public_' : ''}webapi/topology/endpoints/`);
+  }
+
+  async fetchWebApiServiceTypes(publicView=false) {
+    return await this.fetchWebApiData(`/api/v2/internal/${publicView ? 'public_' : ''}webapi/topology/service-types/`);
+  }
+
+  async fetchWebApiCombinedMetricProfiles() {
+    return await this.fetchData('/api/v2/internal/webapi/combined/metricprofiles/');
+  }
+
+  async replaceServiceTypes(serviceTypes) {
+    const url = '/api/v2/internal/webapi/topology/service-types/';
+    let error_msg = '';
+    try {
+      const response = await this.send(url, 'PUT', serviceTypes);
+      if (response.ok) {
+        const json = await response.json();
+        return json.data;
+      } else {
+        try {
+          const json = await response.json();
+          error_msg = `${response.status} ${response.statusText} in PUT ${url}${json.detail ? `: ${json.detail}` : ''}`;
+        } catch (err) {
+          error_msg = `${response.status} ${response.statusText} in PUT ${url}`;
+        }
+      }
+    } catch (err) {
+      error_msg = `${err} in PUT ${url}`;
     }
     if (error_msg)
       throw Error(error_msg);
@@ -322,364 +395,4 @@ export class Backend {
       body: values && JSON.stringify(values)
     });
   }
-}
-
-export class WebApi {
-  constructor(
-    {
-      token=undefined,
-      metricProfiles=undefined,
-      aggregationProfiles=undefined,
-      thresholdsProfiles=undefined,
-      operationsProfiles=undefined,
-      reportsConfigurations=undefined,
-      serviceTypes=undefined
-    }) {
-    this.token = token;
-    this.metricprofiles = metricProfiles;
-    this.aggregationprofiles = aggregationProfiles;
-    this.thresholdsprofiles = thresholdsProfiles;
-    this.operationsprofiles = operationsProfiles;
-    this.reports = reportsConfigurations;
-    this.servicetypes = serviceTypes;
-  }
-
-  async fetchProfiles(url) {
-    let err_msg = '';
-    try {
-      let response = await fetch(
-        url,
-        {
-          headers: {
-            "Accept": "application/json",
-            "x-api-key": this.token
-          }
-        }
-      );
-      if (response.ok) {
-        let json = await response.json();
-        return json['data'];
-      } else {
-        try {
-          let json = await response.json();
-          err_msg = `${response.status} ${response.statusText} in fetch ${url}${json.status.details ? `: ${json.status.details}` : ''}`;
-        } catch(err) {
-          err_msg = `${response.status} ${response.statusText} in fetch ${url}`;
-        }
-      }
-    } catch(err) {
-      err_msg = `${err} in fetch ${url}`;
-    }
-    if (err_msg)
-      throw Error(err_msg);
-  }
-
-  async fetchMetricProfiles() {
-    return this.fetchProfiles(this.metricprofiles);
-  }
-
-  async fetchAggregationProfiles() {
-    return this.fetchProfiles(this.aggregationprofiles);
-  }
-
-  async fetchOperationsProfiles() {
-    return this.fetchProfiles(this.operationsprofiles);
-  }
-
-  async fetchThresholdsProfiles() {
-    return this.fetchProfiles(this.thresholdsprofiles)
-  }
-
-  async fetchReports() {
-    return this.fetchProfiles(this.reports['main']);
-  }
-
-  async fetchReportsTopologyEndpoints() {
-    return this.fetchProfiles(this.reports['topologyendpoints']);
-  }
-
-  async fetchReportsTopologyGroups() {
-    return this.fetchProfiles(this.reports['topologygroups'])
-  }
-
-  async fetchReportsTopologyTags() {
-    return this.fetchProfiles(this.reports['tags']);
-  }
-
-  async fetchServiceTypes() {
-    let data = []
-
-    try {
-      data = await this.fetchProfiles(this.servicetypes);
-
-      data = data.map(item => {
-        if (!("tags" in item))
-          item["tags"] = ["topology"]
-
-        return item
-      })
-    } catch(error) {
-      if (error.message.includes('404')) {
-        return data
-      } else
-        throw(error)
-    }
-
-    return data
-  }
-
-  fetchMetricProfile(id) {
-    return this.fetchProfile(`${this.metricprofiles}/${id}`);
-  }
-
-  async fetchOperationProfile(name) {
-    const profiles = await this.fetchOperationsProfiles();
-    let profile = {};
-    profiles.forEach(prof => {
-      if (prof.name === name)
-        profile = prof;
-    });
-    return profile;
-  }
-
-  async fetchReport(name) {
-    const reports = await this.fetchReports();
-    let report = {};
-    reports.forEach(rep => {
-      if (rep.info.name === name)
-        report = rep;
-    });
-    return report;
-  }
-
-  fetchAggregationProfile(id) {
-    return this.fetchProfile(`${this.aggregationprofiles}/${id}`);
-  }
-
-  fetchThresholdsProfile(id) {
-    return this.fetchProfile(`${this.thresholdsprofiles}/${id}`);
-  }
-
-  changeAggregation(profile) {
-    return this.changeProfile(this.aggregationprofiles, profile);
-  }
-
-  changeMetricProfile(profile) {
-    return this.changeProfile(this.metricprofiles, profile);
-  }
-
-  changeThresholdsProfile(profile) {
-    return this.changeProfile(this.thresholdsprofiles, profile);
-  }
-
-  addMetricProfile(profile) {
-    return this.addProfile(this.metricprofiles, profile);
-  }
-
-  addAggregation(profile) {
-    return this.addProfile(this.aggregationprofiles, profile);
-  }
-
-  addThresholdsProfile(profile) {
-    return this.addProfile(this.thresholdsprofiles, profile);
-  }
-
-  addReport(report) {
-    return this.addProfile(this.reports['main'], report);
-  }
-
-  async addServiceTypes(service_types) {
-    const existingServiceTypes = await this.fetchServiceTypes();
-    if (existingServiceTypes.length > 0)
-      await this.deleteProfile(this.servicetypes);
-    await this.addProfile(this.servicetypes, service_types);
-  }
-
-  changeReport(report) {
-    return this.changeProfile(`${this.reports['main']}`, report);
-  }
-
-  deleteMetricProfile(id) {
-    return this.deleteProfile(`${this.metricprofiles}/${id}`);
-  }
-
-  deleteAggregation(id) {
-    return this.deleteProfile(`${this.aggregationprofiles}/${id}`);
-  }
-
-  deleteThresholdsProfile(id) {
-    return this.deleteProfile(`${this.thresholdsprofiles}/${id}`);
-  }
-
-  deleteReport(id) {
-    return this.deleteProfile(`${this.reports['main']}/${id}`);
-  }
-
-  async fetchProfile(url) {
-    let err_msg = '';
-    try {
-      let response = await fetch(
-        url,
-        {
-          headers: {
-            "Accept": "application/json",
-            "x-api-key": this.token
-          }
-        }
-      );
-      if (response.ok) {
-        let json = await response.json();
-        return json['data'][0];
-      } else {
-        try {
-          let json = await response.json();
-          if (json.status.details)
-            err_msg = `${response.status} ${response.statusText} in fetch ${url}: ${json.status.details}`;
-
-          else if (json.errors[0].details)
-            err_msg = `${response.status} ${response.statusText} in fetch ${url}: ${json.errors[0].details}`;
-
-          else
-            err_msg = `${response.status} ${response.statusText} in fetch ${url}`;
-        } catch(err1) {
-          err_msg = `${response.status} ${response.statusText} in fetch ${url}`;
-        }
-      }
-    } catch(err) {
-      err_msg = `${err} in fetch ${url}`;
-    }
-    if (err_msg)
-      throw Error(err_msg);
-  }
-
-  async changeProfile(url, data) {
-    let err_mesg = '';
-
-    try {
-      const response = await this.send(`${url}/${data.id}`, 'PUT', data);
-
-      if (response.ok) {
-        let json = await response.json()
-        return json
-      } else {
-        try {
-          let json = await response.json();
-          if (json.status.details)
-            err_mesg = `${response.status} ${response.statusText} in PUT ${url}: ${json.status.details}`;
-
-          else if (json.errors[0].details)
-            err_mesg = `${response.status} ${response.statusText} in PUT ${url}: ${json.errors[0].details}`;
-
-          else
-            err_mesg = `${response.status} ${response.statusText} in PUT ${url}`;
-        } catch (err1) {
-          err_mesg =`${response.status} ${response.statusText} in PUT ${url}`;
-        }
-      }
-    } catch (err2) {
-      err_mesg = `${err2} in PUT ${url}`;
-    }
-
-    if (err_mesg)
-      throw Error(err_mesg)
-  }
-
-  async addProfile(url, data) {
-    let err_mesg = '';
-
-    try {
-      const response = await this.send(url, 'POST', data);
-
-      if (response.ok) {
-        let json = await response.json()
-        return json
-      } else {
-        try {
-          let json = await response.json();
-          if (json.status.details)
-            err_mesg = `${response.status} ${response.statusText} in POST ${url}: ${json.status.details}`;
-
-          else if (json.errors[0].details)
-            err_mesg = `${response.status} ${response.statusText} in POST ${url}: ${json.errors[0].details}`;
-
-          else
-            err_mesg = `${response.status} ${response.statusText} in POST ${url}`;
-        } catch (err1) {
-          err_mesg =`${response.status} ${response.statusText} in POST ${url}`;
-        }
-      }
-    } catch (err2) {
-      err_mesg = `${err2} in POST ${url}`;
-    }
-
-    if (err_mesg)
-      throw Error(err_mesg)
-  }
-
-  async deleteProfile(url) {
-    let err_msg = '';
-
-    try {
-      const response = await this.send(url, 'DELETE');
-
-      if (response.ok) {
-        return response;
-      } else {
-        try {
-          let json = await response.json();
-          if (json.status.details)
-            err_msg = `${response.status} ${response.statusText} in DELETE ${url}: ${json.status.details}`;
-
-          else if (json.errors[0].details)
-            err_msg = `${response.status} ${response.statusText} in DELETE ${url}: ${json.errors[0].details}`;
-
-          else
-            err_msg = `${response.status} ${response.statusText} in DELETE ${url}`;
-        } catch (err1) {
-          err_msg = `${response.status} ${response.statusText} in DELETE ${url}`;
-        }
-      }
-    } catch(err2) {
-      err_msg = `${err2} in DELETE ${url}`
-    }
-
-    if (err_msg)
-      throw Error(err_msg)
-  }
-
-  send(url, method, values=null) {
-    return fetch(url, {
-      method: method,
-      mode: 'cors',
-      cache: 'no-cache',
-      credentials: 'same-origin',
-      headers: {
-        'Accept': 'application/json',
-        'Content-Type': 'application/json',
-        'x-api-key': this.token
-      },
-      body: values && JSON.stringify(values)
-    });
-  }
-}
-
-
-const fetchMetricProfiles4Tenant = async (webapimetric, token) => {
-  let webapi = new WebApi({
-    token: token,
-    metricProfiles: webapimetric
-  })
-
-  return await webapi.fetchMetricProfiles()
-}
-
-
-export const fetchTenantsMetricProfiles = async (webapimetric, tenants) => {
-  let result = new Object()
-
-  for (const [tenant, token] of Object.entries(tenants)) {
-    result[tenant] = await fetchMetricProfiles4Tenant(webapimetric, token)
-  }
-
-  return result
 }

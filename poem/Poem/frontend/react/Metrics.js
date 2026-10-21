@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Backend, WebApi } from './DataManager';
+import { Backend } from './DataManager';
 import { Link, useLocation, useParams, useNavigate } from 'react-router-dom';
 import {
   BaseArgoView,
@@ -315,13 +315,6 @@ export const ListOfMetrics = (props) => {
   const [modalMsg, setModalMsg] = useState(undefined);
 
   const backend = new Backend();
-  const webapi = type === "metrics" ?
-    new WebApi({
-      token: props.webapitoken,
-      metricProfiles: props.webapimetric
-    })
-  :
-    undefined
 
   const queryClient = useQueryClient();
 
@@ -359,7 +352,7 @@ export const ListOfMetrics = (props) => {
 
   const { data: metricProfiles, error: errorMP, isLoading: loadingMP } = useQuery(
     [`${publicView ? "public_" : ""}metricprofile`, "webapi"],
-    () => fetchMetricProfiles(webapi),
+    () => fetchMetricProfiles(publicView),
     { enabled: type === "metrics" && (publicView || !!userDetails) }
   )
 

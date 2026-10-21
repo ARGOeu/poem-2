@@ -2,7 +2,7 @@ import React from 'react';
 import { render, waitFor, screen, within, fireEvent } from '@testing-library/react';
 import '@testing-library/jest-dom';
 import { MemoryRouter, Routes, Route } from 'react-router-dom';
-import { Backend, WebApi } from '../DataManager';
+import { Backend } from '../DataManager';
 import { ReportsList, ReportsChange, ReportsAdd } from '../Reports';
 import { QueryClient, QueryClientProvider, setLogger } from 'react-query';
 import { NotificationManager } from 'react-notifications';
@@ -11,19 +11,15 @@ import selectEvent from 'react-select-event';
 
 jest.mock('../DataManager', () => {
   return {
-    Backend: jest.fn(),
-    WebApi: jest.fn()
+    Backend: jest.fn()
   }
 })
 
 jest.setTimeout(50000);
 
 const mockChangeObject = jest.fn();
-const mockChangeReport = jest.fn();
 const mockDeleteObject = jest.fn();
-const mockDeleteReport = jest.fn();
 const mockAddObject = jest.fn();
-const mockAddReport = jest.fn();
 
 const queryClient = new QueryClient();
 
@@ -1559,12 +1555,6 @@ const mockReportsTopologyGroups = [
   }
 ]
 
-const webapireports = {
-  main: 'https://reports.com',
-  tags: 'https://reports-tags.com',
-  topologygroups: 'https://topology-groups.com',
-  topologyendpoints: 'https://endpoints.com'
-};
 
 
 function renderListView(publicView=false) {
@@ -1577,12 +1567,6 @@ function renderListView(publicView=false) {
           <MemoryRouter initialEntries={ [ route ] }>
             <ReportsList
               publicView={ true }
-              webapitoken="public_token"
-              webapireports={ webapireports }
-              webapimetric="https://mock.metric.com"
-              webapiaggregation="https://mock.aggr.com"
-              webapioperations="https://mock.operations.com"
-              webapithresholds="https://mock.thresholds.com"
             />
           </MemoryRouter>
         </QueryClientProvider>
@@ -1595,12 +1579,6 @@ function renderListView(publicView=false) {
         <QueryClientProvider client={queryClient}>
           <MemoryRouter initialEntries={ [ route ] }>
             <ReportsList
-              webapitoken="token"
-              webapireports={ webapireports }
-              webapimetric="https://mock.metric.com"
-              webapiaggregation="https://mock.aggr.com"
-              webapioperations="https://mock.operations.com"
-              webapithresholds="https://mock.thresholds.com"
             />
           </MemoryRouter>
         </QueryClientProvider>
@@ -1622,12 +1600,6 @@ function renderChangeView(publicView=false) {
                 path="/ui/public_reports/:name"
                 element={ 
                   <ReportsChange
-                    webapitoken="public_token"
-                    webapireports={ webapireports }
-                    webapimetric="https://mock.metric.com"
-                    webapiaggregation="https://mock.aggr.com"
-                    webapioperations="https://mock.operations.com"
-                    webapithresholds="https://mock.thresholds.com"
                     publicView={ true }
                   /> 
                 }
@@ -1648,12 +1620,6 @@ function renderChangeView(publicView=false) {
                 path="/ui/reports/:name"
                 element={ 
                   <ReportsChange
-                    webapitoken="token"
-                    webapireports={ webapireports }
-                    webapimetric="https://mock.metric.com"
-                    webapiaggregation="https://mock.aggr.com"
-                    webapioperations="https://mock.operations.com"
-                    webapithresholds="https://mock.thresholds.com"
                   /> 
                 }
               />
@@ -1673,12 +1639,6 @@ function renderAddView() {
       <QueryClientProvider client={queryClient}>
         <MemoryRouter initialEntries={ [ route ] }>
           <ReportsAdd
-            webapitoken="token"
-            webapireports={ webapireports }
-            webapimetric="https://mock.metric.com"
-            webapiaggregation="https://mock.aggr.com"
-            webapioperations="https://mock.operations.com"
-            webapithresholds="https://mock.thresholds.com"
           />
         </MemoryRouter>
       </QueryClientProvider>
@@ -1858,28 +1818,29 @@ const backendReport4sending = {
 }
 
 
+function reportPayload(report, metadata) {
+  const payload = { ...report, groupname: metadata.groupname };
+  if (metadata.apiid && report.id)
+    payload.apiid = metadata.apiid;
+  return payload;
+}
+
 describe('Tests for reports changeview - sites', () => {
   jest.spyOn(NotificationManager, 'success');
   jest.spyOn(NotificationManager, 'error');
   jest.spyOn(queryClient, 'invalidateQueries');
 
   beforeEach(() => {
-    WebApi.mockImplementation(() => {
-      return {
-        fetchReport: () => Promise.resolve(mockReport),
-        fetchMetricProfiles: () => Promise.resolve(mockMetricProfiles),
-        fetchAggregationProfiles: () => Promise.resolve(mockAggregationProfiles),
-        fetchOperationsProfiles: () => Promise.resolve(mockOperationsProfiles),
-        fetchThresholdsProfiles: () => Promise.resolve(mockThresholdsProfiles),
-        fetchReportsTopologyTags: () => Promise.resolve(mockReportsTopologyTags),
-        fetchReportsTopologyGroups: () => Promise.resolve(mockReportsTopologyGroups),
-        fetchReportsTopologyEndpoints: () => Promise.resolve(mockReportsTopologyEndpoints),
-        changeReport: mockChangeReport,
-        deleteReport: mockDeleteReport
-      }
-    })
     Backend.mockImplementation(() => {
       return {
+        fetchWebApiReport: () => Promise.resolve(mockReport),
+        fetchWebApiMetricProfiles: () => Promise.resolve(mockMetricProfiles),
+        fetchWebApiAggregations: () => Promise.resolve(mockAggregationProfiles),
+        fetchWebApiOperationsProfiles: () => Promise.resolve(mockOperationsProfiles),
+        fetchWebApiThresholdsProfiles: () => Promise.resolve(mockThresholdsProfiles),
+        fetchWebApiTopologyTags: () => Promise.resolve(mockReportsTopologyTags),
+        fetchWebApiTopologyGroups: () => Promise.resolve(mockReportsTopologyGroups),
+        fetchWebApiTopologyEndpoints: () => Promise.resolve(mockReportsTopologyEndpoints),
         isActiveSession: () => Promise.resolve(mockActiveSession),
         fetchData: () => Promise.resolve(mockBackendReport),
         changeObject: mockChangeObject,
@@ -2216,9 +2177,6 @@ describe('Tests for reports changeview - sites', () => {
     mockChangeObject.mockReturnValueOnce(
       Promise.resolve({ ok: true, status: 200, statusText: 'OK' })
     )
-    mockChangeReport.mockReturnValueOnce(
-      Promise.resolve({ ok: 'ok' })
-    )
 
     renderChangeView()
 
@@ -2244,13 +2202,10 @@ describe('Tests for reports changeview - sites', () => {
     backendReport.name = 'new-report-name'
     backendReport.groupname = 'TEST'
     backendReport.description = 'Some new description'
-    await waitFor(() => {
-      expect(mockChangeReport).toHaveBeenCalledWith(frontendReport)
-    })
 
     await waitFor(() => {
       expect(mockChangeObject).toHaveBeenCalledWith(
-        '/api/v2/internal/reports/', backendReport
+        '/api/v2/internal/reports/', reportPayload(frontendReport, backendReport)
       )
     })
 
@@ -2263,9 +2218,6 @@ describe('Tests for reports changeview - sites', () => {
   test('Test disable report', async () => {
     mockChangeObject.mockReturnValueOnce(
       Promise.resolve({ ok: true, status: 200, statusText: 'OK' })
-    )
-    mockChangeReport.mockReturnValueOnce(
-      Promise.resolve({ ok: 'ok' })
     )
 
     renderChangeView()
@@ -2284,13 +2236,10 @@ describe('Tests for reports changeview - sites', () => {
 
     let frontendReport = JSON.parse(JSON.stringify(report4sending))
     frontendReport.disabled = true
-    await waitFor(() => {
-      expect(mockChangeReport).toHaveBeenCalledWith(frontendReport)
-    })
 
     await waitFor(() => {
       expect(mockChangeObject).toHaveBeenCalledWith(
-        '/api/v2/internal/reports/', backendReport4sending
+        '/api/v2/internal/reports/', reportPayload(frontendReport, backendReport4sending)
       )
     })
 
@@ -2303,9 +2252,6 @@ describe('Tests for reports changeview - sites', () => {
   test('Test change profiles info', async () => {
     mockChangeObject.mockReturnValueOnce(
       Promise.resolve({ ok: true, status: 200, statusText: 'OK' })
-    )
-    mockChangeReport.mockReturnValueOnce(
-      Promise.resolve({ ok: 'ok' })
     )
 
     renderChangeView()
@@ -2344,13 +2290,10 @@ describe('Tests for reports changeview - sites', () => {
       type: 'thresholds'
     })
 
-    await waitFor(() => {
-      expect(mockChangeReport).toHaveBeenCalledWith(frontendReport)
-    })
 
     await waitFor(() => {
       expect(mockChangeObject).toHaveBeenCalledWith(
-        '/api/v2/internal/reports/', backendReport4sending
+        '/api/v2/internal/reports/', reportPayload(frontendReport, backendReport4sending)
       )
     })
 
@@ -2396,9 +2339,6 @@ describe('Tests for reports changeview - sites', () => {
   test('Test change groups', async () => {
     mockChangeObject.mockReturnValueOnce(
       Promise.resolve({ ok: true, status: 200, statusText: 'OK' })
-    )
-    mockChangeReport.mockReturnValueOnce(
-      Promise.resolve({ ok: 'ok' })
     )
 
     renderChangeView()
@@ -2523,13 +2463,10 @@ describe('Tests for reports changeview - sites', () => {
       context: 'argo.group.filter.fields'
     })
 
-    await waitFor(() => {
-      expect(mockChangeReport).toHaveBeenCalledWith(frontendReport)
-    })
 
     await waitFor(() => {
       expect(mockChangeObject).toHaveBeenCalledWith(
-        '/api/v2/internal/reports/', backendReport4sending
+        '/api/v2/internal/reports/', reportPayload(frontendReport, backendReport4sending)
       )
     })
 
@@ -2542,9 +2479,6 @@ describe('Tests for reports changeview - sites', () => {
   test('Test change endpoints', async () => {
     mockChangeObject.mockReturnValueOnce(
       Promise.resolve({ ok: true, status: 200, statusText: 'OK' })
-    )
-    mockChangeReport.mockReturnValueOnce(
-      Promise.resolve({ ok: 'ok' })
     )
 
     renderChangeView()
@@ -2633,13 +2567,10 @@ describe('Tests for reports changeview - sites', () => {
       context: 'argo.endpoint.filter.tags.array'
     })
 
-    await waitFor(() => {
-      expect(mockChangeReport).toHaveBeenCalledWith(frontendReport)
-    })
 
     await waitFor(() => {
       expect(mockChangeObject).toHaveBeenCalledWith(
-        '/api/v2/internal/reports/', backendReport4sending
+        '/api/v2/internal/reports/', reportPayload(frontendReport, backendReport4sending)
       )
     })
 
@@ -2652,9 +2583,6 @@ describe('Tests for reports changeview - sites', () => {
   test('Test change thresholds', async () => {
     mockChangeObject.mockReturnValueOnce(
       Promise.resolve({ ok: true, status: 200, statusText: 'OK' })
-    )
-    mockChangeReport.mockReturnValueOnce(
-      Promise.resolve({ ok: 'ok' })
     )
 
     renderChangeView()
@@ -2682,13 +2610,10 @@ describe('Tests for reports changeview - sites', () => {
     frontendReport.thresholds.unknown = 0.2
     frontendReport.thresholds.downtime = 0.3
 
-    await waitFor(() => {
-      expect(mockChangeReport).toHaveBeenCalledWith(frontendReport)
-    })
 
     await waitFor(() => {
       expect(mockChangeObject).toHaveBeenCalledWith(
-        '/api/v2/internal/reports/', backendReport4sending
+        '/api/v2/internal/reports/', reportPayload(frontendReport, backendReport4sending)
       )
     })
 
@@ -2698,95 +2623,10 @@ describe('Tests for reports changeview - sites', () => {
     )
   })
 
-  test('Test error changing report on web api with error message', async () => {
-    mockChangeReport.mockImplementationOnce( () => {
-      throw Error('406 Content Not acceptable: There has been an error.')
-    } );
-
-    renderChangeView();
-
-    await waitFor(() => {
-      expect(screen.getByRole("button", { name: /save/i })).toBeInTheDocument()
-    })
-
-    fireEvent.change(screen.getByLabelText(/description/i), { target: { value: 'More elaborate description of the critical report.' } })
-
-    fireEvent.click(screen.getByRole('button', { name: /save/i }));
-    await waitFor(() => {
-      expect(screen.getByRole('dialog', { title: /change/i })).toBeInTheDocument();
-    })
-    fireEvent.click(screen.getByRole('button', { name: /yes/i }));
-
-    let frontendReport = JSON.parse(JSON.stringify(report4sending))
-    frontendReport.info.description = 'More elaborate description of the critical report.'
-
-    await waitFor(() => {
-      expect(mockChangeReport).toHaveBeenCalledWith(frontendReport)
-    })
-
-    await waitFor(() => {
-      expect(mockChangeObject).not.toHaveBeenCalled();
-    })
-
-    expect(queryClient.invalidateQueries).not.toHaveBeenCalled();
-    expect(NotificationManager.error).toHaveBeenCalledWith(
-      <div>
-        <p>406 Content Not acceptable: There has been an error.</p>
-        <p>Click to dismiss.</p>
-      </div>,
-      'Web API error',
-      0,
-      expect.any(Function)
-    )
-  })
-
-  test('Test error changing report on web api without error message', async () => {
-    mockChangeReport.mockImplementationOnce( () => { throw Error() } );
-
-    renderChangeView();
-
-    await waitFor(() => {
-      expect(screen.getByRole("button", { name: /save/i })).toBeInTheDocument()
-    })
-
-    fireEvent.change(screen.getByLabelText(/description/i), { target: { value: 'More elaborate description of the critical report.' } })
-
-    fireEvent.click(screen.getByRole('button', { name: /save/i }));
-    await waitFor(() => {
-      expect(screen.getByRole('dialog', { title: /change/i })).toBeInTheDocument();
-    })
-    fireEvent.click(screen.getByRole('button', { name: /yes/i }));
-
-    let frontendReport = JSON.parse(JSON.stringify(report4sending))
-    frontendReport.info.description = 'More elaborate description of the critical report.'
-
-    await waitFor(() => {
-      expect(mockChangeReport).toHaveBeenCalledWith(frontendReport)
-    })
-
-    await waitFor(() => {
-      expect(mockChangeObject).not.toHaveBeenCalled();
-    })
-
-    expect(queryClient.invalidateQueries).not.toHaveBeenCalled();
-    expect(NotificationManager.error).toHaveBeenCalledWith(
-      <div>
-        <p>Web API error changing report</p>
-        <p>Click to dismiss.</p>
-      </div>,
-      'Web API error',
-      0,
-      expect.any(Function)
-    )
-  })
-
   test('Test error changing report on internal API with error message', async () => {
     mockChangeObject.mockImplementationOnce( () => {
       throw Error('400 BAD REQUEST: There has been an error.')
     } );
-    mockChangeReport.mockReturnValueOnce(
-      Promise.resolve({ ok: 'ok' })
-    )
 
     renderChangeView();
 
@@ -2808,13 +2648,10 @@ describe('Tests for reports changeview - sites', () => {
     let backendReport = JSON.parse(JSON.stringify(backendReport4sending))
     backendReport.description = 'More elaborate description of the critical report.'
 
-    await waitFor(() => {
-      expect(mockChangeReport).toHaveBeenCalledWith(frontendReport)
-    })
 
     await waitFor(() => {
       expect(mockChangeObject).toHaveBeenCalledWith(
-        '/api/v2/internal/reports/', backendReport
+        '/api/v2/internal/reports/', reportPayload(frontendReport, backendReport)
       )
     })
 
@@ -2832,7 +2669,6 @@ describe('Tests for reports changeview - sites', () => {
 
   test('Test error changing report on internal API without error message', async () => {
     mockChangeObject.mockImplementationOnce( () => { throw Error() } );
-    mockChangeReport.mockReturnValueOnce( Promise.resolve({ ok: 'ok' }) );
 
     renderChangeView();
 
@@ -2854,13 +2690,10 @@ describe('Tests for reports changeview - sites', () => {
     let backendReport = JSON.parse(JSON.stringify(backendReport4sending))
     backendReport.description = 'More elaborate description of the critical report.'
 
-    await waitFor(() => {
-      expect(mockChangeReport).toHaveBeenCalledWith(frontendReport)
-    })
 
     await waitFor(() => {
       expect(mockChangeObject).toHaveBeenCalledWith(
-        '/api/v2/internal/reports/', backendReport
+        '/api/v2/internal/reports/', reportPayload(frontendReport, backendReport)
       )
     })
 
@@ -2877,7 +2710,6 @@ describe('Tests for reports changeview - sites', () => {
   })
 
   test('Test successfully deleting report', async () => {
-    mockDeleteReport.mockReturnValueOnce( Promise.resolve({ ok: 'ok' }) );
 
     renderChangeView();
 
@@ -2891,9 +2723,6 @@ describe('Tests for reports changeview - sites', () => {
     })
     fireEvent.click(screen.getByRole('button', { name: /yes/i }));
 
-    await waitFor(() => {
-      expect(mockDeleteReport).toHaveBeenCalledWith('yee9chel-5o4u-l4j4-410b-eipi3ohrah5i')
-    })
 
     await waitFor(() => {
       expect(mockDeleteObject).toHaveBeenCalledWith(
@@ -2907,83 +2736,10 @@ describe('Tests for reports changeview - sites', () => {
     )
   })
 
-  test('Test error deleting report on web api with error message', async () => {
-    mockDeleteReport.mockImplementationOnce( () => {
-      throw Error('406 Content Not acceptable: There has been an error.')
-    } );
-
-    renderChangeView();
-
-    await waitFor(() => {
-      expect(screen.getByRole("button", { name: /save/i })).toBeInTheDocument()
-    })
-
-    fireEvent.click(screen.getByRole('button', { name: /delete/i }));
-    await waitFor(() => {
-      expect(screen.getByRole('dialog', { title: /delete/i })).toBeInTheDocument();
-    })
-    fireEvent.click(screen.getByRole('button', { name: /yes/i }));
-
-    await waitFor(() => {
-      expect(mockDeleteReport).toHaveBeenCalledWith('yee9chel-5o4u-l4j4-410b-eipi3ohrah5i')
-    })
-
-    await waitFor(() => {
-      expect(mockDeleteObject).not.toHaveBeenCalled();
-    })
-
-    expect(queryClient.invalidateQueries).toHaveBeenCalledWith('report');
-    expect(NotificationManager.error).toHaveBeenCalledWith(
-      <div>
-        <p>406 Content Not acceptable: There has been an error.</p>
-        <p>Click to dismiss.</p>
-      </div>,
-      'Web API error',
-      0,
-      expect.any(Function)
-    )
-  })
-
-  test('Test error deleting report on web api without error message', async () => {
-    mockDeleteReport.mockImplementationOnce( () => { throw Error() } );
-
-    renderChangeView();
-
-    await waitFor(() => {
-      expect(screen.getByRole("button", { name: /save/i })).toBeInTheDocument()
-    })
-
-    fireEvent.click(screen.getByRole('button', { name: /delete/i }));
-    await waitFor(() => {
-      expect(screen.getByRole('dialog', { title: /delete/i })).toBeInTheDocument();
-    })
-    fireEvent.click(screen.getByRole('button', { name: /yes/i }));
-
-    await waitFor(() => {
-      expect(mockDeleteReport).toHaveBeenCalledWith('yee9chel-5o4u-l4j4-410b-eipi3ohrah5i')
-    })
-
-    await waitFor(() => {
-      expect(mockDeleteObject).not.toHaveBeenCalled();
-    })
-
-    expect(queryClient.invalidateQueries).toHaveBeenCalledWith('report');
-    expect(NotificationManager.error).toHaveBeenCalledWith(
-      <div>
-        <p>Web API error deleting report</p>
-        <p>Click to dismiss.</p>
-      </div>,
-      'Web API error',
-      0,
-      expect.any(Function)
-    )
-  })
-
   test('Test error deleting report on internal backend with error message', async () => {
     mockDeleteObject.mockImplementationOnce( () => {
       throw Error('400 BAD REQUEST: There has been an error.')
     } );
-    mockDeleteReport.mockReturnValueOnce( Promise.resolve({ ok: 'ok' }) );
 
     renderChangeView();
 
@@ -2997,9 +2753,6 @@ describe('Tests for reports changeview - sites', () => {
     })
     fireEvent.click(screen.getByRole('button', { name: /yes/i }));
 
-    await waitFor(() => {
-      expect(mockDeleteReport).toHaveBeenCalledWith('yee9chel-5o4u-l4j4-410b-eipi3ohrah5i')
-    })
 
     await waitFor(() => {
       expect(mockDeleteObject).toHaveBeenCalledWith(
@@ -3021,7 +2774,6 @@ describe('Tests for reports changeview - sites', () => {
 
   test('Test error deleting report on internal backend without error message', async () => {
     mockDeleteObject.mockImplementationOnce( () => { throw Error() } );
-    mockDeleteReport.mockReturnValueOnce( Promise.resolve({ ok: 'ok' }) );
 
     renderChangeView();
 
@@ -3035,9 +2787,6 @@ describe('Tests for reports changeview - sites', () => {
     })
     fireEvent.click(screen.getByRole('button', { name: /yes/i }));
 
-    await waitFor(() => {
-      expect(mockDeleteReport).toHaveBeenCalledWith('yee9chel-5o4u-l4j4-410b-eipi3ohrah5i')
-    })
 
     await waitFor(() => {
       expect(mockDeleteObject).toHaveBeenCalledWith(
@@ -3061,20 +2810,16 @@ describe('Tests for reports changeview - sites', () => {
 
 describe("Tests for reports changeview - servicegroups", () => {
   beforeEach(() => {
-    WebApi.mockImplementation(() => {
-      return {
-        fetchReport: () => Promise.resolve(mockReport4),
-        fetchMetricProfiles: () => Promise.resolve(mockMetricProfiles),
-        fetchAggregationProfiles: () => Promise.resolve(mockAggregationProfiles),
-        fetchOperationsProfiles: () => Promise.resolve(mockOperationsProfiles),
-        fetchThresholdsProfiles: () => Promise.resolve(mockThresholdsProfiles),
-        fetchReportsTopologyTags: () => Promise.resolve(mockReportsTopologyTags),
-        fetchReportsTopologyGroups: () => Promise.resolve(mockReportsTopologyGroups),
-        fetchReportsTopologyEndpoints: () => Promise.resolve(mockReportsTopologyEndpoints)
-      }
-    })
     Backend.mockImplementation(() => {
       return {
+        fetchWebApiReport: () => Promise.resolve(mockReport4),
+        fetchWebApiMetricProfiles: () => Promise.resolve(mockMetricProfiles),
+        fetchWebApiAggregations: () => Promise.resolve(mockAggregationProfiles),
+        fetchWebApiOperationsProfiles: () => Promise.resolve(mockOperationsProfiles),
+        fetchWebApiThresholdsProfiles: () => Promise.resolve(mockThresholdsProfiles),
+        fetchWebApiTopologyTags: () => Promise.resolve(mockReportsTopologyTags),
+        fetchWebApiTopologyGroups: () => Promise.resolve(mockReportsTopologyGroups),
+        fetchWebApiTopologyEndpoints: () => Promise.resolve(mockReportsTopologyEndpoints),
         isActiveSession: () => Promise.resolve(mockActiveSession),
         fetchData: () => Promise.resolve(mockBackendReport)
       }
@@ -3805,20 +3550,16 @@ describe("Tests for reports changeview - servicegroups", () => {
 
 describe("Tests for reports changeview with wildcard - servicegroups", () => {
   beforeEach(() => {
-    WebApi.mockImplementation(() => {
-      return {
-        fetchReport: () => Promise.resolve(mockReport5),
-        fetchMetricProfiles: () => Promise.resolve(mockMetricProfiles),
-        fetchAggregationProfiles: () => Promise.resolve(mockAggregationProfiles),
-        fetchOperationsProfiles: () => Promise.resolve(mockOperationsProfiles),
-        fetchThresholdsProfiles: () => Promise.resolve(mockThresholdsProfiles),
-        fetchReportsTopologyTags: () => Promise.resolve(mockReportsTopologyTags),
-        fetchReportsTopologyGroups: () => Promise.resolve(mockReportsTopologyGroups),
-        fetchReportsTopologyEndpoints: () => Promise.resolve(mockReportsTopologyEndpoints)
-      }
-    })
     Backend.mockImplementation(() => {
       return {
+        fetchWebApiReport: () => Promise.resolve(mockReport5),
+        fetchWebApiMetricProfiles: () => Promise.resolve(mockMetricProfiles),
+        fetchWebApiAggregations: () => Promise.resolve(mockAggregationProfiles),
+        fetchWebApiOperationsProfiles: () => Promise.resolve(mockOperationsProfiles),
+        fetchWebApiThresholdsProfiles: () => Promise.resolve(mockThresholdsProfiles),
+        fetchWebApiTopologyTags: () => Promise.resolve(mockReportsTopologyTags),
+        fetchWebApiTopologyGroups: () => Promise.resolve(mockReportsTopologyGroups),
+        fetchWebApiTopologyEndpoints: () => Promise.resolve(mockReportsTopologyEndpoints),
         isActiveSession: () => Promise.resolve(mockActiveSession),
         fetchData: () => Promise.resolve(mockBackendReport)
       }
@@ -4615,20 +4356,16 @@ describe("Tests for reports changeview with wildcard - servicegroups", () => {
 
 describe("Tests for reports changeview with wildcards - sites", () => {
   beforeEach(() => {
-    WebApi.mockImplementation(() => {
-      return {
-        fetchReport: () => Promise.resolve(mockReport3),
-        fetchMetricProfiles: () => Promise.resolve(mockMetricProfiles),
-        fetchAggregationProfiles: () => Promise.resolve(mockAggregationProfiles),
-        fetchOperationsProfiles: () => Promise.resolve(mockOperationsProfiles),
-        fetchThresholdsProfiles: () => Promise.resolve(mockThresholdsProfiles),
-        fetchReportsTopologyTags: () => Promise.resolve(mockReportsTopologyTags),
-        fetchReportsTopologyGroups: () => Promise.resolve(mockReportsTopologyGroups),
-        fetchReportsTopologyEndpoints: () => Promise.resolve(mockReportsTopologyEndpoints)
-      }
-    })
     Backend.mockImplementation(() => {
       return {
+        fetchWebApiReport: () => Promise.resolve(mockReport3),
+        fetchWebApiMetricProfiles: () => Promise.resolve(mockMetricProfiles),
+        fetchWebApiAggregations: () => Promise.resolve(mockAggregationProfiles),
+        fetchWebApiOperationsProfiles: () => Promise.resolve(mockOperationsProfiles),
+        fetchWebApiThresholdsProfiles: () => Promise.resolve(mockThresholdsProfiles),
+        fetchWebApiTopologyTags: () => Promise.resolve(mockReportsTopologyTags),
+        fetchWebApiTopologyGroups: () => Promise.resolve(mockReportsTopologyGroups),
+        fetchWebApiTopologyEndpoints: () => Promise.resolve(mockReportsTopologyEndpoints),
         isActiveSession: () => Promise.resolve(mockActiveSession),
         fetchData: () => Promise.resolve(mockBackendReport)
       }
@@ -5107,20 +4844,16 @@ describe("Tests for reports changeview with wildcards - sites", () => {
 
 describe("Tests for reports changeview with negation - sites", () => {
   beforeEach(() => {
-    WebApi.mockImplementation(() => {
-      return {
-        fetchReport: () => Promise.resolve(mockReport6),
-        fetchMetricProfiles: () => Promise.resolve(mockMetricProfiles),
-        fetchAggregationProfiles: () => Promise.resolve(mockAggregationProfiles),
-        fetchOperationsProfiles: () => Promise.resolve(mockOperationsProfiles),
-        fetchThresholdsProfiles: () => Promise.resolve(mockThresholdsProfiles),
-        fetchReportsTopologyTags: () => Promise.resolve(mockReportsTopologyTags),
-        fetchReportsTopologyGroups: () => Promise.resolve(mockReportsTopologyGroups),
-        fetchReportsTopologyEndpoints: () => Promise.resolve(mockReportsTopologyEndpoints)
-      }
-    })
     Backend.mockImplementation(() => {
       return {
+        fetchWebApiReport: () => Promise.resolve(mockReport6),
+        fetchWebApiMetricProfiles: () => Promise.resolve(mockMetricProfiles),
+        fetchWebApiAggregations: () => Promise.resolve(mockAggregationProfiles),
+        fetchWebApiOperationsProfiles: () => Promise.resolve(mockOperationsProfiles),
+        fetchWebApiThresholdsProfiles: () => Promise.resolve(mockThresholdsProfiles),
+        fetchWebApiTopologyTags: () => Promise.resolve(mockReportsTopologyTags),
+        fetchWebApiTopologyGroups: () => Promise.resolve(mockReportsTopologyGroups),
+        fetchWebApiTopologyEndpoints: () => Promise.resolve(mockReportsTopologyEndpoints),
         isActiveSession: () => Promise.resolve(mockActiveSession),
         fetchData: () => Promise.resolve(mockBackendReport)
       }
@@ -5657,20 +5390,16 @@ describe("Tests for reports changeview with negation - sites", () => {
 
 describe("Tests for reports changeview with negation - servicegroups", () => {
   beforeEach(() => {
-    WebApi.mockImplementation(() => {
-      return {
-        fetchReport: () => Promise.resolve(mockReport7),
-        fetchMetricProfiles: () => Promise.resolve(mockMetricProfiles),
-        fetchAggregationProfiles: () => Promise.resolve(mockAggregationProfiles),
-        fetchOperationsProfiles: () => Promise.resolve(mockOperationsProfiles),
-        fetchThresholdsProfiles: () => Promise.resolve(mockThresholdsProfiles),
-        fetchReportsTopologyTags: () => Promise.resolve(mockReportsTopologyTags),
-        fetchReportsTopologyGroups: () => Promise.resolve(mockReportsTopologyGroups),
-        fetchReportsTopologyEndpoints: () => Promise.resolve(mockReportsTopologyEndpoints)
-      }
-    })
     Backend.mockImplementation(() => {
       return {
+        fetchWebApiReport: () => Promise.resolve(mockReport7),
+        fetchWebApiMetricProfiles: () => Promise.resolve(mockMetricProfiles),
+        fetchWebApiAggregations: () => Promise.resolve(mockAggregationProfiles),
+        fetchWebApiOperationsProfiles: () => Promise.resolve(mockOperationsProfiles),
+        fetchWebApiThresholdsProfiles: () => Promise.resolve(mockThresholdsProfiles),
+        fetchWebApiTopologyTags: () => Promise.resolve(mockReportsTopologyTags),
+        fetchWebApiTopologyGroups: () => Promise.resolve(mockReportsTopologyGroups),
+        fetchWebApiTopologyEndpoints: () => Promise.resolve(mockReportsTopologyEndpoints),
         isActiveSession: () => Promise.resolve(mockActiveSession),
         fetchData: () => Promise.resolve(mockBackendReport)
       }
@@ -6197,20 +5926,16 @@ describe("Tests for reports changeview with negation - servicegroups", () => {
 
 describe("Tests for reports changeview with combination of negation and wildcards", () => {
   beforeEach(() => {
-    WebApi.mockImplementation(() => {
-      return {
-        fetchReport: () => Promise.resolve(mockReport8),
-        fetchMetricProfiles: () => Promise.resolve(mockMetricProfiles),
-        fetchAggregationProfiles: () => Promise.resolve(mockAggregationProfiles),
-        fetchOperationsProfiles: () => Promise.resolve(mockOperationsProfiles),
-        fetchThresholdsProfiles: () => Promise.resolve(mockThresholdsProfiles),
-        fetchReportsTopologyTags: () => Promise.resolve(mockReportsTopologyTags),
-        fetchReportsTopologyGroups: () => Promise.resolve(mockReportsTopologyGroups),
-        fetchReportsTopologyEndpoints: () => Promise.resolve(mockReportsTopologyEndpoints)
-      }
-    })
     Backend.mockImplementation(() => {
       return {
+        fetchWebApiReport: () => Promise.resolve(mockReport8),
+        fetchWebApiMetricProfiles: () => Promise.resolve(mockMetricProfiles),
+        fetchWebApiAggregations: () => Promise.resolve(mockAggregationProfiles),
+        fetchWebApiOperationsProfiles: () => Promise.resolve(mockOperationsProfiles),
+        fetchWebApiThresholdsProfiles: () => Promise.resolve(mockThresholdsProfiles),
+        fetchWebApiTopologyTags: () => Promise.resolve(mockReportsTopologyTags),
+        fetchWebApiTopologyGroups: () => Promise.resolve(mockReportsTopologyGroups),
+        fetchWebApiTopologyEndpoints: () => Promise.resolve(mockReportsTopologyEndpoints),
         isActiveSession: () => Promise.resolve(mockActiveSession),
         fetchData: () => Promise.resolve(mockBackendReport)
       }
@@ -6747,14 +6472,10 @@ describe("Tests for reports changeview with combination of negation and wildcard
 
 describe('Tests for public reports changeview', () => {
   beforeEach(() => {
-    WebApi.mockImplementation(() => {
-      return {
-        fetchReport: () => Promise.resolve(mockReport),
-        fetchReportsTopologyGroups: () => Promise.resolve(mockReportsTopologyGroups),
-      }
-    })
     Backend.mockImplementation(() => {
       return {
+        fetchWebApiReport: () => Promise.resolve(mockReport),
+        fetchWebApiTopologyGroups: () => Promise.resolve(mockReportsTopologyGroups),
         fetchData: () => Promise.resolve(mockBackendReport)
       }
     })
@@ -6868,10 +6589,11 @@ describe('Tests for public reports changeview', () => {
   })
 
   test('Test that page renders properly if report has no entities', async () => {
-    WebApi.mockImplementation(() => {
+    Backend.mockImplementation(() => {
       return {
-        fetchReport: () => Promise.resolve(mockReport2),
-        fetchReportsTopologyTags: () => Promise.resolve(mockReportsTopologyTags)
+        fetchData: () => Promise.resolve(mockBackendReport),
+        fetchWebApiReport: () => Promise.resolve(mockReport2),
+        fetchWebApiTopologyTags: () => Promise.resolve(mockReportsTopologyTags)
       }
     })
     renderChangeView(true);
@@ -7056,20 +6778,15 @@ describe('Tests for reports addview', () => {
   jest.spyOn(queryClient, 'invalidateQueries');
 
   beforeAll(() => {
-    WebApi.mockImplementation(() => {
-      return {
-        fetchMetricProfiles: () => Promise.resolve(mockMetricProfiles),
-        fetchAggregationProfiles: () => Promise.resolve(mockAggregationProfiles),
-        fetchOperationsProfiles: () => Promise.resolve(mockOperationsProfiles),
-        fetchThresholdsProfiles: () => Promise.resolve(mockThresholdsProfiles),
-        fetchReportsTopologyTags: () => Promise.resolve(mockReportsTopologyTags),
-        fetchReportsTopologyGroups: () => Promise.resolve(mockReportsTopologyGroups),
-        fetchReportsTopologyEndpoints: () => Promise.resolve(mockReportsTopologyEndpoints),
-        addReport: mockAddReport
-      }
-    })
     Backend.mockImplementation(() => {
       return {
+        fetchWebApiMetricProfiles: () => Promise.resolve(mockMetricProfiles),
+        fetchWebApiAggregations: () => Promise.resolve(mockAggregationProfiles),
+        fetchWebApiOperationsProfiles: () => Promise.resolve(mockOperationsProfiles),
+        fetchWebApiThresholdsProfiles: () => Promise.resolve(mockThresholdsProfiles),
+        fetchWebApiTopologyTags: () => Promise.resolve(mockReportsTopologyTags),
+        fetchWebApiTopologyGroups: () => Promise.resolve(mockReportsTopologyGroups),
+        fetchWebApiTopologyEndpoints: () => Promise.resolve(mockReportsTopologyEndpoints),
         isActiveSession: () => Promise.resolve(mockActiveSession),
         addObject: mockAddObject
       }
@@ -7188,20 +6905,6 @@ describe('Tests for reports addview', () => {
   })
 
   test('Test add required information', async () => {
-    mockAddReport.mockReturnValueOnce(
-      Promise.resolve({
-        status: {
-          message: 'Report Created',
-          code: "200"
-        },
-        data: {
-          id: 'Ohs2duRu-tU6N-mF3Q-jV8F-Wiush8ieR7me',
-          links: {
-            self: 'string'
-          }
-        }
-      })
-    )
 
     renderAddView()
 
@@ -7245,13 +6948,10 @@ describe('Tests for reports addview', () => {
     frontendReport.disabled = true
     frontendReport.filter_tags = []
 
-    await waitFor(() => {
-      expect(mockAddReport).toHaveBeenCalledWith(frontendReport)
-    })
 
     await waitFor(() => {
       expect(mockAddObject).toHaveBeenCalledWith(
-        "/api/v2/internal/reports/", newBackendReport4Sending
+        "/api/v2/internal/reports/", reportPayload(frontendReport, newBackendReport4Sending)
       )
     })
 
@@ -8613,20 +8313,6 @@ describe('Tests for reports addview', () => {
   })
 
   test('Test successfully adding a report', async () => {
-    mockAddReport.mockReturnValueOnce(
-      Promise.resolve({
-        status: {
-          message: 'Report Created',
-          code: "200"
-        },
-        data: {
-          id: 'Ohs2duRu-tU6N-mF3Q-jV8F-Wiush8ieR7me',
-          links: {
-            self: 'string'
-          }
-        }
-      })
-    )
 
     renderAddView();
 
@@ -8721,13 +8407,10 @@ describe('Tests for reports addview', () => {
     })
     fireEvent.click(screen.getByRole('button', { name: /yes/i }));
 
-    await waitFor(() => {
-      expect(mockAddReport).toHaveBeenCalledWith(newReport4Sending)
-    })
 
     await waitFor(() => {
       expect(mockAddObject).toHaveBeenCalledWith(
-        '/api/v2/internal/reports/', newBackendReport4Sending
+        '/api/v2/internal/reports/', reportPayload(newReport4Sending, newBackendReport4Sending)
       )
     })
 
@@ -8737,255 +8420,7 @@ describe('Tests for reports addview', () => {
     )
   })
 
-  test('Test error adding a report in web api with error message', async () => {
-    mockAddReport.mockImplementationOnce( () => {
-      throw Error('406 Content Not acceptable: There has been an error.')
-    } );
-
-    renderAddView();
-
-    await waitFor(() => {
-      expect(screen.getByRole("button", { name: /save/i })).toBeInTheDocument()
-    })
-
-    fireEvent.change(screen.getByTestId('name'), { target: { value: 'OPS-MONITOR' } });
-    fireEvent.change(screen.getByLabelText(/description/i), { target: { value: 'A/R report for Operations services.' } });
-
-    await selectEvent.select(screen.getAllByText(/select/i)[0], 'ARGO')
-
-    await selectEvent.select(screen.getAllByText(/select/i)[0], 'OPS_MONITOR_RHEL7')
-    await selectEvent.select(screen.getAllByText(/select/i)[0], 'ops-mon-critical')
-    await selectEvent.select(screen.getAllByText(/select/i)[0], 'egi_ops')
-    await selectEvent.select(screen.getAllByText(/select/i)[0], 'TEST_PROFILE')
-
-    await waitFor(() => {
-      selectEvent.select(screen.getAllByText(/select/i)[0], 'Sites')
-    })
-
-    const card_groups = within(screen.getByTestId('card-group-of-groups'));
-    const card_endpoints = within(screen.getByTestId('card-group-of-endpoints'));
-
-    fireEvent.click(card_groups.getByRole('button', { name: /add new tag/i }))
-
-    await waitFor(() => {
-      expect(card_groups.getAllByText("Select...")).toHaveLength(2)
-    })
-
-    await waitFor(() => {
-      selectEvent.select(card_groups.getAllByText("Select...")[0], 'monitored')
-    })
-
-    await waitFor(() => {
-      expect(card_groups.getAllByText("Select...")).toHaveLength(1)
-    })
-
-    await waitFor(() => {
-      selectEvent.select(card_groups.getByText("Select..."), 'yes')
-    })
-
-    fireEvent.click(card_groups.getByRole('button', { name: /add new extension/i }))
-
-    await waitFor(() => {
-      expect(card_groups.getAllByText("Select...")).toHaveLength(2)
-    })
-
-    await waitFor(() => {
-      selectEvent.select(card_groups.getAllByText("Select...")[0], 'GLUE2EndpointImplementationName')
-    })
-
-    await waitFor(() => {
-      expect(card_groups.getAllByText("Select...")).toHaveLength(1)
-    })
-    
-    await waitFor(() => {
-      selectEvent.select(card_groups.getAllByText("Select...")[0], 'ARC-CE')
-    })
-
-    fireEvent.click(card_endpoints.getByText(/add new extension/i))
-
-    await waitFor(() => {
-      expect(card_endpoints.getAllByText("Select...")).toHaveLength(2)
-    })
-
-    await waitFor(() => {
-      selectEvent.select(card_endpoints.getAllByText("Select...")[0], 'GLUE2EndpointID')
-    })
-
-    await waitFor(() => {
-      expect(card_endpoints.getAllByText("Select...")).toHaveLength(1)
-    })
-
-    await waitFor(() => {
-      selectEvent.select(card_endpoints.getAllByText("Select...")[0], 'ce1.gridpp.ecdf.ed.ac.uk')
-    })
-
-    await waitFor(() => {
-      expect(card_endpoints.queryAllByText("Select...")).toHaveLength(0)
-    })
-
-    fireEvent.change(screen.getByLabelText(/availability/i), { target: { value: '70' } });
-    fireEvent.change(screen.getByLabelText(/reliability/i), { target: { value: '80' } });
-    fireEvent.change(screen.getByLabelText(/uptime/i), { target: { value: '1.0' } });
-    fireEvent.change(screen.getByLabelText(/unknown/i), { target: { value: '0.2' } });
-    fireEvent.change(screen.getByLabelText(/downtime/i), { target: { value: '0.2' } });
-
-    fireEvent.click(screen.getByRole('button', { name: /save/i }))
-    await waitFor(() => {
-      expect(screen.getByRole('dialog', { title: /add/i })).toBeInTheDocument();
-    })
-    fireEvent.click(screen.getByRole('button', { name: /yes/i }));
-
-    await waitFor(() => {
-      expect(mockAddReport).toHaveBeenCalledWith(newReport4Sending)
-    })
-
-    await waitFor(() => {
-      expect(mockAddObject).not.toHaveBeenCalled();
-    })
-
-    expect(queryClient.invalidateQueries).not.toHaveBeenCalled();
-    expect(NotificationManager.error).toHaveBeenCalledWith(
-      <div>
-        <p>406 Content Not acceptable: There has been an error.</p>
-        <p>Click to dismiss.</p>
-      </div>,
-      'Web API error',
-      0,
-      expect.any(Function)
-    )
-  })
-
-  test('Test error adding a report in web api without error message', async () => {
-    mockAddReport.mockImplementationOnce( () => { throw Error() } );
-
-    renderAddView();
-
-    await waitFor(() => {
-      expect(screen.getByRole("button", { name: /save/i })).toBeInTheDocument()
-    })
-
-    fireEvent.change(screen.getByTestId('name'), { target: { value: 'OPS-MONITOR' } });
-    fireEvent.change(screen.getByLabelText(/description/i), { target: { value: 'A/R report for Operations services.' } });
-
-    await selectEvent.select(screen.getAllByText(/select/i)[0], 'ARGO')
-
-    await selectEvent.select(screen.getAllByText(/select/i)[0], 'OPS_MONITOR_RHEL7')
-    await selectEvent.select(screen.getAllByText(/select/i)[0], 'ops-mon-critical')
-    await selectEvent.select(screen.getAllByText(/select/i)[0], 'egi_ops')
-    await selectEvent.select(screen.getAllByText(/select/i)[0], 'TEST_PROFILE')
-
-    await waitFor(() => {
-      selectEvent.select(screen.getAllByText(/select/i)[0], 'Sites')
-    })
-
-    const card_groups = within(screen.getByTestId('card-group-of-groups'));
-    const card_endpoints = within(screen.getByTestId('card-group-of-endpoints'));
-
-    fireEvent.click(card_groups.getByRole('button', { name: /add new tag/i }))
-
-    await waitFor(() => {
-      expect(card_groups.getAllByText("Select...")).toHaveLength(2)
-    })
-
-    await waitFor(() => {
-      selectEvent.select(card_groups.getAllByText("Select...")[0], 'monitored')
-    })
-
-    await waitFor(() => {
-      expect(card_groups.getAllByText("Select...")).toHaveLength(1)
-    })
-
-    await waitFor(() => {
-      selectEvent.select(card_groups.getByText("Select..."), 'yes')
-    })
-
-    fireEvent.click(card_groups.getByRole('button', { name: /add new extension/i }))
-
-    await waitFor(() => {
-      expect(card_groups.getAllByText("Select...")).toHaveLength(2)
-    })
-
-    await waitFor(() => {
-      selectEvent.select(card_groups.getAllByText("Select...")[0], 'GLUE2EndpointImplementationName')
-    })
-
-    await waitFor(() => {
-      expect(card_groups.getAllByText("Select...")).toHaveLength(1)
-    })
-    
-    await waitFor(() => {
-      selectEvent.select(card_groups.getAllByText("Select...")[0], 'ARC-CE')
-    })
-
-    fireEvent.click(card_endpoints.getByText(/add new extension/i))
-
-    await waitFor(() => {
-      expect(card_endpoints.getAllByText("Select...")).toHaveLength(2)
-    })
-
-    await waitFor(() => {
-      selectEvent.select(card_endpoints.getAllByText("Select...")[0], 'GLUE2EndpointID')
-    })
-
-    await waitFor(() => {
-      expect(card_endpoints.getAllByText("Select...")).toHaveLength(1)
-    })
-
-    await waitFor(() => {
-      selectEvent.select(card_endpoints.getAllByText("Select...")[0], 'ce1.gridpp.ecdf.ed.ac.uk')
-    })
-
-    await waitFor(() => {
-      expect(card_endpoints.queryAllByText("Select...")).toHaveLength(0)
-    })
-
-    fireEvent.change(screen.getByLabelText(/availability/i), { target: { value: '70' } });
-    fireEvent.change(screen.getByLabelText(/reliability/i), { target: { value: '80' } });
-    fireEvent.change(screen.getByLabelText(/uptime/i), { target: { value: '1.0' } });
-    fireEvent.change(screen.getByLabelText(/unknown/i), { target: { value: '0.2' } });
-    fireEvent.change(screen.getByLabelText(/downtime/i), { target: { value: '0.2' } });
-
-    fireEvent.click(screen.getByRole('button', { name: /save/i }))
-    await waitFor(() => {
-      expect(screen.getByRole('dialog', { title: /add/i })).toBeInTheDocument();
-    })
-    fireEvent.click(screen.getByRole('button', { name: /yes/i }));
-
-    await waitFor(() => {
-      expect(mockAddReport).toHaveBeenCalledWith(newReport4Sending)
-    })
-
-    await waitFor(() => {
-      expect(mockAddObject).not.toHaveBeenCalled();
-    })
-
-    expect(queryClient.invalidateQueries).not.toHaveBeenCalled();
-    expect(NotificationManager.error).toHaveBeenCalledWith(
-      <div>
-        <p>Web API error adding report</p>
-        <p>Click to dismiss.</p>
-      </div>,
-      'Web API error',
-      0,
-      expect.any(Function)
-    )
-  })
-
   test('Test error adding a report in internal api with error message', async () => {
-    mockAddReport.mockReturnValueOnce(
-      Promise.resolve({
-        status: {
-          message: 'Report Created',
-          code: "200"
-        },
-        data: {
-          id: 'Ohs2duRu-tU6N-mF3Q-jV8F-Wiush8ieR7me',
-          links: {
-            self: 'string'
-          }
-        }
-      })
-    )
     mockAddObject.mockImplementationOnce( () => {
       throw Error('400 BAD REQUEST: There has been an error.')
     } );
@@ -9083,13 +8518,10 @@ describe('Tests for reports addview', () => {
     })
     fireEvent.click(screen.getByRole('button', { name: /yes/i }));
 
-    await waitFor(() => {
-      expect(mockAddReport).toHaveBeenCalledWith(newReport4Sending)
-    })
 
     await waitFor(() => {
       expect(mockAddObject).toHaveBeenCalledWith(
-        '/api/v2/internal/reports/', newBackendReport4Sending
+        '/api/v2/internal/reports/', reportPayload(newReport4Sending, newBackendReport4Sending)
       )
     })
 
@@ -9106,20 +8538,6 @@ describe('Tests for reports addview', () => {
   })
 
   test('Test error adding a report in internal api without error message', async () => {
-    mockAddReport.mockReturnValueOnce(
-      Promise.resolve({
-        status: {
-          message: 'Report Created',
-          code: "200"
-        },
-        data: {
-          id: 'Ohs2duRu-tU6N-mF3Q-jV8F-Wiush8ieR7me',
-          links: {
-            self: 'string'
-          }
-        }
-      })
-    )
     mockAddObject.mockImplementationOnce( () => { throw Error() } );
 
     renderAddView();
@@ -9215,13 +8633,10 @@ describe('Tests for reports addview', () => {
     })
     fireEvent.click(screen.getByRole('button', { name: /yes/i }));
 
-    await waitFor(() => {
-      expect(mockAddReport).toHaveBeenCalledWith(newReport4Sending)
-    })
 
     await waitFor(() => {
       expect(mockAddObject).toHaveBeenCalledWith(
-        '/api/v2/internal/reports/', newBackendReport4Sending
+        '/api/v2/internal/reports/', reportPayload(newReport4Sending, newBackendReport4Sending)
       )
     })
 

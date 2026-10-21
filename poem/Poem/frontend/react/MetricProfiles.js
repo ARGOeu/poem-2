@@ -1,9 +1,7 @@
 import React, { useState, useMemo, useContext, useEffect } from 'react';
 import {Link, useLocation, useParams, useNavigate} from 'react-router-dom';
 import {
-  Backend,
-  WebApi,
-  fetchTenantsMetricProfiles
+  Backend
 } from './DataManager';
 import {
   BaseArgoView,
@@ -40,7 +38,12 @@ import PapaParse from 'papaparse';
 import { downloadCSV } from './FileDownload';
 import {
   fetchUserDetails,
-  fetchBackendMetricProfiles
+  fetchBackendMetricProfiles,
+  fetchMetricProfile,
+  fetchServiceTypes,
+  fetchAggregationProfiles,
+  fetchReports,
+  fetchCombinedMetricProfiles
 } from './QueryFunctions';
 
 import './MetricProfiles.css';
@@ -315,11 +318,6 @@ const ServicesList = () => {
       </tbody>
     </table>
   )
-}
-
-
-const fetchMetricProfile = async (webapi, apiid) => {
-  return await webapi.fetchMetricProfile(apiid);
 }
 
 
@@ -682,20 +680,10 @@ export const MetricProfilesComponent = (props) => {
   const tenantDetails = props.tenantDetails !== undefined ? props.tenantDetails : "";
   const combined = props.tenantDetails && props.tenantDetails.combined !== undefined ? props.tenantDetails.combined : false;
   const backend = new Backend();
-  const webapi = new WebApi({
-    token: props.webapitoken,
-    metricProfiles: props.webapimetric,
-    aggregationProfiles: props.webapiaggregation,
-    reportsConfigurations: props.webapireports,
-    serviceTypes: props.webapiservicetypes
-  })
 
   const queryClient = useQueryClient();
-  const webapiChangeMutation = useMutation(async (values) => await webapi.changeMetricProfile(values));
   const backendChangeMutation = useMutation(async (values) => await backend.changeMetricProfile(values))
-  const webapiAddMutation = useMutation(async (values) => await webapi.addMetricProfile(values));
   const backendAddMutation = useMutation(async (values) => await backend.addMetricProfile(values))
-  const webapiDeleteMutation = useMutation(async (idProfile) => await webapi.deleteMetricProfile(idProfile));
   const backendDeleteMutation = useMutation(async (idProfile) => await backend.deleteMetricProfile(idProfile))
 
   const { data: userDetails, error: errorUserDetails, isLoading: loadingUserDetails } = useQuery(
@@ -718,7 +706,7 @@ export const MetricProfilesComponent = (props) => {
 
   const { data: webApiMP, error: errorWebApiMP, isLoading: loadingWebApiMP } = useQuery(
     [`${publicView ? 'public_' : ''}metricprofile`, 'webapi', profile_name],
-    () => fetchMetricProfile(webapi, backendMP.apiid),
+    () => fetchMetricProfile(backendMP.apiid, publicView),
     {
       enabled: !!backendMP && !addview,
       initialData: () => {
@@ -735,25 +723,25 @@ export const MetricProfilesComponent = (props) => {
 
   const { data: webApiST, errorWebApiST, isLoading: loadingWebApiST} = useQuery(
     ['servicetypes', 'webapi'], async () => {
-      return await webapi.fetchServiceTypes();
+      return await fetchServiceTypes(publicView);
     },
     { enabled: !!userDetails }
   )
 
   const { data: aggregationProfiles, error: errorAggrProfiles, isLoading: loadingAggrProfiles } = useQuery(
     [`${publicView ? "public_" : ""}aggregationprofile`, "webapi"],
-    async () => await webapi.fetchAggregationProfiles(),
+    async () => await fetchAggregationProfiles(publicView),
     { enabled: !publicView && !cloneview && !addview && !!userDetails }
   )
 
   const { data: reports, error: errorReports, isLoading: loadingReports } = useQuery(
-    [`${publicView ? "public_" : ""}report`, "webapi"], async () => await webapi.fetchReports(),
+    [`${publicView ? "public_" : ""}report`, "webapi"], async () => await fetchReports(publicView),
     { enabled: !publicView && !cloneview && !addview && !!userDetails }
   )
 
   const { data: tenantsProfiles, error: errorTenantsProfiles, isLoading: loadingTenantsProfiles } = useQuery(
     ["metricprofile", "combined", profile_name],
-    () => fetchTenantsMetricProfiles(props.webapimetric, tenantDetails.tenants),
+    () => fetchCombinedMetricProfiles(),
     {
       enabled: combined && addview && !!userDetails,
       initialData: () => {
@@ -783,36 +771,26 @@ export const MetricProfilesComponent = (props) => {
     let rprts = getAssociatedReports(idProfile)
 
     if (aggrProfiles.length === 0 && rprts.length === 0)
-      webapiDeleteMutation.mutate(idProfile, {
-        onSuccess: () => {
-          backendDeleteMutation.mutate(idProfile, {
-            onSuccess: (data) => {
-              queryClient.invalidateQueries('metricprofile');
-              queryClient.invalidateQueries('public_metricprofile');
+      backendDeleteMutation.mutate(idProfile, {
+        onSuccess: (data) => {
+          queryClient.invalidateQueries('metricprofile');
+          queryClient.invalidateQueries('public_metricprofile');
 
-              let msg = "Metric profile successfully deleted"
+          let msg = "Metric profile successfully deleted"
 
-              if ("deleted" in data)
-                msg = `${msg}\n${data.deleted}`
+          if ("deleted" in data)
+            msg = `${msg}\n${data.deleted}`
 
-              NotifyOk({
-                msg: msg,
-                title: 'Deleted',
-                callback: () => navigate('/ui/metricprofiles')
-              });
-            },
-            onError: (error) => {
-              NotifyError({
-                title: 'Internal API error',
-                msg: error.message ? error.message : 'Internal API error deleting metric profile'
-              })
-            }
-          })
+          NotifyOk({
+            msg: msg,
+            title: 'Deleted',
+            callback: () => navigate('/ui/metricprofiles')
+          });
         },
         onError: (error) => {
           NotifyError({
-            title: 'Web API error',
-            msg: error.message ? error.message : 'Web API error deleting metric profile'
+            title: 'Internal API error',
+            msg: error.message ? error.message : 'Internal API error deleting metric profile'
           })
         }
       })
@@ -830,149 +808,96 @@ export const MetricProfilesComponent = (props) => {
       })
   }
 
-  const groupMetricsByServices = (servicesFlat) => {
-    let services = [];
-
-    servicesFlat.forEach(element => {
-      let service = services.filter(e => e.service === element.service);
-      if (!service.length)
-        services.push({
-          'service': element.service,
-          'metrics': [element.metric]
-        })
-      else
-        service[0].metrics.push(element.metric)
-
-    })
-    return services
-  }
-
   const doChange = ({formValues, servicesList}) => {
-    let services = [];
-    let dataToSend = new Object()
     const backend_services = [];
     servicesList.forEach((service) => backend_services.push({ service: service.service, metric: service.metric }));
 
     if (!addview && !cloneview) {
       const { id } = webApiMP
-      services = groupMetricsByServices(servicesList);
-      dataToSend = {
-        id,
+      backendChangeMutation.mutate({
+        apiid: id,
         name: profile_name,
         description: formValues.description,
-        services
-      };
-      webapiChangeMutation.mutate(dataToSend, {
-        onSuccess: () => {
-          backendChangeMutation.mutate({
-            apiid: dataToSend.id,
-            name: profile_name,
-            description: dataToSend.description,
-            groupname: formValues.groupname,
-            services: backend_services
-          }, {
-            onSuccess: (data) => {
-              queryClient.invalidateQueries('metricprofile');
-              queryClient.invalidateQueries('public_metricprofile');
+        groupname: formValues.groupname,
+        services: backend_services
+      }, {
+        onSuccess: (data) => {
+          queryClient.invalidateQueries('metricprofile');
+          queryClient.invalidateQueries('public_metricprofile');
 
-              let msg = "Metric profile successfully changed"
-              let warn_msg = ""
+          let msg = "Metric profile successfully changed"
+          let warn_msg = ""
 
-              if ("imported" in data)
-                msg = `${msg}\n${data.imported}`
+          if ("imported" in data)
+            msg = `${msg}\n${data.imported}`
 
-              if ("warning" in data)
-                warn_msg = `${warn_msg}\n${data.warning}`.replace(/^\s+|\s+$/g, "")
+          if ("warning" in data)
+            warn_msg = `${warn_msg}\n${data.warning}`.replace(/^\s+|\s+$/g, "")
 
-              if ("unavailable" in data)
-                warn_msg = `${warn_msg}\n${data.unavailable}`.replace(/^\s+|\s+$/g, "")
+          if ("unavailable" in data)
+            warn_msg = `${warn_msg}\n${data.unavailable}`.replace(/^\s+|\s+$/g, "")
 
-              if ("deleted" in data)
-                msg = `${msg}\n${data.deleted}`
+          if ("deleted" in data)
+            msg = `${msg}\n${data.deleted}`
 
-              NotifyOk({
-                msg: msg,
-                title: 'Changed',
-                callback: () => navigate('/ui/metricprofiles')
-              });
+          NotifyOk({
+            msg: msg,
+            title: 'Changed',
+            callback: () => navigate('/ui/metricprofiles')
+          });
 
-              if (warn_msg)
-                NotifyWarn({
-                  msg: warn_msg,
-                  title: "Metrics warning"
-                })
-            },
-            onError: (error) => {
-              NotifyError({
-                title: 'Internal API error',
-                msg: error.message ? error.message : 'Internal API error changing metric profile'
-              })
-            }
-          })
+          if (warn_msg)
+            NotifyWarn({
+              msg: warn_msg,
+              title: "Metrics warning"
+            })
         },
         onError: (error) => {
           NotifyError({
-            title: 'Web API error',
-            msg: error.message ? error.message : 'Web API error changing metric profile'
+            title: 'Internal API error',
+            msg: error.message ? error.message : 'Internal API error changing metric profile'
           })
         }
       })
     } else {
-      services = groupMetricsByServices(servicesList);
-      dataToSend = {
+      backendAddMutation.mutate({
         name: formValues.name,
+        groupname: formValues.groupname,
         description: formValues.description,
-        services
-      }
-      webapiAddMutation.mutate(dataToSend, {
+        services: backend_services
+      }, {
         onSuccess: (data) => {
-          backendAddMutation.mutate({
-            apiid: data.data.id,
-            name: dataToSend.name,
-            groupname: formValues.groupname,
-            description: formValues.description,
-            services: backend_services
-          }, {
-            onSuccess: (data) => {
-              queryClient.invalidateQueries('metricprofile');
-              queryClient.invalidateQueries('public_metricprofile');
+          queryClient.invalidateQueries('metricprofile');
+          queryClient.invalidateQueries('public_metricprofile');
 
-              let msg = "Metric profile successfully added"
-              let warn_msg = ""
+          let msg = "Metric profile successfully added"
+          let warn_msg = ""
 
-              if ("imported" in data)
-                msg = `${msg}\n${data.imported}`
+          if ("imported" in data)
+            msg = `${msg}\n${data.imported}`
 
-              if ("warning" in data)
-                warn_msg = `${warn_msg}\n${data.warning}`.replace(/^\s+|\s+$/g, "")
+          if ("warning" in data)
+            warn_msg = `${warn_msg}\n${data.warning}`.replace(/^\s+|\s+$/g, "")
 
-              if ("unavailable" in data)
-                warn_msg = `${warn_msg}\n${data.unavailable}`.replace(/^\s+|\s+$/g, "")
+          if ("unavailable" in data)
+            warn_msg = `${warn_msg}\n${data.unavailable}`.replace(/^\s+|\s+$/g, "")
 
-              if ("deleted" in data)
-                msg = `${msg}\n${data.deleted}`
+          if ("deleted" in data)
+            msg = `${msg}\n${data.deleted}`
 
-              NotifyOk({
-                msg: msg,
-                title: 'Added',
-                callback: () => navigate('/ui/metricprofiles')
-              })
-
-              if (warn_msg)
-                NotifyWarn({ msg: warn_msg, title: "Metrics warning" })
-            },
-            onError: (error) => {
-              NotifyError({
-                title: 'Internal API error',
-                msg: error.message ? error.message : 'Internal API error adding metric profile'
-              })
-            }
+          NotifyOk({
+            msg: msg,
+            title: 'Added',
+            callback: () => navigate('/ui/metricprofiles')
           })
+
+          if (warn_msg)
+            NotifyWarn({ msg: warn_msg, title: "Metrics warning" })
         },
         onError: (error) => {
           NotifyError({
-            title: 'Web API error',
-            msg: error.message ? error.message : 'Web API error adding metric profile'
+            title: 'Internal API error',
+            msg: error.message ? error.message : 'Internal API error adding metric profile'
           })
         }
       })

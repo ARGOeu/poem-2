@@ -1,7 +1,7 @@
 import React, { useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "react-query";
-import { fetchUserDetails } from "./QueryFunctions";
-import { Backend, WebApi } from "./DataManager";
+import { fetchUserDetails, fetchServiceTypes } from "./QueryFunctions";
+import { Backend } from "./DataManager";
 import { 
   BaseArgoTable, 
   BaseArgoView, 
@@ -644,11 +644,6 @@ export const ProbeCandidateChange = (props) => {
 
   const backend = new Backend()
 
-  const webapi = new WebApi({
-    token: props.webapitoken,
-    serviceTypes: props.webapiservicetypes
-  })
-
   const queryClient = useQueryClient()
 
   const mutation = useMutation(async (values) => await backend.changeObject("/api/v2/internal/probecandidates/", values))
@@ -677,7 +672,7 @@ export const ProbeCandidateChange = (props) => {
 
   const { data: serviceTypes, error: serviceTypesError, isLoading: serviceTypesLoading } = useQuery(
     ["servicetypes", "webapi"], async () => {
-      return await webapi.fetchServiceTypes()
+      return await fetchServiceTypes()
     },
     { enabled: !!userDetails }
   )

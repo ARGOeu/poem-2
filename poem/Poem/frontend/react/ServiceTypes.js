@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useContext } from 'react';
 import { Link } from 'react-router-dom';
-import { WebApi } from './DataManager';
+import { Backend } from './DataManager';
 import { useQuery, useQueryClient, useMutation } from 'react-query';
 import {
   Button,
@@ -35,6 +35,7 @@ import {
 } from './UIElements';
 import {
   fetchUserDetails,
+  fetchServiceTypes,
 } from './QueryFunctions';
 import {
   faSearch,
@@ -242,7 +243,8 @@ const ServiceTypesListAdded = ({ data, ...props }) => {
   })
 
   const queryClient = useQueryClient();
-  const webapiAddMutation = useMutation(async (values) => await context.webapi.addServiceTypes(values));
+  const backend = new Backend();
+  const webapiAddMutation = useMutation(async (values) => await backend.replaceServiceTypes(values));
 
   const [areYouSureModal, setAreYouSureModal] = React.useState(false)
   const [modalTitle, setModalTitle] = React.useState('')
@@ -575,11 +577,6 @@ const ServiceTypesAddForm = (props) => {
 
 
 export const ServiceTypesBulkAdd = (props) => {
-  const webapi = new WebApi({
-    token: props.webapitoken,
-    serviceTypes: props.webapiservicetypes
-  })
-  
   const showtitles = props.showtitles
 
   const { data: userDetails, error: errorUserDetails, isLoading: loadingUserDetails } = useQuery(
@@ -588,7 +585,7 @@ export const ServiceTypesBulkAdd = (props) => {
 
   const { data: serviceTypes, errorServiceTypes, isLoading: loadingServiceTypes } = useQuery(
     'servicetypes', async () => {
-      return await webapi.fetchServiceTypes();
+      return await fetchServiceTypes();
     },
     { enabled: !!userDetails }
   )
@@ -645,8 +642,7 @@ export const ServiceTypesBulkAdd = (props) => {
     return (
       <BulkAddContext.Provider value={{
         userDetails: userDetails,
-        serviceTypes: serviceTypes,
-        webapi: webapi
+        serviceTypes: serviceTypes
       }}>
         <ServiceTypesAddForm { ...props } />
       </BulkAddContext.Provider>
@@ -657,7 +653,7 @@ export const ServiceTypesBulkAdd = (props) => {
 }
 
 
-const ServiceTypesBulkDeleteChange = ({data, webapi, ...props}) => {
+const ServiceTypesBulkDeleteChange = ({data, ...props}) => {
   const showtitles = props.showtitles
   const tenantName = props.tenantName
   const devel = props.devel
@@ -681,7 +677,8 @@ const ServiceTypesBulkDeleteChange = ({data, webapi, ...props}) => {
   const hiddenFileInput = React.useRef(null)
 
   const queryClient = useQueryClient();
-  const webapiAddMutation = useMutation(async (values) => await webapi.addServiceTypes(values));
+  const backend = new Backend();
+  const webapiAddMutation = useMutation(async (values) => await backend.replaceServiceTypes(values));
 
   function toggleModal() {
     setAreYouSureModal(!areYouSureModal)
@@ -1098,18 +1095,13 @@ export const ServiceTypesList = (props) => {
   const showtitles = props.showtitles
   const publicView = props.publicView
 
-  const webapi = new WebApi({
-    token: props.webapitoken,
-    serviceTypes: props.webapiservicetypes
-  })
-
   const { data: userDetails, error: errorUserDetails, isLoading: loadingUserDetails } = useQuery(
     'userdetails', () => fetchUserDetails(true),
   );
 
   const { data: serviceTypesDescriptions, errorServiceTypesDescriptions, isLoading: loadingServiceTypesDescriptions} = useQuery(
     [`${publicView ? "public_" : ""}servicetypes`, 'webapi'], async () => {
-      return await webapi.fetchServiceTypes();
+      return await fetchServiceTypes(publicView);
     },
     { enabled: publicView || !!userDetails }
   )
@@ -1194,7 +1186,7 @@ export const ServiceTypesList = (props) => {
   }
   else if (serviceTypesDescriptions &&  userDetails?.is_superuser)
     return (
-      <ServiceTypesBulkDeleteChange data={serviceTypesDescriptions} webapi={webapi} {...props}/>
+      <ServiceTypesBulkDeleteChange data={serviceTypesDescriptions} {...props}/>
     )
   else
     return null

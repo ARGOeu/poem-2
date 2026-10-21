@@ -3,13 +3,13 @@ import '@testing-library/jest-dom';
 import { render, screen, waitFor, within } from '@testing-library/react';
 import { MemoryRouter, Routes, Route } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from 'react-query';
+import { Backend } from '../DataManager';
 import { OperationsProfileDetails, OperationsProfilesList } from '../OperationsProfiles';
-import { WebApi } from '../DataManager';
 
 
 jest.mock('../DataManager', () => {
   return {
-    WebApi: jest.fn()
+    Backend: jest.fn()
   }
 })
 
@@ -276,8 +276,6 @@ function renderListView(publicView=undefined) {
           <MemoryRouter initialEntries={ [ route ] }>
             <OperationsProfilesList
               publicView={ true }
-              webapioperations="https://mock.operations.com"
-              webapitoken="token"
             />
           </MemoryRouter>
         </QueryClientProvider>
@@ -290,8 +288,6 @@ function renderListView(publicView=undefined) {
         <QueryClientProvider client={queryClient}>
           <MemoryRouter initialEntries={ [ route ] }>
             <OperationsProfilesList
-              webapioperations="https://mock.operations.com"
-              webapitoken="token"
             />
           </MemoryRouter>
         </QueryClientProvider>
@@ -313,9 +309,7 @@ function renderDetailsView(publicView=undefined) {
                 path="/ui/public_operationsprofiles/:name"
                 element={ <OperationsProfileDetails
                   publicView={ true }
-                  webapioperations="https://mock.operations.com"
-                  webapitoken="token"
-                  />
+                          />
                 }
               />
             </Routes>
@@ -334,9 +328,7 @@ function renderDetailsView(publicView=undefined) {
                 path="/ui/operationsprofiles/:name"
                 element={ 
                   <OperationsProfileDetails
-                    webapioperations="https://mock.operations.com"
-                    webapitoken="token"
-                  /> 
+                              /> 
                 }
               />
             </Routes>
@@ -349,9 +341,9 @@ function renderDetailsView(publicView=undefined) {
 
 describe('Test list of operations profiles', () => {
   beforeAll(() => {
-    WebApi.mockImplementation(() => {
+    Backend.mockImplementation(() => {
       return {
-        fetchOperationsProfiles: () => Promise.resolve(mockOperationsProfiles)
+        fetchWebApiOperationsProfiles: () => Promise.resolve(mockOperationsProfiles)
       }
     })
   })
@@ -398,9 +390,9 @@ describe('Test list of operations profiles', () => {
 
 describe('Tests for operations profiles detail view', () => {
   beforeAll(() => {
-    WebApi.mockImplementation(() => {
+    Backend.mockImplementation(() => {
       return {
-        fetchOperationProfile: () => Promise.resolve(mockOperationsProfiles[0])
+        fetchWebApiOperationsProfile: () => Promise.resolve(mockOperationsProfiles[0])
       }
     })
   })

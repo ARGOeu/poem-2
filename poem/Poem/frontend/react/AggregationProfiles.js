@@ -14,7 +14,7 @@ import {
 } from './UIElements';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faPlus, faTimes, faInfoCircle } from '@fortawesome/free-solid-svg-icons';
-import {Backend, WebApi} from './DataManager';
+import {Backend} from './DataManager';
 import {
   Alert,
   Button,
@@ -46,6 +46,8 @@ import './AggregationProfiles.css';
 import {
   fetchBackendAggregationProfiles,
   fetchMetricProfiles,
+  fetchAggregationProfile,
+  fetchReports,
   fetchUserDetails
 } from './QueryFunctions';
 import { Controller, FormProvider, useFieldArray, useForm, useFormContext, useWatch } from 'react-hook-form';
@@ -1030,11 +1032,6 @@ const GroupsDisabledForm = () => {
 }
 
 
-const fetchAP = async (webapi, apiid) => {
-  return await webapi.fetchAggregationProfile(apiid);
-}
-
-
 const sortServices = (a, b) => {
   if (a.toLowerCase() < b.toLowerCase()) return -1
   if (a.toLowerCase() > b.toLowerCase()) return 1
@@ -1111,19 +1108,10 @@ export const AggregationProfilesChange = (props) => {
   const publicView = props.publicView;
 
   const backend = new Backend();
-  const webapi = new WebApi({
-    token: props.webapitoken,
-    metricProfiles: props.webapimetric,
-    aggregationProfiles: props.webapiaggregation,
-    reportsConfigurations: props.webapireports
-  })
 
   const queryClient = useQueryClient();
-  const webapiChangeMutation = useMutation(async (values) => await webapi.changeAggregation(values));
   const backendChangeMutation = useMutation(async (values) => await backend.changeObject('/api/v2/internal/aggregations/', values));
-  const webapiAddMutation = useMutation(async (values) => await webapi.addAggregation(values));
   const backendAddMutation = useMutation(async (values) => await backend.addObject('/api/v2/internal/aggregations/', values));
-  const webapiDeleteMutation = useMutation(async (idProfile) => await webapi.deleteAggregation(idProfile));
   const backendDeleteMutation = useMutation(async (idProfile) => await backend.deleteObject(`/api/v2/internal/aggregations/${idProfile}`));
 
   const logic_operations = ["OR", "AND"];
@@ -1154,7 +1142,7 @@ export const AggregationProfilesChange = (props) => {
 
   const { data: webApiAP, error: errorWebApiAP, isLoading: loadingWebApiAP } = useQuery(
     [`${publicView ? 'public_' : ''}aggregationprofile`, 'webapi', profile_name],
-    () => fetchAP(webapi, backendAP.apiid),
+    () => fetchAggregationProfile(backendAP.apiid, publicView),
     {
       enabled: !!backendAP,
       initialData: () => {
@@ -1170,13 +1158,13 @@ export const AggregationProfilesChange = (props) => {
 
   const { data: metricProfiles, error: errorMetricProfiles, isLoading: loadingMetricProfiles } = useQuery(
     [`${publicView ? 'public_' : ''}metricprofile`, 'webapi'],
-    () => fetchMetricProfiles(webapi),
+    () => fetchMetricProfiles(publicView),
     { enabled: !publicView ? !!userDetails : true }
   )
 
   const { data: reports, error: errorReports, isLoading: loadingReports } = useQuery(
     [`${publicView ? "public_" : ""}report`, "webapi"],
-    async () => await webapi.fetchReports(),
+    async () => await fetchReports(publicView),
     { enabled: !publicView && !addview && !!userDetails }
   )
 
@@ -1234,77 +1222,61 @@ export const AggregationProfilesChange = (props) => {
 
     valueSend.metric_profile = match_profile[0]
 
+    const metric_profile_ref = {
+      name: valueSend.metric_profile.name,
+      id: valueSend.metric_profile.id
+    }
+
     if (!addview) {
-      webapiChangeMutation.mutate(valueSend, {
+      backendChangeMutation.mutate({
+        apiid: valueSend.id,
+        name: valueSend.name,
+        groupname: valueSend.groupname,
+        endpoint_group: valueSend.endpoint_group,
+        metric_operation: valueSend.metric_operation,
+        profile_operation: valueSend.profile_operation,
+        metric_profile: metric_profile_ref,
+        groups: valueSend.groups
+      }, {
         onSuccess: () => {
-          backendChangeMutation.mutate({
-            apiid: valueSend.id,
-            name: valueSend.name,
-            groupname: valueSend.groupname,
-            endpoint_group: valueSend.endpoint_group,
-            metric_operation: valueSend.metric_operation,
-            profile_operation: valueSend.profile_operation,
-            metric_profile: valueSend.metric_profile.name,
-            groups: JSON.stringify(valueSend.groups)
-          }, {
-            onSuccess: () => {
-              queryClient.invalidateQueries('aggregationprofile');
-              queryClient.invalidateQueries('public_aggregationprofile');
-              NotifyOk({
-                msg: 'Aggregation profile successfully changed',
-                title: 'Changed',
-                callback: () => navigate('/ui/aggregationprofiles')
-              });
-            },
-            onError: (error) => {
-              NotifyError({
-                title: 'Internal API error',
-                msg: error.message ? error.message : 'Internal API error changing aggregation profile'
-              })
-            }
-          })
+          queryClient.invalidateQueries('aggregationprofile');
+          queryClient.invalidateQueries('public_aggregationprofile');
+          NotifyOk({
+            msg: 'Aggregation profile successfully changed',
+            title: 'Changed',
+            callback: () => navigate('/ui/aggregationprofiles')
+          });
         },
         onError: (error) => {
           NotifyError({
-            title: 'Web API error',
-            msg: error.message ? error.message : 'Web API error changing aggregation profile'
+            title: 'Internal API error',
+            msg: error.message ? error.message : 'Internal API error changing aggregation profile'
           })
         }
       })
     } else {
-      webapiAddMutation.mutate(valueSend, {
-        onSuccess: (data) => {
-          backendAddMutation.mutate({
-            apiid: data.data.id,
-            name: valueSend.name,
-            groupname: valueSend.groupname,
-            endpoint_group: valueSend.endpoint_group,
-            metric_operation: valueSend.metric_operation,
-            profile_operation: valueSend.profile_operation,
-            metric_profile: values.metric_profile,
-            groups: JSON.stringify(valueSend.groups)
-          }, {
-            onSuccess: () => {
-              queryClient.invalidateQueries('aggregationprofile');
-              queryClient.invalidateQueries('public_aggregationprofile');
-              NotifyOk({
-                msg: 'Aggregation profile successfully added',
-                title: 'Added',
-                callback: () => navigate('/ui/aggregationprofiles')
-              })
-            },
-            onError: (error) => {
-              NotifyError({
-                title: 'Internal API error',
-                msg: error.message ? error.message : 'Internal API error adding aggregation profile'
-              })
-            }
+      backendAddMutation.mutate({
+        name: valueSend.name,
+        groupname: valueSend.groupname,
+        endpoint_group: valueSend.endpoint_group,
+        metric_operation: valueSend.metric_operation,
+        profile_operation: valueSend.profile_operation,
+        metric_profile: metric_profile_ref,
+        groups: valueSend.groups
+      }, {
+        onSuccess: () => {
+          queryClient.invalidateQueries('aggregationprofile');
+          queryClient.invalidateQueries('public_aggregationprofile');
+          NotifyOk({
+            msg: 'Aggregation profile successfully added',
+            title: 'Added',
+            callback: () => navigate('/ui/aggregationprofiles')
           })
         },
         onError: (error) => {
           NotifyError({
-            title: 'Web API error',
-            msg: error.message ? error.message : 'Web API error adding aggregation profile'
+            title: 'Internal API error',
+            msg: error.message ? error.message : 'Internal API error adding aggregation profile'
           })
         }
       })
@@ -1315,30 +1287,20 @@ export const AggregationProfilesChange = (props) => {
     let reportNames = getAssociatedReports(idProfile)
 
     if (reportNames.length === 0)
-      webapiDeleteMutation.mutate(idProfile, {
+      backendDeleteMutation.mutate(idProfile, {
         onSuccess: () => {
-          backendDeleteMutation.mutate(idProfile, {
-            onSuccess: () => {
-              queryClient.invalidateQueries('aggregationprofile');
-              queryClient.invalidateQueries('public_aggregationprofile');
-              NotifyOk({
-                msg: 'Aggregation profile successfully deleted',
-                title: 'Deleted',
-                callback: () => navigate('/ui/aggregationprofiles')
-              });
-            },
-            onError: (error) => {
-              NotifyError({
-                title: 'Internal API error',
-                msg: error.message ? error.message : 'Internal API error deleting aggregation profile'
-              })
-            }
-          })
+          queryClient.invalidateQueries('aggregationprofile');
+          queryClient.invalidateQueries('public_aggregationprofile');
+          NotifyOk({
+            msg: 'Aggregation profile successfully deleted',
+            title: 'Deleted',
+            callback: () => navigate('/ui/aggregationprofiles')
+          });
         },
         onError: (error) => {
           NotifyError({
-            title: 'Web API error',
-            msg: error.message ? error.message : 'Web API error deleting aggregation profile'
+            title: 'Internal API error',
+            msg: error.message ? error.message : 'Internal API error deleting aggregation profile'
           })
         }
       })

@@ -66,6 +66,27 @@ class ListThresholdsProfilesAPIViewTests(TenantTestCase):
             poem_models.ThresholdsProfiles
         )
 
+        # Mock the upstream WEB-API write primitives so the refactored views
+        # do not make real HTTP requests.
+        self.create_profile_patcher = patch(
+            "Poem.api.internal_views.thresholdsprofiles.create_profile",
+            return_value="mocked-upstream-id"
+        )
+        self.create_profile_patcher.start()
+        self.addCleanup(self.create_profile_patcher.stop)
+
+        self.update_profile_patcher = patch(
+            "Poem.api.internal_views.thresholdsprofiles.update_profile"
+        )
+        self.update_profile_patcher.start()
+        self.addCleanup(self.update_profile_patcher.stop)
+
+        self.delete_profile_patcher = patch(
+            "Poem.api.internal_views.thresholdsprofiles.delete_profile"
+        )
+        self.delete_profile_patcher.start()
+        self.addCleanup(self.delete_profile_patcher.stop)
+
         data = json.loads(
             serializers.serialize(
                 'json', [self.tp1],
@@ -1287,7 +1308,7 @@ class ListThresholdsProfilesAPIViewTests(TenantTestCase):
         )
         data = {
             'name': 'NEW_PROFILE',
-            'apiid': '12341234-aaaa-kkkk-aaaa-aaeekkccnnee',
+            'apiid': 'mocked-upstream-id',
             'groupname': 'GROUP',
             'rules': json.dumps([
                 {
@@ -1305,14 +1326,14 @@ class ListThresholdsProfilesAPIViewTests(TenantTestCase):
             poem_models.ThresholdsProfiles.objects.all().count(), 4
         )
         profile = poem_models.ThresholdsProfiles.objects.get(
-            apiid='12341234-aaaa-kkkk-aaaa-aaeekkccnnee'
+            apiid='mocked-upstream-id'
         )
         self.assertEqual(profile.name, 'NEW_PROFILE')
         self.assertEqual(profile.groupname, 'GROUP')
         group = poem_models.GroupOfThresholdsProfiles.objects.get(name='GROUP')
         self.assertTrue(
             group.thresholdsprofiles.filter(
-                apiid='12341234-aaaa-kkkk-aaaa-aaeekkccnnee'
+                apiid='mocked-upstream-id'
             ).exists()
         )
         history = poem_models.TenantHistory.objects.filter(
@@ -1336,7 +1357,7 @@ class ListThresholdsProfilesAPIViewTests(TenantTestCase):
         )
         data = {
             'name': 'NEW_PROFILE',
-            'apiid': '12341234-aaaa-kkkk-aaaa-aaeekkccnnee',
+            'apiid': 'mocked-upstream-id',
             'groupname': 'GROUP',
             'rules': json.dumps([
                 {
@@ -1354,14 +1375,14 @@ class ListThresholdsProfilesAPIViewTests(TenantTestCase):
             poem_models.ThresholdsProfiles.objects.all().count(), 4
         )
         profile = poem_models.ThresholdsProfiles.objects.get(
-            apiid='12341234-aaaa-kkkk-aaaa-aaeekkccnnee'
+            apiid='mocked-upstream-id'
         )
         self.assertEqual(profile.name, 'NEW_PROFILE')
         self.assertEqual(profile.groupname, 'GROUP')
         group = poem_models.GroupOfThresholdsProfiles.objects.get(name='GROUP')
         self.assertTrue(
             group.thresholdsprofiles.filter(
-                apiid='12341234-aaaa-kkkk-aaaa-aaeekkccnnee'
+                apiid='mocked-upstream-id'
             ).exists()
         )
         history = poem_models.TenantHistory.objects.filter(
@@ -1385,7 +1406,7 @@ class ListThresholdsProfilesAPIViewTests(TenantTestCase):
         )
         data = {
             'name': 'NEW_PROFILE',
-            'apiid': '12341234-aaaa-kkkk-aaaa-aaeekkccnnee',
+            'apiid': 'mocked-upstream-id',
             'groupname': 'GROUP2',
             'rules': json.dumps([
                 {
@@ -1410,7 +1431,7 @@ class ListThresholdsProfilesAPIViewTests(TenantTestCase):
         self.assertRaises(
             poem_models.ThresholdsProfiles.DoesNotExist,
             poem_models.ThresholdsProfiles.objects.get,
-            apiid='12341234-aaaa-kkkk-aaaa-aaeekkccnnee'
+            apiid='mocked-upstream-id'
         )
 
     def test_post_thresholds_profile_limited_user(self):
@@ -1419,7 +1440,7 @@ class ListThresholdsProfilesAPIViewTests(TenantTestCase):
         )
         data = {
             'name': 'NEW_PROFILE',
-            'apiid': '12341234-aaaa-kkkk-aaaa-aaeekkccnnee',
+            'apiid': 'mocked-upstream-id',
             'groupname': 'GROUP2',
             'rules': json.dumps([
                 {
@@ -1443,7 +1464,7 @@ class ListThresholdsProfilesAPIViewTests(TenantTestCase):
         self.assertRaises(
             poem_models.ThresholdsProfiles.DoesNotExist,
             poem_models.ThresholdsProfiles.objects.get,
-            apiid='12341234-aaaa-kkkk-aaaa-aaeekkccnnee'
+            apiid='mocked-upstream-id'
         )
 
     def test_post_thresholds_profile_with_nonexisting_group_superuser(self):
@@ -1452,7 +1473,7 @@ class ListThresholdsProfilesAPIViewTests(TenantTestCase):
         )
         data = {
             'name': 'NEW_PROFILE',
-            'apiid': '12341234-aaaa-kkkk-aaaa-aaeekkccnnee',
+            'apiid': 'mocked-upstream-id',
             'groupname': 'nonexisting',
             'rules': json.dumps([
                 {
@@ -1476,7 +1497,7 @@ class ListThresholdsProfilesAPIViewTests(TenantTestCase):
         self.assertRaises(
             poem_models.ThresholdsProfiles.DoesNotExist,
             poem_models.ThresholdsProfiles.objects.get,
-            apiid='12341234-aaaa-kkkk-aaaa-aaeekkccnnee'
+            apiid='mocked-upstream-id'
         )
 
     def test_post_thresholds_profile_with_nonexisting_group_user(self):
@@ -1485,7 +1506,7 @@ class ListThresholdsProfilesAPIViewTests(TenantTestCase):
         )
         data = {
             'name': 'NEW_PROFILE',
-            'apiid': '12341234-aaaa-kkkk-aaaa-aaeekkccnnee',
+            'apiid': 'mocked-upstream-id',
             'groupname': 'nonexisting',
             'rules': json.dumps([
                 {
@@ -1509,7 +1530,7 @@ class ListThresholdsProfilesAPIViewTests(TenantTestCase):
         self.assertRaises(
             poem_models.ThresholdsProfiles.DoesNotExist,
             poem_models.ThresholdsProfiles.objects.get,
-            apiid='12341234-aaaa-kkkk-aaaa-aaeekkccnnee'
+            apiid='mocked-upstream-id'
         )
 
     def test_post_thresholds_profile_with_nonexisting_group_limited_user(self):
@@ -1518,7 +1539,7 @@ class ListThresholdsProfilesAPIViewTests(TenantTestCase):
         )
         data = {
             'name': 'NEW_PROFILE',
-            'apiid': '12341234-aaaa-kkkk-aaaa-aaeekkccnnee',
+            'apiid': 'mocked-upstream-id',
             'groupname': 'nonexisting',
             'rules': json.dumps([
                 {
@@ -1542,7 +1563,7 @@ class ListThresholdsProfilesAPIViewTests(TenantTestCase):
         self.assertRaises(
             poem_models.ThresholdsProfiles.DoesNotExist,
             poem_models.ThresholdsProfiles.objects.get,
-            apiid='12341234-aaaa-kkkk-aaaa-aaeekkccnnee'
+            apiid='mocked-upstream-id'
         )
 
     def test_post_thresholds_profile_with_empty_group_superuser(self):
@@ -1551,7 +1572,7 @@ class ListThresholdsProfilesAPIViewTests(TenantTestCase):
         )
         data = {
             'name': 'NEW_PROFILE',
-            'apiid': '12341234-aaaa-kkkk-aaaa-aaeekkccnnee',
+            'apiid': 'mocked-upstream-id',
             'groupname': '',
             'rules': json.dumps([
                 {
@@ -1569,14 +1590,14 @@ class ListThresholdsProfilesAPIViewTests(TenantTestCase):
             poem_models.ThresholdsProfiles.objects.all().count(), 4
         )
         profile = poem_models.ThresholdsProfiles.objects.get(
-            apiid='12341234-aaaa-kkkk-aaaa-aaeekkccnnee'
+            apiid='mocked-upstream-id'
         )
         self.assertEqual(profile.name, 'NEW_PROFILE')
         self.assertEqual(profile.groupname, '')
         group = poem_models.GroupOfThresholdsProfiles.objects.get(name='GROUP')
         self.assertFalse(
             group.thresholdsprofiles.filter(
-                apiid='12341234-aaaa-kkkk-aaaa-aaeekkccnnee'
+                apiid='mocked-upstream-id'
             ).exists()
         )
         history = poem_models.TenantHistory.objects.filter(
@@ -1600,7 +1621,7 @@ class ListThresholdsProfilesAPIViewTests(TenantTestCase):
         )
         data = {
             'name': 'NEW_PROFILE',
-            'apiid': '12341234-aaaa-kkkk-aaaa-aaeekkccnnee',
+            'apiid': 'mocked-upstream-id',
             'groupname': '',
             'rules': json.dumps([
                 {
@@ -1625,7 +1646,7 @@ class ListThresholdsProfilesAPIViewTests(TenantTestCase):
         self.assertRaises(
             poem_models.ThresholdsProfiles.DoesNotExist,
             poem_models.ThresholdsProfiles.objects.get,
-            apiid='12341234-aaaa-kkkk-aaaa-aaeekkccnnee'
+            apiid='mocked-upstream-id'
         )
 
     def test_post_thresholds_profile_with_empty_group_limited_user(self):
@@ -1634,7 +1655,7 @@ class ListThresholdsProfilesAPIViewTests(TenantTestCase):
         )
         data = {
             'name': 'NEW_PROFILE',
-            'apiid': '12341234-aaaa-kkkk-aaaa-aaeekkccnnee',
+            'apiid': 'mocked-upstream-id',
             'groupname': '',
             'rules': json.dumps([
                 {
@@ -1658,7 +1679,7 @@ class ListThresholdsProfilesAPIViewTests(TenantTestCase):
         self.assertRaises(
             poem_models.ThresholdsProfiles.DoesNotExist,
             poem_models.ThresholdsProfiles.objects.get,
-            apiid='12341234-aaaa-kkkk-aaaa-aaeekkccnnee'
+            apiid='mocked-upstream-id'
         )
 
     def test_post_thresholds_profile_with_invalid_data_superuser(self):
@@ -1666,7 +1687,6 @@ class ListThresholdsProfilesAPIViewTests(TenantTestCase):
             poem_models.ThresholdsProfiles.objects.all().count(), 3
         )
         data = {
-            'name': 'NEW_PROFILE',
             'apiid': '',
             'groupname': 'GROUP',
             'rules': json.dumps([
@@ -1685,7 +1705,7 @@ class ListThresholdsProfilesAPIViewTests(TenantTestCase):
         )
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertEqual(
-            response.data['detail'], 'apiid: This field may not be blank.'
+            response.data['detail'], 'name: This field is required.'
         )
 
     def test_post_thresholds_profile_with_invalid_data_user(self):
@@ -1693,7 +1713,6 @@ class ListThresholdsProfilesAPIViewTests(TenantTestCase):
             poem_models.ThresholdsProfiles.objects.all().count(), 3
         )
         data = {
-            'name': 'NEW_PROFILE',
             'apiid': '',
             'groupname': 'GROUP',
             'rules': json.dumps([
@@ -1712,7 +1731,7 @@ class ListThresholdsProfilesAPIViewTests(TenantTestCase):
         )
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertEqual(
-            response.data['detail'], 'apiid: This field may not be blank.'
+            response.data['detail'], 'name: This field is required.'
         )
 
     def test_post_thresholds_profile_with_invalid_data_limited_user(self):
@@ -1720,7 +1739,6 @@ class ListThresholdsProfilesAPIViewTests(TenantTestCase):
             poem_models.ThresholdsProfiles.objects.all().count(), 3
         )
         data = {
-            'name': 'NEW_PROFILE',
             'apiid': '',
             'groupname': 'GROUP',
             'rules': json.dumps([

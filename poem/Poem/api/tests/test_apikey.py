@@ -505,8 +505,7 @@ class ListAPIKeysAPIViewTests(TenantTestCase):
             {
                 "id": self.id4,
                 "name": "WEB-API-TENANT",
-                "token": self.token4,
-                "created": self.created4,
+                                "created": self.created4,
                 "revoked": False,
                 "used_by": "webapi"
             }
@@ -580,8 +579,7 @@ class ListAPIKeysAPIViewTests(TenantTestCase):
             {
                 "id": self.id4,
                 "name": "WEB-API-TENANT",
-                "token": self.token4,
-                "created": self.created4,
+                                "created": self.created4,
                 "revoked": False,
                 "used_by": "webapi"
             }
@@ -603,8 +601,7 @@ class ListAPIKeysAPIViewTests(TenantTestCase):
             {
                 "id": self.id7,
                 "name": "WEB-API-TENANT2-RO",
-                "token": self.token7,
-                "created": self.created7,
+                                "created": self.created7,
                 "revoked": False,
                 "used_by": "webapi"
             }
@@ -684,8 +681,7 @@ class ListAPIKeysAPIViewTests(TenantTestCase):
             {
                 "id": self.id4,
                 "name": "WEB-API-TENANT",
-                "token": self.token4,
-                "created": self.created4,
+                                "created": self.created4,
                 "revoked": False,
                 "used_by": "webapi"
             }
@@ -707,8 +703,7 @@ class ListAPIKeysAPIViewTests(TenantTestCase):
             {
                 "id": self.id7,
                 "name": "WEB-API-TENANT2-RO",
-                "token": self.token7,
-                "created": self.created7,
+                                "created": self.created7,
                 "revoked": False,
                 "used_by": "webapi"
             }
@@ -834,8 +829,7 @@ class ListAPIKeysAPIViewTests(TenantTestCase):
             {
                 "id": self.id5,
                 "name": "WEB-API-TENANT-RO",
-                "token": self.token5,
-                "created": self.created5,
+                                "created": self.created5,
                 "revoked": False,
                 "used_by": "webapi"
             }
