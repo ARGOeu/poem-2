@@ -29,7 +29,7 @@ function renderListView(
     ...render(
       <QueryClientProvider client={queryClient}>
         <MemoryRouter initialEntries={ [ route ] }>
-          <GroupList 
+          <GroupList
             group={ group }
             id={ id }
             name={ name }
@@ -442,6 +442,7 @@ describe('Tests for group elements changeview', () => {
   })
 
   test('Test add item to group and save', async () => {
+    const user = useEvent.setup();
     renderChangeView();
 
     await waitFor(() => {
@@ -451,9 +452,9 @@ describe('Tests for group elements changeview', () => {
     expect(screen.getAllByRole('row')).toHaveLength(6);
 
     const selectField = screen.getByTestId('available_metrics');
-    fireEvent.change(within(selectField).getByRole('combobox'), { target: { value: 'test' } })
-    await useEvent.click(within(selectField).getByText('test.AMS-Check'))
-    await useEvent.click(screen.getByRole('button', { name: /add/i }))
+    await user.type(within(selectField).getByRole('combobox'), 'test');
+    await user.click(await within(selectField).findByRole('option', { name: 'test.AMS-Check' }));
+    await user.click(screen.getByRole('button', { name: /add/i }));
     await waitFor(() => {
       expect(screen.getAllByRole('row')).toHaveLength(7);
     })

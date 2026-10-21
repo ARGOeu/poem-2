@@ -6,7 +6,7 @@ import { QueryClient, QueryClientProvider, setLogger } from 'react-query';
 import { ChangePassword, UserChange, UsersList } from '../Users';
 import { Backend } from '../DataManager';
 import { NotificationManager } from 'react-notifications';
-import selectEvent from 'react-select-event';
+import selectEvent from '../testUtils/selectEvent';
 
 
 jest.mock('../DataManager', () => {
@@ -938,19 +938,19 @@ describe('Tests for user changeview on tenant POEM', () => {
     expect(screen.getByText("report-group2")).toBeInTheDocument()
 
     expect(screen.queryByText('aggr-group2')).not.toBeInTheDocument()
-    selectEvent.openMenu(groupsOfAggregationsField)
+    await selectEvent.openMenu(groupsOfAggregationsField)
     expect(screen.getByText('aggr-group2')).toBeInTheDocument()
 
     expect(screen.queryByText('metric-group3')).not.toBeInTheDocument()
-    selectEvent.openMenu(groupsOfMetricsField)
+    await selectEvent.openMenu(groupsOfMetricsField)
     expect(screen.getByText('metric-group3')).toBeInTheDocument()
 
     expect(screen.queryByText('threshold-group2')).not.toBeInTheDocument()
-    selectEvent.openMenu(groupsOfThresholdsField)
+    await selectEvent.openMenu(groupsOfThresholdsField)
     expect(screen.getByText('threshold-group2')).toBeInTheDocument()
 
     expect(screen.queryByText('report-group1')).not.toBeInTheDocument()
-    selectEvent.openMenu(groupsOfReportsField)
+    await selectEvent.openMenu(groupsOfReportsField)
     expect(screen.getByText('report-group1')).toBeInTheDocument()
 
     expect(subjectField.value).toBe('some subject');
@@ -1495,31 +1495,31 @@ describe('Tests for user addview on tenant POEM', () => {
 
     expect(screen.queryByText('aggr-group1')).not.toBeInTheDocument()
     expect(screen.queryByText('aggr-group2')).not.toBeInTheDocument()
-    selectEvent.openMenu(groupsOfAggregationsField)
+    await selectEvent.openMenu(groupsOfAggregationsField)
     expect(screen.getByText('aggr-group1')).toBeInTheDocument()
     expect(screen.getByText('aggr-group2')).toBeInTheDocument()
 
     expect(screen.queryByText('metric-group1')).not.toBeInTheDocument()
     expect(screen.queryByText('metric-group2')).not.toBeInTheDocument()
     expect(screen.queryByText('metric-group3')).not.toBeInTheDocument()
-    selectEvent.openMenu(groupsOfMetricsField)
+    await selectEvent.openMenu(groupsOfMetricsField)
     expect(screen.getByText('metric-group1')).toBeInTheDocument()
     expect(screen.getByText('metric-group2')).toBeInTheDocument()
     expect(screen.getByText('metric-group3')).toBeInTheDocument()
 
     expect(screen.queryByText('mp-group1')).not.toBeInTheDocument()
-    selectEvent.openMenu(groupsOfMetricProfilesField)
+    await selectEvent.openMenu(groupsOfMetricProfilesField)
     expect(screen.getByText('mp-group1')).toBeInTheDocument()
 
     expect(screen.queryByText('report-group1')).not.toBeInTheDocument()
     expect(screen.queryByText('report-group2')).not.toBeInTheDocument()
-    selectEvent.openMenu(groupsOfReportsField)
+    await selectEvent.openMenu(groupsOfReportsField)
     expect(screen.getByText('report-group1')).toBeInTheDocument()
     expect(screen.getByText('report-group2')).toBeInTheDocument()
 
     expect(screen.queryByText('threshold-group2')).not.toBeInTheDocument()
     expect(screen.queryByText('threshold-group3')).not.toBeInTheDocument()
-    selectEvent.openMenu(groupsOfThresholdsField)
+    await selectEvent.openMenu(groupsOfThresholdsField)
     expect(screen.getByText('threshold-group2')).toBeInTheDocument()
     expect(screen.getByText('threshold-group3')).toBeInTheDocument()
 

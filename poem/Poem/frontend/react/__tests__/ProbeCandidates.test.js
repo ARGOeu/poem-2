@@ -1,7 +1,7 @@
 import React from "react";
 import '@testing-library/jest-dom';
 import { QueryClient, QueryClientProvider, setLogger } from "react-query";
-import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { act, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { MemoryRouter, Routes, Route } from "react-router-dom";
 import { ProbeCandidateChange, ProbeCandidateList } from "../ProbeCandidates";
 import { Backend } from "../DataManager";
@@ -559,10 +559,12 @@ describe("Test probe candidate changeview", () => {
 
     expect(screen.getByText("submitted")).toBeEnabled()
 
-    selectEvent.openMenu(screen.getByText("submitted"))
-    expect(screen.queryByText("deployed")).toBeInTheDocument()
-    expect(screen.queryByText("rejected")).toBeInTheDocument()
-    expect(screen.queryByText("testing")).toBeInTheDocument()
+    await act(async () => {
+      selectEvent.openMenu(screen.getByText("submitted"))
+    })
+    expect(await screen.findByText("deployed")).toBeInTheDocument()
+    expect(await screen.findByText("rejected")).toBeInTheDocument()
+    expect(await screen.findByText("testing")).toBeInTheDocument()
 
     expect(screen.queryByText("Some service type")).not.toBeInTheDocument()
     expect(screen.queryByText("Meh service type")).not.toBeInTheDocument()
@@ -570,10 +572,12 @@ describe("Test probe candidate changeview", () => {
 
     expect(screen.getByText("Test service type")).toBeEnabled()
 
-    selectEvent.openMenu(screen.getByText("Test service type"))
-    expect(screen.queryByText("Some service type")).toBeInTheDocument()
-    expect(screen.queryByText("Meh service type")).toBeInTheDocument()
-    expect(screen.queryByText("Production service type")).toBeInTheDocument()
+    await act(async () => {
+      selectEvent.openMenu(screen.getByText("Test service type"))
+    })
+    expect(await screen.findByText("Some service type")).toBeInTheDocument()
+    expect(await screen.findByText("Meh service type")).toBeInTheDocument()
+    expect(await screen.findByText("Production service type")).toBeInTheDocument()
 
     expect(createdField.value).toBe("2023-05-22 09:59:59")
     expect(createdField).toBeDisabled()
@@ -647,10 +651,12 @@ describe("Test probe candidate changeview", () => {
 
     expect(screen.getByText("rejected")).toBeEnabled()
 
-    selectEvent.openMenu(screen.getByText("rejected"))
-    expect(screen.queryByText("deployed")).toBeInTheDocument()
-    expect(screen.queryByText("submitted")).toBeInTheDocument()
-    expect(screen.queryByText("testing")).toBeInTheDocument()
+    await act(async () => {
+      selectEvent.openMenu(screen.getByText("rejected"))
+    })
+    expect(await screen.findByText("deployed")).toBeInTheDocument()
+    expect(await screen.findByText("submitted")).toBeInTheDocument()
+    expect(await screen.findByText("testing")).toBeInTheDocument()
 
     expect(screen.queryByText("Some service type")).not.toBeInTheDocument()
     expect(screen.queryByText("Meh service type")).not.toBeInTheDocument()
@@ -658,10 +664,12 @@ describe("Test probe candidate changeview", () => {
 
     expect(screen.getByText("Production service type")).toBeEnabled()
 
-    selectEvent.openMenu(screen.getByText("Production service type"))
-    expect(screen.queryByText("Some service type")).toBeInTheDocument()
-    expect(screen.queryByText("Meh service type")).toBeInTheDocument()
-    expect(screen.queryByText("Test service type")).toBeInTheDocument()
+    await act(async () => {
+      selectEvent.openMenu(screen.getByText("Production service type"))
+    })
+    expect(await screen.findByText("Some service type")).toBeInTheDocument()
+    expect(await screen.findByText("Meh service type")).toBeInTheDocument()
+    expect(await screen.findByText("Test service type")).toBeInTheDocument()
 
     expect(createdField.value).toBe("2023-08-07 11:52:49")
     expect(createdField).toBeDisabled()
@@ -733,10 +741,12 @@ describe("Test probe candidate changeview", () => {
 
     expect(screen.getByText("testing")).toBeEnabled()
 
-    selectEvent.openMenu(screen.getByText("testing"))
-    expect(screen.queryByText("deployed")).toBeInTheDocument()
-    expect(screen.queryByText("rejected")).toBeInTheDocument()
-    expect(screen.queryByText("submitted")).toBeInTheDocument()
+    await act(async () => {
+      selectEvent.openMenu(screen.getByText("testing"))
+    })
+    expect(await screen.findByText("deployed")).toBeInTheDocument()
+    expect(await screen.findByText("rejected")).toBeInTheDocument()
+    expect(await screen.findByText("submitted")).toBeInTheDocument()
 
     expect(screen.queryByText("Test service type")).not.toBeInTheDocument()
     expect(screen.queryByText("Meh service type")).not.toBeInTheDocument()
@@ -745,10 +755,12 @@ describe("Test probe candidate changeview", () => {
     expect(screen.queryByText("Some service type")).toBeInTheDocument()
     expect(screen.queryByText("Some service type")).toBeEnabled()
 
-    selectEvent.openMenu(screen.getByText("Some service type"))
-    expect(screen.queryByText("Test service type")).toBeInTheDocument()
-    expect(screen.queryByText("Meh service type")).toBeInTheDocument()
-    expect(screen.queryByText("Production service type")).toBeInTheDocument()
+    await act(async () => {
+      selectEvent.openMenu(screen.getByText("Some service type"))
+    })
+    expect(await screen.findByText("Test service type")).toBeInTheDocument()
+    expect(await screen.findByText("Meh service type")).toBeInTheDocument()
+    expect(await screen.findByText("Production service type")).toBeInTheDocument()
 
     expect(createdField.value).toBe("2023-05-22 09:55:48")
     expect(createdField).toBeDisabled()
@@ -820,10 +832,12 @@ describe("Test probe candidate changeview", () => {
 
     expect(screen.getByText("deployed")).toBeEnabled()
 
-    selectEvent.openMenu(screen.getByText("deployed"))
-    expect(screen.queryByText("rejected")).toBeInTheDocument()
-    expect(screen.queryByText("submitted")).toBeInTheDocument()
-    expect(screen.queryByText("testing")).toBeInTheDocument()
+    await act(async () => {
+      selectEvent.openMenu(screen.getByText("deployed"))
+    })
+    expect(await screen.findByText("rejected")).toBeInTheDocument()
+    expect(await screen.findByText("submitted")).toBeInTheDocument()
+    expect(await screen.findByText("testing")).toBeInTheDocument()
 
     expect(screen.queryByText("Test service type")).not.toBeInTheDocument()
     expect(screen.queryByText("Some service type")).not.toBeInTheDocument()
@@ -832,10 +846,12 @@ describe("Test probe candidate changeview", () => {
     expect(screen.queryByText("Production service type")).toBeInTheDocument()
     expect(screen.queryByText("Production service type")).toBeEnabled()
 
-    selectEvent.openMenu(screen.getByText("Production service type"))
-    expect(screen.queryByText("Test service type")).toBeInTheDocument()
-    expect(screen.queryByText("Some service type")).toBeInTheDocument()
-    expect(screen.queryByText("Meh service type")).toBeInTheDocument()
+    await act(async () => {
+      selectEvent.openMenu(screen.getByText("Production service type"))
+    })
+    expect(await screen.findByText("Test service type")).toBeInTheDocument()
+    expect(await screen.findByText("Some service type")).toBeInTheDocument()
+    expect(await screen.findByText("Meh service type")).toBeInTheDocument()
 
     expect(createdField.value).toBe("2023-05-22 09:55:48")
     expect(createdField).toBeDisabled()
@@ -907,10 +923,12 @@ describe("Test probe candidate changeview", () => {
 
     expect(screen.getByText("submitted")).toBeEnabled()
 
-    selectEvent.openMenu(screen.getByText("submitted"))
-    expect(screen.queryByText("deployed")).toBeInTheDocument()
-    expect(screen.queryByText("rejected")).toBeInTheDocument()
-    expect(screen.queryByText("testing")).toBeInTheDocument()
+    await act(async () => {
+      selectEvent.openMenu(screen.getByText("submitted"))
+    })
+    expect(await screen.findByText("deployed")).toBeInTheDocument()
+    expect(await screen.findByText("rejected")).toBeInTheDocument()
+    expect(await screen.findByText("testing")).toBeInTheDocument()
 
     expect(screen.queryByText("some.service.type")).not.toBeInTheDocument()
     expect(screen.queryByText("meh.service.type")).not.toBeInTheDocument()
@@ -918,10 +936,12 @@ describe("Test probe candidate changeview", () => {
 
     expect(screen.getByText("test.service.type")).toBeEnabled()
 
-    selectEvent.openMenu(screen.getByText("test.service.type"))
-    expect(screen.queryByText("some.service.type")).toBeInTheDocument()
-    expect(screen.queryByText("meh.service.type")).toBeInTheDocument()
-    expect(screen.queryByText("production.service.type")).toBeInTheDocument()
+    await act(async () => {
+      selectEvent.openMenu(screen.getByText("test.service.type"))
+    })
+    expect(await screen.findByText("some.service.type")).toBeInTheDocument()
+    expect(await screen.findByText("meh.service.type")).toBeInTheDocument()
+    expect(await screen.findByText("production.service.type")).toBeInTheDocument()
 
     expect(createdField.value).toBe("2023-05-22 09:59:59")
     expect(createdField).toBeDisabled()
