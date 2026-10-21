@@ -29,4 +29,4 @@ Section **POEM User Permissions** contains groups of resources associated to the
 
 #### Additional Information
 
-**Additional Information** section are information that are coming from the SAML IdP.
+The **Additional Information** section shows optional profile metadata stored for the user.
