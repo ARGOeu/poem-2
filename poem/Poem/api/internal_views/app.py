@@ -3,7 +3,6 @@ from configparser import NoOptionError, NoSectionError
 from Poem.api import serializers
 from Poem.api.internal_views.users import get_all_groups, get_groups_for_user
 from Poem.helpers.tenant_helpers import CombinedTenant
-from Poem.poem.saml2.config import tenant_from_request, saml_login_string
 
 from django.conf import settings
 from django.contrib.auth import get_user_model
@@ -100,9 +99,8 @@ class GetConfigOptions(APIView):
         except PackageNotFoundError:
             poem_ver = "undefined_version"
 
-        tenant = tenant_from_request(request)
+        tenant = request.tenant.name.lower()
         if tenant != 'all':
-            options.update(saml_login_string=saml_login_string(tenant))
             options.update(use_service_title=get_use_service_titles(tenant))
 
         options.update(terms_privacy_links=settings.LINKS_TERMS_PRIVACY[tenant])
