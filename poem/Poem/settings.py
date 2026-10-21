@@ -301,7 +301,10 @@ STATIC_ROOT = '{}/usr/share/poem/static/'.format(VENV)
 LOGIN_REDIRECT_URL = '/ui/login'
 LOGOUT_REDIRECT_URL = '/ui/login'
 SAML_CONFIG_LOADER = 'Poem.poem.saml2.config.get_saml_config'
-SESSION_EXPIRE_AT_BROWSER_CLOSE = True
+# Keep sessions across browser restarts and renew expiry on each request.
+SESSION_EXPIRE_AT_BROWSER_CLOSE = False
+SESSION_COOKIE_AGE = 14 * 24 * 60 * 60
+SESSION_SAVE_EVERY_REQUEST = True
 SESSION_COOKIE_SAMESITE = None
 SESSION_COOKIE_SECURE = True
 
