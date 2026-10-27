@@ -2,7 +2,9 @@
 
 ## Description
 
-ARGO POEM service is multi-tenant aware web application used for management of tenants and corresponding resources needed to bootstrap their monitoring. It's register of services, repositories, packages and related probes, metric configurations and metric profiles that instruct ARGO monitoring instances what kind of probes/tests to execute for given tenant. Additionally it manages grouping of results and defines configuration of reports that ARGO compute engine will generate for each tenant. All of that in multi-tenant manner where single instance of web application can cater for multiple tenants and their monitoring needs. Users of EGI tenant are allowed to login via SAML2 based EGI CheckIN service.
+ARGO POEM service is multi-tenant aware web application used for management of tenants and corresponding resources needed to bootstrap their monitoring. It's register of services, repositories, packages and related probes, metric configurations and metric profiles that instruct ARGO monitoring instances what kind of probes/tests to execute for given tenant. Additionally it manages grouping of results and defines configuration of reports that ARGO compute engine will generate for each tenant. All of that in multi-tenant manner where single instance of web application can cater for multiple tenants and their monitoring needs.
+
+Users sign in with a local username and password. When upgrading from a release with SAML authentication, administrators must set local passwords for accounts that previously used only an identity provider. Existing SAML sessions require a new login.
 
 ### Features
 
@@ -16,7 +18,6 @@ Here is a complete list of features:
 * flexible session and token protected REST API
 * use of ARGO WEB-API as a centralized store for various resources
 * PostgreSQL with schemas for enabling of multi-tenancy
-* integration with SAML identity providers
 
 ### Design
 
@@ -26,7 +27,7 @@ Web application is served with Apache web server and uses PostgreSQL as database
 
 #### List of packages used
 
-Backend: `Django`, `dj-rest-auth`, `django-tenants`, `django-webpack-loader`, `djangorestframework`, `djangorestframework-api-key`, `djangosaml2`, `psycopg2-binary`
+Backend: `Django`, `dj-rest-auth`, `django-tenants`, `django-webpack-loader`, `djangorestframework`, `djangorestframework-api-key`, `psycopg2-binary`
 
 Frontend: `ReactJS`, `formik`, `react-hook-form`, `react-autosuggest`, `react-diff-viewer`, `react-dom`, `react-fontawesome`, `react-helmet`, `react-notifications`, `react-popup`, `react-router`, `react-select`, `react-table`, `reactstrap`, `webpack`, `yup`
 
@@ -50,8 +51,7 @@ POEM web service is meant to be running with Django 3.x driven by Python 3.x on 
 
 ```sh
 % yum -y install ca-certificates \
-		git which \
-		xmlsec1 xmlsec1-openssl
+		git which
 ```
 
 Layout of POEM web service files on the filesystem depends on the location of virtual environment. By the default, service assumes it is:
@@ -215,14 +215,11 @@ Configuration is centered around one file `VENV/etc/poem/poem.conf` that is spli
 	AllowedHosts = FQDN1, FQDN2
 	CAFile = /etc/pki/tls/certs/DigiCertCA.crt
 	CAPath = /etc/grid-security/certificates/
-	HostCert = /etc/grid-security/hostcert.pem
-	HostKey = /etc/grid-security/hostkey.pem
 	SecretKeyPath = %(VENV)s/etc/poem/secret_key
 
 * `AllowedHosts` should have FQDN name of hosts that will be running POEM service. It can be provided as comma separated list of valid FQDNs and it is used as prevention of HTTP Host Header attacks. FQDNs listed here will be matched against request's Host header exactly.
   Additional hosts may be configured in `poem.auto.conf` by setting `SECURITY.AllowedHosts` to a relative path to a file in the same `etc/poem` directory; that file should contain one FQDN per line and its values are appended to the core `poem.conf` hosts.
 * `CAFile`, `CAPath` are used by sync scripts to authenticate the server certificate
-* `HostCert`, `HostKey` are public and private part of client certificate
 * `SecretKeyPath` is the location of file containing Django SECRET_KEY that is used for cryptographic signing
 	* `poem-genseckey` provided tool can generate unique and unpredictable value and write it into the file
 ```sh
@@ -260,15 +257,11 @@ them.
 
     [GENERAL_EGI]
     Namespace = hr.cro-ngi.TEST
-    SamlLoginString = Log in using EGI CHECK-IN
-    SamlServiceName = ARGO POEM EGI-CheckIN
     TermsOfUse = https://ui.argo.grnet.gr/egi/termsofUse/ALL
     PrivacyPolicies = https://argo.egi.eu/egi/policies/ALL
 
 
 * `Namespace` defines the identifier that will be prepended to every Profile
-* `SamlLoginString` defines the text presented on the SAML2 button of login page
-* `SamlServiceName` defines service name in SAML2 configuration
 * `TermsOfUse` represents tenant URL reference to Terms of Use on ARGO UI service
 * `PrivacyPolicies` represents tenant URL reference to Privacy policies on ARGO UI service
 
@@ -360,8 +353,6 @@ Tenant metadata should be listed in `poem.conf` with corresponding sections:
 AllowedHosts = poem.devel.argo.grnet.gr, egi.poem.devel.argo.grnet.gr
 
 [GENERAL_EGI]
-SamlLoginString = Login using EGI CHECK-IN
-SamlServiceName = ARGO POEM EGI-CheckIN
 
 [SUPERUSER_EGI]
 Name = <username>

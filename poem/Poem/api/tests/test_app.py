@@ -11,7 +11,7 @@ from Poem.users.models import CustUser
 from django.conf import settings
 from django.core.exceptions import ImproperlyConfigured
 from django_tenants.test.cases import TenantTestCase
-from django_tenants.test.client import TenantRequestFactory
+from django_tenants.test.client import TenantClient, TenantRequestFactory
 from django_tenants.utils import get_public_schema_name
 from django.utils import timezone
 from importlib.metadata import version
@@ -178,11 +178,8 @@ class GetConfigOptionsAPIViewTests(TenantTestCase):
         "Poem.api.internal_views.app.get_use_service_titles",
         return_value=True
     )
-    @patch('Poem.api.internal_views.app.saml_login_string',
-           return_value='Log in using B2ACCESS')
-    @patch('Poem.api.internal_views.app.tenant_from_request',
-           return_value='tenant')
     def test_get_config_options(self, *args):
+        self.tenant.name = 'TENANT'
         with self.settings(
             WEBAPI_METRIC='https://metric.profile.com',
             WEBAPI_AGGREGATION='https://aggregations.com',
@@ -207,7 +204,6 @@ class GetConfigOptionsAPIViewTests(TenantTestCase):
                 response.data,
                 {
                     'result': {
-                        'saml_login_string': 'Log in using B2ACCESS',
                         'version': version('poem'),
                         'tenant_name': 'tenant',
                         'terms_privacy_links': {
@@ -218,6 +214,43 @@ class GetConfigOptionsAPIViewTests(TenantTestCase):
                     }
                 }
             )
+
+
+class PasswordLoginTests(TenantTestCase):
+    def setUp(self):
+        self.client = TenantClient(self.tenant)
+        self.user = CustUser.objects.create_user(
+            username='passworduser', password='test-password'
+        )
+        poem_models.UserProfile.objects.create(user=self.user)
+
+    def test_password_login_creates_active_session(self):
+        response = self.client.post('/dj-rest-auth/login/', {
+            'username': 'passworduser', 'password': 'test-password'
+        })
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(
+            self.client.session['_auth_user_backend'],
+            'Poem.auth_backend.cust.backends.CustModelBackend'
+        )
+        self.assertTrue(response.cookies[settings.SESSION_COOKIE_NAME]['expires'])
+
+        response = self.client.get('/api/v2/internal/sessionactive/true')
+        self.assertEqual(response.status_code, 200)
+        self.assertTrue(response.data['active'])
+        self.assertEqual(response.data['userdetails']['username'], 'passworduser')
+
+    def test_password_login_rejects_invalid_password(self):
+        response = self.client.post('/dj-rest-auth/login/', {
+            'username': 'passworduser', 'password': 'incorrect-password'
+        })
+        self.assertEqual(response.status_code, 400)
+        self.assertNotIn('_auth_user_id', self.client.session)
+
+    def test_removed_authentication_routes_return_not_found(self):
+        for url in ('/saml2/login/', '/api/v2/internal/saml2login'):
+            with self.subTest(url=url):
+                self.assertEqual(self.client.get(url).status_code, 404)
 
 
 class GetSessionDetailsAPIViewTests(TenantTestCase):
@@ -502,16 +535,12 @@ Email =
 
 [GENERAL_EGI]
 Namespace = hr.cro-ngi.EGI
-SamlLoginString = Login using EGI CHECK-IN
-SamlServiceName = ARGO POEM EGI-CheckIN
 TermsOfUse = https://ui.argo.grnet.gr/egi/termsofUse
 PrivacyPolicies = https://argo.egi.eu/egi/policies
 UseServiceTitles = False
 
 [GENERAL_EOSC]
 Namespace = hr.cro-ngi.EOSC
-SamlLoginString = Login using EGI CHECK-IN
-SamlServiceName = ARGO POEM EGI-CheckIN
 TermsOfUse = https://ui.argo.grnet.gr/eosc/termsofUse
 PrivacyPolicies = https://argo.egi.eu/eosc/policies
 UseServiceTitles = True
@@ -530,15 +559,11 @@ Email =
 
 [GENERAL_EGI]
 Namespace = hr.cro-ngi.EGI
-SamlLoginString = Login using EGI CHECK-IN
-SamlServiceName = ARGO POEM EGI-CheckIN
 TermsOfUse = https://ui.argo.grnet.gr/egi/termsofUse
 PrivacyPolicies = https://argo.egi.eu/egi/policies
 
 [GENERAL_EOSC]
 Namespace = hr.cro-ngi.EOSC
-SamlLoginString = Login using EGI CHECK-IN
-SamlServiceName = ARGO POEM EGI-CheckIN
 TermsOfUse = https://ui.argo.grnet.gr/eosc/termsofUse
 PrivacyPolicies = https://argo.egi.eu/eosc/policies
 UseServiceTitles = True

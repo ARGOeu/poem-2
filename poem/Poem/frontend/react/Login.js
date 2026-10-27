@@ -23,7 +23,6 @@ import { Controller, useForm } from 'react-hook-form';
 
 
 const Login = (props) => {
-  const [samlIdpString, setSamlIdpString] = useState(null);
   const [loginFailedVisible, setLoginFailedVisible] = useState(false);
   const [isTenantSchema, setIsTenantSchema] = useState(null);
   const [loading, setLoading] = useState(false);
@@ -47,11 +46,7 @@ const Login = (props) => {
       setPrivacyLink(options && options.result.terms_privacy_links.privacy);
       setTermsLink(options && options.result.terms_privacy_links.terms);
 
-      if (response) {
-        setIsTenantSchema(response);
-        setSamlIdpString(options.result.saml_login_string);
-      } else
-        setIsTenantSchema(response);
+      setIsTenantSchema(response);
 
       setLoading(false);
     }
@@ -144,7 +139,6 @@ const Login = (props) => {
                   </div>
                   <FormGroup className='justify-content-center'>
                     <Button color="success" type="submit" block className='mb-2'>Login using username and password</Button>
-                    {isTenantSchema && <a className="btn btn-success btn-block" role="button" href="/saml2/login" style={{width: '100%'}}>{samlIdpString}</a>}
                   </FormGroup>
                 </Form>
               </CardBody>

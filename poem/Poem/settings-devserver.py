@@ -119,8 +119,6 @@ try:
     DATABASE_ROUTERS = ('django_tenants.routers.TenantSyncRouter',)
 
     ALLOWED_HOSTS = config.get('SECURITY', 'AllowedHosts')
-    HOST_CERT = config.get('SECURITY', 'HostCert')
-    HOST_KEY = config.get('SECURITY', 'HostKey')
     SECRETKEY_PATH = config.get('SECURITY', 'SecretKeyPath')
     EMAILFROM = config.get("EMAIL", "From")
     EMAILUS = config.get("EMAIL", "Us")
@@ -174,7 +172,6 @@ except Exception as e:
 
 AUTHENTICATION_BACKENDS = (
     'Poem.auth_backend.cust.backends.CustModelBackend',
-    'Poem.auth_backend.saml2.backends.SAML2Backend',
 )
 
 AUTH_USER_MODEL = 'users.CustUser'
@@ -207,7 +204,6 @@ TENANT_APPS = (
     'django.contrib.staticfiles',
     'django.contrib.messages',
     'django.contrib.sessions',
-    'djangosaml2',
     'rest_framework',
     'rest_framework.authtoken',
     'rest_framework_api_key',
@@ -233,7 +229,6 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
-    'djangosaml2.middleware.SamlSessionMiddleware'
 ]
 
 TEMPLATES = [
@@ -298,11 +293,13 @@ STATICFILES_DIRS = [os.path.join(APP_PATH, 'frontend/bundles/')]
 STATIC_URL = '/static/'
 STATIC_ROOT = '{}/usr/share/poem/static/'.format(VENV)
 
-# load SAML settings
+# Authentication and session settings
 LOGIN_REDIRECT_URL = '/ui/login'
 LOGOUT_REDIRECT_URL = '/ui/login'
-SAML_CONFIG_LOADER = 'Poem.poem.saml2.config.get_saml_config'
-SESSION_EXPIRE_AT_BROWSER_CLOSE = True
+# Keep sessions across browser restarts and renew expiry on each request.
+SESSION_EXPIRE_AT_BROWSER_CLOSE = False
+SESSION_COOKIE_AGE = 14 * 24 * 60 * 60
+SESSION_SAVE_EVERY_REQUEST = True
 SESSION_COOKIE_SAMESITE = None
 SESSION_COOKIE_SECURE = False
 

@@ -14,8 +14,6 @@ Port = 5432
 
 [SECURITY]
 AllowedHosts = *
-HostCert = /etc/grid-security/hostcert.pem
-HostKey = /etc/grid-security/hostkey.pem
 SecretKeyPath = %(VENV)s/etc/poem/secret_key
 
 [EMAIL]
@@ -54,8 +52,6 @@ Email =
 
 [GENERAL_EGI]
 Namespace = hr.cro-ngi.TEST
-SamlLoginString = Login using EGI CHECK-IN
-SamlServiceName = ARGO POEM EGI-CheckIN
 TermsOfUse = https://ui.argo.grnet.gr/egi/termsofUse
 PrivacyPolicies = https://argo.egi.eu/egi/policies
 UseServiceTitles = False

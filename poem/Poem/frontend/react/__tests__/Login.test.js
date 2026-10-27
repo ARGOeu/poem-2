@@ -21,7 +21,6 @@ beforeEach(() => {
 
 const mockConfigOptions = {
   result: {
-    saml_login_string: 'Log in using EGI CheckIn',
     webapimetric: 'https://metric.profile.com',
     webapiaggregation: 'https://aggregations.com',
     webapithresholds: 'https://thresholds.com',
@@ -106,9 +105,8 @@ describe('Test for login page on tenant POEM', () => {
     expect(screen.getByLabelText(/username/i)).toBeInTheDocument();
     expect(screen.getByLabelText(/password/i)).toBeInTheDocument();
 
-    expect(screen.getAllByRole('button')).toHaveLength(2);
+    expect(screen.getAllByRole('button')).toHaveLength(1);
     expect(screen.getByRole('button', { name: /login using username and password/i })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /egi checkin/i}).textContent).toBe('Log in using EGI CheckIn');
 
     expect(screen.getByText(/grnet/i).closest('a')).toHaveAttribute('href', 'https://grnet.gr/');
     expect(screen.getByText(/srce/i).closest('a')).toHaveAttribute('href', 'http://www.srce.unizg.hr/');
