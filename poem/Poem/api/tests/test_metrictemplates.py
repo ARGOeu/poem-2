@@ -3501,6 +3501,49 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
         self.assertEqual(admin_models.MetricTemplate.objects.all().count(), 8)
 
     @patch("Poem.api.internal_views.metrictemplates.sync_tags_webapi")
+    def test_put_passive_template_to_active_stores_type_and_history(self, mock_sync):
+        template = self.metrictemplate2
+        self.assertEqual(template.mtype.name, 'Passive')
+        self.assertIsNone(template.probekey)
+        history = admin_models.MetricTemplateHistory.objects.filter(object_id=template)
+        original_history_count = history.count()
+        data = {
+            'id': template.pk,
+            'name': template.name,
+            'mtype': 'Active',
+            'probeversion': str(self.ams_probe_11),
+            'description': 'Converted to an active metric template.',
+            'parent': '',
+            'probeexecutable': 'ams-probe',
+            'tags': ['test_tag1'],
+            'config': [{'key': 'path', 'value': '/usr/libexec/ams-probe'}],
+            'attribute': [],
+            'dependency': [],
+            'parameter': [],
+            'flags': [],
+        }
+        request = self.factory.put(self.url, json.dumps(data),
+                                   content_type='application/json')
+        request.tenant = self.public_tenant
+        force_authenticate(request, user=self.superuser)
+
+        response = self.view(request)
+
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        template.refresh_from_db()
+        self.assertEqual(template.mtype, self.template_active)
+        self.assertEqual(template.probekey, self.ams_probe_11)
+        self.assertEqual(template.description, data['description'])
+        self.assertEqual(history.count(), original_history_count + 1)
+        version = history.get(probekey=self.ams_probe_11)
+        self.assertEqual(version.mtype, self.template_active)
+        self.assertEqual(version.probekey, template.probekey)
+        self.assertEqual(version.config, template.config)
+        self.assertEqual(set(version.tags.all()), set(template.tags.all()))
+        self.assertEqual(history.get(probekey=None).mtype.name, 'Passive')
+        mock_sync.assert_called_once()
+
+    @patch("Poem.api.internal_views.metrictemplates.sync_tags_webapi")
     def test_put_existing_probe_version_leaves_template_unchanged(self, mock_sync):
         template = self.metrictemplate1
         original = admin_models.MetricTemplate.objects.values().get(pk=template.pk)

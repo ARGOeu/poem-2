@@ -293,6 +293,9 @@ class ListMetricTemplates(APIView):
                     if request.data['mtype'] == 'Active' and \
                             old_probekey != new_probekey:
                         metrictemplate.name = request.data['name']
+                        metrictemplate.mtype = admin_models.MetricTemplateType.objects.get(
+                            name=request.data['mtype']
+                        )
                         metrictemplate.probekey = new_probekey
                         metrictemplate.description = request.data['description']
                         metrictemplate.parent = parent
