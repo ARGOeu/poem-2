@@ -79,6 +79,7 @@ import CreatableSelect from 'react-select/creatable';
 import { Controller, useFormContext } from 'react-hook-form';
 import { ErrorMessage } from '@hookform/error-message';
 import { HistoryPlaceholder } from './Placeholders';
+import PageUnavailable from './PageUnavailable';
 
 var list_pages = ['administration', 'probes',
                   'metrics', 'reports', 'servicetypes', 'metricprofiles', 'aggregationprofiles',
@@ -1360,23 +1361,7 @@ export const ProfileMain = ({
 }
 
 
-export const ErrorComponent = ({error}) => {
-  let errors = [];
-  error.toString().split('; ').forEach((e, i) => {
-    if (i === 0)
-      errors.push(<h3 key={i}>{e}</h3>)
-    else
-      errors.push(<p key={i}>{e}</p>)
-
-  })
-
-  return (
-    <React.Fragment>
-      <h1>Something went wrong</h1>
-      {errors}
-    </React.Fragment>
-  )
-}
+export const ErrorComponent = ({error}) => <PageUnavailable error={error} />;
 
 
 export const ParagraphTitle = ({title}) => (

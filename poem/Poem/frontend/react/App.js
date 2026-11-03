@@ -39,6 +39,7 @@ import { UsersList, UserChange, ChangePassword } from "./Users";
 import { GroupList, GroupChange } from "./GroupElements";
 import { APIKeyList, APIKeyChange } from "./APIKey";
 import NotFound from "./NotFound";
+import PageUnavailable from "./PageUnavailable";
 import {
   BrowserRouter,
   Routes,
@@ -737,7 +738,7 @@ const TenantRouteSwitch = ({
       />
     </Route>
 
-    <Route element={<NotFound />} />
+    <Route path="*" element={<NotFound />} />
   </Routes>
 );
 
@@ -853,7 +854,7 @@ const SuperAdminRouteSwitch = () => (
     <Route path="/ui/tenants" element={<TenantList />} />
     <Route path="/ui/tenants/:name" element={<TenantChange />} />
     <Route path="/ui/cookiepolicies/" element={<CookiePolicy />} />
-    <Route element={<NotFound />} />
+    <Route path="*" element={<NotFound />} />
   </Routes>
 );
 
@@ -1327,7 +1328,7 @@ const App = () => {
                 }
               />
 
-              <Route element={<NotFound />} />
+              <Route path="*" element={<NotFound homePath="/ui/public_home" />} />
             </Routes>
           </BrowserRouter>
         </QueryClientProvider>
@@ -1449,7 +1450,7 @@ const App = () => {
                 }
               />
 
-              <Route element={<NotFound />} />
+              <Route path="*" element={<NotFound homePath="/ui/public_home" />} />
             </Routes>
           </BrowserRouter>
         </QueryClientProvider>
@@ -1546,10 +1547,7 @@ const App = () => {
   } else if (isTenantSchema === null && isSessionActive) {
     return (
       <QueryClientProvider client={queryClient}>
-        <React.Fragment>
-          <h1>Something went wrong</h1>
-          <p>Cannot obtain schema.</p>
-        </React.Fragment>
+        <PageUnavailable error="Unable to load the application configuration." />
       </QueryClientProvider>
     );
   } else return null;
