@@ -88,7 +88,14 @@ def replace_service_types(tenant_name, service_types):
     if current:
         try:
             client.delete("servicetypes", None)
-        except (UpstreamError, CredentialError) as exc:
+        except UpstreamError as exc:
+            # The collection may already be empty by the time DELETE runs.
+            # WEB-API reports this as 404 ("Specific query returned no items").
+            if exc.status_code != 404:
+                raise ServiceTypeReplacementError(
+                    f"Unable to clear existing service types: {exc}"
+                )
+        except CredentialError as exc:
             raise ServiceTypeReplacementError(
                 f"Unable to clear existing service types: {exc}"
             )
