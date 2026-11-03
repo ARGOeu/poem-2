@@ -196,7 +196,7 @@ export class Backend {
       throw Error(error_msg);
   }
 
-  async changeObject(url, data) {
+  async changeObject(url, data, parseResponse = false) {
     let error_msg = '';
     try {
       const response = await this.send(url, 'PUT', data);
@@ -208,6 +208,14 @@ export class Backend {
           error_msg = `${response.status} ${response.statusText} in PUT ${url}`;
         }
       } else {
+        if (parseResponse) {
+          // Successful saves may return a warning, or have an empty body.
+          try {
+            return await response.json();
+          } catch {
+            return undefined;
+          }
+        }
         return response;
       }
     } catch (err1) {
@@ -218,7 +226,7 @@ export class Backend {
       throw Error(error_msg)
   }
 
-  async addObject(url, data) {
+  async addObject(url, data, parseResponse = false) {
     let error_msg = '';
     try {
       const response = await this.send(url, 'POST', data);
@@ -229,6 +237,12 @@ export class Backend {
           error_msg = `${response.status} ${response.statusText} in POST ${url}${json.detail ? `: ${json.detail}` : ''}`;
         } catch (err1) {
           error_msg = `${response.status} ${response.statusText} in POST ${url}`;
+        }
+      } else if (parseResponse) {
+        try {
+          return await response.json();
+        } catch {
+          return undefined;
         }
       }
     } catch (err2) {

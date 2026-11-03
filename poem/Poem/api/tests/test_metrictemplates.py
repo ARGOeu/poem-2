@@ -2656,7 +2656,7 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
         response = self.view(request)
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
         self.assertEqual(
-            response.data["detail"],
+            response.data["warning"],
             "Error syncing metric tags: 400 BAD REQUEST"
         )
         mock_sync.assert_called_once()
@@ -4022,7 +4022,7 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
         response = self.view(request)
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
         self.assertEqual(
-            response.data["detail"],
+            response.data["warning"],
             "Error syncing metric tags: 400 BAD REQUEST"
         )
         mock_sync.assert_called_once()

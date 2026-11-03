@@ -214,8 +214,8 @@ class ListMetricTemplates(APIView):
                     return Response(status=status.HTTP_201_CREATED)
 
                 except WebApiException as err:
-                    return error_response(
-                        status_code=status.HTTP_201_CREATED, detail=str(err)
+                    return Response(
+                        {'warning': str(err)}, status=status.HTTP_201_CREATED
                     )
 
             except IntegrityError:
@@ -430,8 +430,8 @@ class ListMetricTemplates(APIView):
                     return Response(status=status.HTTP_201_CREATED)
 
                 except WebApiException as error:
-                    return error_response(
-                        status_code=status.HTTP_201_CREATED, detail=str(error)
+                    return Response(
+                        {'warning': str(error)}, status=status.HTTP_201_CREATED
                     )
 
             except admin_models.MetricTemplate.DoesNotExist:
