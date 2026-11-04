@@ -1310,6 +1310,7 @@ describe("Tests for metric configuration overrides addview", () => {
   })
 
   test("Test import json successfully", async () => {
+    const user = useEvent.setup()
     renderAddView()
 
     await waitFor(() => {
@@ -1350,34 +1351,28 @@ describe("Tests for metric configuration overrides addview", () => {
     const file = new File([content], "test.json", { type: "application/json" })
     const input = screen.getByTestId("file_input")
 
-    await waitFor(() => {
-      useEvent.upload(input, file)
-    })
+    await user.upload(input, file)
 
-    await waitFor(() => {
-      expect(input.files[0]).toBe(file)
-    })
+    expect(input.files[0]).toBe(file)
 
     expect(input.files.item(0)).toBe(file)
     expect(input.files).toHaveLength(1)
 
     await waitFor(() => {
-      fireEvent.load(screen.getByTestId("file_input"))
-    })
-
-    expect(screen.getByTestId("metric-override-form")).toHaveFormValues({
-      name: "",
-      "globalAttributes.0.attribute": "ROBOT_CERT",
-      "globalAttributes.0.value": "/etc/sensu/certs/robotcert.pem",
-      "globalAttributes.1.attribute": "ROBOT_KEY",
-      "globalAttributes.1.value": "/etc/sensu/certs/robotkey.pem",
-      "hostAttributes.0.hostname": "poem.devel.argo.grnet.gr",
-      "hostAttributes.0.attribute": "ARGO_TENANTS_TOKEN",
-      "hostAttributes.0.value": "$DEVEL_ARGO_TENANTS_TOKEN",
-      "metricParameters.0.hostname": "",
-      "metricParameters.0.metric": "",
-      "metricParameters.0.parameter": "",
-      "metricParameters.0.value": ""
+      expect(screen.getByTestId("metric-override-form")).toHaveFormValues({
+        name: "",
+        "globalAttributes.0.attribute": "ROBOT_CERT",
+        "globalAttributes.0.value": "/etc/sensu/certs/robotcert.pem",
+        "globalAttributes.1.attribute": "ROBOT_KEY",
+        "globalAttributes.1.value": "/etc/sensu/certs/robotkey.pem",
+        "hostAttributes.0.hostname": "poem.devel.argo.grnet.gr",
+        "hostAttributes.0.attribute": "ARGO_TENANTS_TOKEN",
+        "hostAttributes.0.value": "$DEVEL_ARGO_TENANTS_TOKEN",
+        "metricParameters.0.hostname": "",
+        "metricParameters.0.metric": "",
+        "metricParameters.0.parameter": "",
+        "metricParameters.0.value": ""
+      })
     })
   })
 
@@ -3217,6 +3212,7 @@ describe("Tests for metric configuration overrides changeview", () => {
   })
 
   test("Test import json successfully", async () => {
+    const user = useEvent.setup()
     renderChangeView()
 
     await waitFor(() => {
@@ -3257,34 +3253,28 @@ describe("Tests for metric configuration overrides changeview", () => {
     const file = new File([content], "test.json", { type: "application/json" })
     const input = screen.getByTestId("file_input")
 
-    await waitFor(() => {
-      useEvent.upload(input, file)
-    })
+    await user.upload(input, file)
 
-    await waitFor(() => {
-      expect(input.files[0]).toBe(file)
-    })
+    expect(input.files[0]).toBe(file)
 
     expect(input.files.item(0)).toBe(file)
     expect(input.files).toHaveLength(1)
 
     await waitFor(() => {
-      fireEvent.load(screen.getByTestId("file_input"))
-    })
-
-    expect(screen.getByTestId("metric-override-form")).toHaveFormValues({
-      name: "local",
-      "globalAttributes.0.attribute": "ROBOT_CERT",
-      "globalAttributes.0.value": "/etc/sensu/certs/robotcert.pem",
-      "globalAttributes.1.attribute": "ROBOT_KEY",
-      "globalAttributes.1.value": "/etc/sensu/certs/robotkey.pem",
-      "hostAttributes.0.hostname": "poem.devel.argo.grnet.gr",
-      "hostAttributes.0.attribute": "ARGO_TENANTS_TOKEN",
-      "hostAttributes.0.value": "$DEVEL_ARGO_TENANTS_TOKEN",
-      "metricParameters.0.hostname": "",
-      "metricParameters.0.metric": "",
-      "metricParameters.0.parameter": "",
-      "metricParameters.0.value": ""
+      expect(screen.getByTestId("metric-override-form")).toHaveFormValues({
+        name: "local",
+        "globalAttributes.0.attribute": "ROBOT_CERT",
+        "globalAttributes.0.value": "/etc/sensu/certs/robotcert.pem",
+        "globalAttributes.1.attribute": "ROBOT_KEY",
+        "globalAttributes.1.value": "/etc/sensu/certs/robotkey.pem",
+        "hostAttributes.0.hostname": "poem.devel.argo.grnet.gr",
+        "hostAttributes.0.attribute": "ARGO_TENANTS_TOKEN",
+        "hostAttributes.0.value": "$DEVEL_ARGO_TENANTS_TOKEN",
+        "metricParameters.0.hostname": "",
+        "metricParameters.0.metric": "",
+        "metricParameters.0.parameter": "",
+        "metricParameters.0.value": ""
+      })
     })
 
     fireEvent.click(screen.getByRole("button", { name: /save/i }))
