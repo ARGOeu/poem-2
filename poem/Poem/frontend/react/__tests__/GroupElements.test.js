@@ -458,6 +458,15 @@ describe('Tests for group elements changeview', () => {
     await waitFor(() => {
       expect(screen.getAllByRole('row')).toHaveLength(7);
     })
+    expect(screen.getByRole('row', { name: /test\.AMS-Check/ })).toBeInTheDocument();
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+
+    await user.click(within(selectField).getByRole('combobox'));
+    expect(within(selectField).queryByRole('option', { name: 'test.AMS-Check' }))
+      .not.toBeInTheDocument();
+    await user.keyboard('{Escape}');
+    await user.click(screen.getByRole('button', { name: /add/i }));
+    expect(screen.getAllByRole('row')).toHaveLength(7);
 
     fireEvent.click(screen.getByRole('button', { name: /save/i }))
 

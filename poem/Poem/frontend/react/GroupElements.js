@@ -286,18 +286,18 @@ const GroupChangeForm = ({ id, items, freeItems, group, groupname, title, addvie
             <Col md={2}>
               <Button
                 color='success'
+                type='button'
                 onClick={() => {
-                  let itms = getValues("items")
-                  let fitms = getValues("freeItems")
-                  for (let i = 0; i < fitms.length; i++) {
-                    if (newItems.includes(fitms[i])) {
-                      fitms.splice(i, 1);
-                      i--;
-                    }
-                  }
-                  newItems.forEach(i => itms.push(i.value));
-                  setValue("items", itms.sort());
-                  setValue("freeItems", fitms)
+                  const selectedValues = new Set(newItems.map(item => item.value));
+                  const updatedItems = [...new Set([
+                    ...getValues("items"),
+                    ...selectedValues
+                  ])].sort();
+                  const availableItems = getValues("freeItems").filter(
+                    item => !selectedValues.has(item.value)
+                  );
+                  setValue("items", updatedItems);
+                  setValue("freeItems", availableItems);
                   setNewItems([]);
                 }}
               >
