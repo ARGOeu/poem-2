@@ -2135,7 +2135,8 @@ describe('Test metric template changeview on SuperPOEM', () => {
           'flags': [
             { key: 'OBSESS', value: '1' }
           ]
-        }
+        },
+        true
       )
     })
     expect(queryClient.invalidateQueries).toHaveBeenCalledWith('metrictemplate');
@@ -2196,7 +2197,8 @@ describe('Test metric template changeview on SuperPOEM', () => {
           flags: [
             { key: "OBSESS", value: "1" }
           ]
-        }
+        },
+        true
       )
     })
 
@@ -2264,7 +2266,8 @@ describe('Test metric template changeview on SuperPOEM', () => {
           flags: [
             { key: "OBSESS", value: "1" }
           ]
-        }
+        },
+        true
       )
     })
 
@@ -2328,7 +2331,8 @@ describe('Test metric template changeview on SuperPOEM', () => {
           flags: [
             { key: "OBSESS", value: "1" }
           ]
-        }
+        },
+        true
       )
     })
 
@@ -2396,7 +2400,8 @@ describe('Test metric template changeview on SuperPOEM', () => {
             { key: "NOHOSTNAME", value: "1", isNew: true },
             { key: "NOARGS", value: "0", isNew: true }
           ]
-        }
+        },
+        true
       )
     })
 
@@ -2476,7 +2481,8 @@ describe('Test metric template changeview on SuperPOEM', () => {
             { key: 'OBSESS', value: '1' },
             { key: 'NOHOSTNAME', value: '1', isNew: true }
           ]
-        }
+        },
+        true
       )
     })
     expect(queryClient.invalidateQueries).toHaveBeenCalledWith('metrictemplate');
@@ -2558,7 +2564,8 @@ describe('Test metric template changeview on SuperPOEM', () => {
             { key: 'OBSESS', value: '1' },
             { key: 'NOHOSTNAME', value: '1', isNew: true }
           ]
-        }
+        },
+        true
       )
     })
     expect(queryClient.invalidateQueries).toHaveBeenCalledWith('metrictemplate');
@@ -2621,7 +2628,8 @@ describe('Test metric template changeview on SuperPOEM', () => {
           'flags': [
             { key: 'OBSESS', value: '1' }
           ]
-        }
+        },
+        true
       )
     })
 
@@ -2684,7 +2692,8 @@ describe('Test metric template changeview on SuperPOEM', () => {
           'flags': [
             { key: 'OBSESS', value: '1' }
           ]
-        }
+        },
+        true
       )
     })
 
@@ -2745,7 +2754,8 @@ describe('Test metric template changeview on SuperPOEM', () => {
           'flags': [
             { key: 'OBSESS', value: '1' }
           ]
-        }
+        },
+        true
       )
     })
 
@@ -3281,7 +3291,8 @@ describe('Test metric template changeview on SuperPOEM', () => {
             { key: 'OBSESS', value: '1' },
             { key: 'PASSIVE', value: '1' }
           ]
-        }
+        },
+        true
       )
     })
     expect(queryClient.invalidateQueries).toHaveBeenCalledWith('metrictemplate');
@@ -4093,7 +4104,8 @@ describe('Test metric template addview on SuperPOEM', () => {
             { key: 'NOTIMEOUT', value: '1' },
             { key: 'NOPUBLISH', value: '1' }
           ]
-        }
+        },
+        true
       )
     })
 
@@ -4204,7 +4216,8 @@ describe('Test metric template addview on SuperPOEM', () => {
             { key: 'PASSIVE', value: '1' },
             { key: 'OBSESS', value: '1' }
           ]
-        }
+        },
+        true
       )
     })
 
@@ -4294,7 +4307,8 @@ describe('Test metric template addview on SuperPOEM', () => {
             { key: 'NOTIMEOUT', value: '1' },
             { key: 'NOPUBLISH', value: '1' }
           ]
-        }
+        },
+        true
       )
     })
 
@@ -4385,7 +4399,8 @@ describe('Test metric template addview on SuperPOEM', () => {
             { key: 'NOTIMEOUT', value: '1' },
             { key: 'NOPUBLISH', value: '1' }
           ]
-        }
+        },
+        true
       )
     })
 
@@ -4473,7 +4488,8 @@ describe('Test metric template addview on SuperPOEM', () => {
             { key: 'NOTIMEOUT', value: '1' },
             { key: 'NOPUBLISH', value: '1' }
           ]
-        }
+        },
+        true
       )
     })
 
@@ -4706,7 +4722,8 @@ describe('Test metric template cloneview on SuperPOEM', () => {
             { key: 'OBSESS', value: '1' },
             { key: 'NOHOSTNAME', value: '1', isNew: true }
           ]
-        }
+        },
+        true
       )
     })
 
@@ -4762,7 +4779,8 @@ describe('Test metric template cloneview on SuperPOEM', () => {
             { key: 'PASSIVE', value: '1' },
             { key: 'NOHOSTNAME', value: '1', isNew: true }
           ]
-        }
+        },
+        true
       )
     })
 
@@ -4822,7 +4840,8 @@ describe('Test metric template cloneview on SuperPOEM', () => {
             { key: 'OBSESS', value: '1' },
             { key: 'NOHOSTNAME', value: '1', isNew: true }
           ]
-        }
+        },
+        true
       )
     })
 
@@ -4886,7 +4905,8 @@ describe('Test metric template cloneview on SuperPOEM', () => {
             { key: 'OBSESS', value: '1' },
             { key: 'NOHOSTNAME', value: '1', isNew: true }
           ]
-        }
+        },
+        true
       )
     })
 

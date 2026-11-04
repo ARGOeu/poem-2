@@ -2656,7 +2656,7 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
         response = self.view(request)
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
         self.assertEqual(
-            response.data["detail"],
+            response.data["warning"],
             "Error syncing metric tags: 400 BAD REQUEST"
         )
         mock_sync.assert_called_once()
@@ -3501,6 +3501,91 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
         self.assertEqual(admin_models.MetricTemplate.objects.all().count(), 8)
 
     @patch("Poem.api.internal_views.metrictemplates.sync_tags_webapi")
+    def test_put_passive_template_to_active_stores_type_and_history(self, mock_sync):
+        template = self.metrictemplate2
+        self.assertEqual(template.mtype.name, 'Passive')
+        self.assertIsNone(template.probekey)
+        history = admin_models.MetricTemplateHistory.objects.filter(object_id=template)
+        original_history_count = history.count()
+        data = {
+            'id': template.pk,
+            'name': template.name,
+            'mtype': 'Active',
+            'probeversion': str(self.ams_probe_11),
+            'description': 'Converted to an active metric template.',
+            'parent': '',
+            'probeexecutable': 'ams-probe',
+            'tags': ['test_tag1'],
+            'config': [{'key': 'path', 'value': '/usr/libexec/ams-probe'}],
+            'attribute': [],
+            'dependency': [],
+            'parameter': [],
+            'flags': [],
+        }
+        request = self.factory.put(self.url, json.dumps(data),
+                                   content_type='application/json')
+        request.tenant = self.public_tenant
+        force_authenticate(request, user=self.superuser)
+
+        response = self.view(request)
+
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        template.refresh_from_db()
+        self.assertEqual(template.mtype, self.template_active)
+        self.assertEqual(template.probekey, self.ams_probe_11)
+        self.assertEqual(template.description, data['description'])
+        self.assertEqual(history.count(), original_history_count + 1)
+        version = history.get(probekey=self.ams_probe_11)
+        self.assertEqual(version.mtype, self.template_active)
+        self.assertEqual(version.probekey, template.probekey)
+        self.assertEqual(version.config, template.config)
+        self.assertEqual(set(version.tags.all()), set(template.tags.all()))
+        self.assertEqual(history.get(probekey=None).mtype.name, 'Passive')
+        mock_sync.assert_called_once()
+
+    @patch("Poem.api.internal_views.metrictemplates.sync_tags_webapi")
+    def test_put_existing_probe_version_leaves_template_unchanged(self, mock_sync):
+        template = self.metrictemplate1
+        original = admin_models.MetricTemplate.objects.values().get(pk=template.pk)
+        original_tags = set(template.tags.values_list('name', flat=True))
+        history = admin_models.MetricTemplateHistory.objects.filter(object_id=template)
+        original_history = list(history.order_by('pk').values())
+        data = {
+            'id': template.pk,
+            'name': template.name,
+            'mtype': 'Active',
+            'probeversion': str(self.ams_probe_7),
+            'description': 'This failed update must not be stored.',
+            'parent': '',
+            'probeexecutable': 'ams-probe',
+            'tags': ['rollback-test-tag'],
+            'config': [{'key': 'path', 'value': '/new/probe/path'}],
+            'attribute': [],
+            'dependency': [],
+            'parameter': [],
+            'flags': [],
+        }
+        request = self.factory.put(self.url, json.dumps(data),
+                                   content_type='application/json')
+        request.tenant = self.public_tenant
+        force_authenticate(request, user=self.superuser)
+
+        response = self.view(request)
+
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(
+            admin_models.MetricTemplate.objects.values().get(pk=template.pk),
+            original,
+        )
+        self.assertEqual(set(template.tags.values_list('name', flat=True)),
+                         original_tags)
+        self.assertEqual(list(history.order_by('pk').values()), original_history)
+        self.assertFalse(admin_models.MetricTags.objects.filter(
+            name='rollback-test-tag'
+        ).exists())
+        mock_sync.assert_not_called()
+
+    @patch("Poem.api.internal_views.metrictemplates.sync_tags_webapi")
     @patch('Poem.api.internal_views.metrictemplates.update_metrics')
     @patch('Poem.api.internal_views.metrictemplates.inline_metric_for_db')
     def test_put_metrictemplate_without_changing_probekey_sp_superuser(
@@ -3937,7 +4022,7 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
         response = self.view(request)
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
         self.assertEqual(
-            response.data["detail"],
+            response.data["warning"],
             "Error syncing metric tags: 400 BAD REQUEST"
         )
         mock_sync.assert_called_once()

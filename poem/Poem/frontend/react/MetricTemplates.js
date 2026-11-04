@@ -35,8 +35,8 @@ export const MetricTemplateComponent = (props) => {
   const backend = new Backend();
   const queryClient = useQueryClient();
 
-  const addMutation = useMutation(async (values) => await backend.addObject('/api/v2/internal/metrictemplates/', values));
-  const changeMutation = useMutation(async (values) => await backend.changeObject('/api/v2/internal/metrictemplates/', values));
+  const addMutation = useMutation(async (values) => await backend.addObject('/api/v2/internal/metrictemplates/', values, true));
+  const changeMutation = useMutation(async (values) => await backend.changeObject('/api/v2/internal/metrictemplates/', values, true));
   const deleteMutation = useMutation(async () => await backend.deleteObject(`/api/v2/internal/metrictemplates/${name}`));
 
   const [formValues, setFormValues] = useState(undefined);

@@ -11,7 +11,7 @@ from Poem.poem.models import Metric, TenantHistory
 from Poem.poem_super_admin import models as admin_models
 from Poem.tenants.models import Tenant
 from django.contrib.contenttypes.models import ContentType
-from django.db import IntegrityError
+from django.db import IntegrityError, transaction
 from django_tenants.utils import get_public_schema_name, schema_context
 from rest_framework import status
 from rest_framework.authentication import SessionAuthentication
@@ -214,8 +214,8 @@ class ListMetricTemplates(APIView):
                     return Response(status=status.HTTP_201_CREATED)
 
                 except WebApiException as err:
-                    return error_response(
-                        status_code=status.HTTP_201_CREATED, detail=str(err)
+                    return Response(
+                        {'warning': str(err)}, status=status.HTTP_201_CREATED
                     )
 
             except IntegrityError:
@@ -252,172 +252,177 @@ class ListMetricTemplates(APIView):
         if request.tenant.schema_name == get_public_schema_name() and \
                 request.user.is_superuser:
             try:
-                metrictemplate = admin_models.MetricTemplate.objects.get(
-                    id=request.data['id']
-                )
-                old_name = metrictemplate.name
-                old_probekey = metrictemplate.probekey
-                old_tags = set([tag.name for tag in metrictemplate.tags.all()])
-
-                if request.data['parent']:
-                    parent = json.dumps([request.data['parent']])
-                else:
-                    parent = ''
-
-                if request.data['probeexecutable']:
-                    probeexecutable = json.dumps(
-                        [request.data['probeexecutable']]
+                # Roll back template, tags and history together on failure.
+                with transaction.atomic():
+                    metrictemplate = admin_models.MetricTemplate.objects.get(
+                        id=request.data['id']
                     )
-                else:
-                    probeexecutable = ''
+                    old_name = metrictemplate.name
+                    old_probekey = metrictemplate.probekey
+                    old_tags = set([tag.name for tag in metrictemplate.tags.all()])
 
-                new_tags = set()
-                if 'tags' in dict(request.data):
-                    new_tags = set(dict(request.data)['tags'])
+                    if request.data['parent']:
+                        parent = json.dumps([request.data['parent']])
+                    else:
+                        parent = ''
 
-                if request.data['probeversion']:
-                    probe_name = request.data['probeversion'].split(' ')[0]
-                    probe_version = request.data[
-                                        'probeversion'
-                                    ].split(' ')[1][1:-1]
-                    new_probekey = admin_models.ProbeHistory.objects.get(
-                        name=probe_name,
-                        package__version=probe_version
-                    )
+                    if request.data['probeexecutable']:
+                        probeexecutable = json.dumps(
+                            [request.data['probeexecutable']]
+                        )
+                    else:
+                        probeexecutable = ''
 
-                else:
-                    new_probekey = None
+                    new_tags = set()
+                    if 'tags' in dict(request.data):
+                        new_tags = set(dict(request.data)['tags'])
 
-                if request.data['mtype'] == 'Active' and \
-                        old_probekey != new_probekey:
-                    metrictemplate.name = request.data['name']
-                    metrictemplate.probekey = new_probekey
-                    metrictemplate.description = request.data['description']
-                    metrictemplate.parent = parent
-                    metrictemplate.probeexecutable = probeexecutable
-                    metrictemplate.config = inline_metric_for_db(
-                        request.data['config']
-                    )
-                    metrictemplate.attribute = inline_metric_for_db(
-                        request.data['attribute']
-                    )
-                    metrictemplate.dependency = inline_metric_for_db(
-                        request.data['dependency']
-                    )
-                    metrictemplate.flags = inline_metric_for_db(
-                        request.data['flags']
-                    )
-                    metrictemplate.parameter = inline_metric_for_db(
-                        request.data['parameter']
-                    )
-                    metrictemplate.save()
+                    if request.data['probeversion']:
+                        probe_name = request.data['probeversion'].split(' ')[0]
+                        probe_version = request.data[
+                                            'probeversion'
+                                        ].split(' ')[1][1:-1]
+                        new_probekey = admin_models.ProbeHistory.objects.get(
+                            name=probe_name,
+                            package__version=probe_version
+                        )
 
-                    if old_tags.difference(new_tags):
-                        for tag in old_tags.difference(new_tags):
-                            metrictemplate.tags.remove(
-                                admin_models.MetricTags.objects.get(name=tag)
-                            )
+                    else:
+                        new_probekey = None
 
-                    if new_tags.difference(old_tags):
-                        for tag in new_tags.difference(old_tags):
-                            try:
-                                mtag = admin_models.MetricTags.objects.get(
-                                    name=tag
-                                )
-
-                            except admin_models.MetricTags.DoesNotExist:
-                                mtag = admin_models.MetricTags.objects.create(
-                                    name=tag
-                                )
-                            metrictemplate.tags.add(mtag)
-
-                    create_history(metrictemplate, request.user.username)
-
-                else:
-                    new_data = {
-                        'name': request.data['name'],
-                        'probekey': new_probekey,
-                        'mtype': admin_models.MetricTemplateType.objects.get(
+                    if request.data['mtype'] == 'Active' and \
+                            old_probekey != new_probekey:
+                        metrictemplate.name = request.data['name']
+                        metrictemplate.mtype = admin_models.MetricTemplateType.objects.get(
                             name=request.data['mtype']
-                        ),
-                        'description': request.data['description'],
-                        'parent': parent,
-                        'probeexecutable': probeexecutable,
-                        'config': inline_metric_for_db(request.data['config']),
-                        'attribute': inline_metric_for_db(
+                        )
+                        metrictemplate.probekey = new_probekey
+                        metrictemplate.description = request.data['description']
+                        metrictemplate.parent = parent
+                        metrictemplate.probeexecutable = probeexecutable
+                        metrictemplate.config = inline_metric_for_db(
+                            request.data['config']
+                        )
+                        metrictemplate.attribute = inline_metric_for_db(
                             request.data['attribute']
-                        ),
-                        'dependency': inline_metric_for_db(
+                        )
+                        metrictemplate.dependency = inline_metric_for_db(
                             request.data['dependency']
-                        ),
-                        'flags': inline_metric_for_db(request.data['flags']),
-                        'parameter': inline_metric_for_db(
+                        )
+                        metrictemplate.flags = inline_metric_for_db(
+                            request.data['flags']
+                        )
+                        metrictemplate.parameter = inline_metric_for_db(
                             request.data['parameter']
                         )
-                    }
-                    admin_models.MetricTemplate.objects.filter(
-                        id=request.data['id']
-                    ).update(**new_data)
+                        metrictemplate.save()
 
-                    mt = admin_models.MetricTemplate.objects.get(
-                        pk=request.data['id']
-                    )
-
-                    tags_to_remove = None
-                    if old_tags.difference(new_tags):
-                        tags_to_remove = admin_models.MetricTags.objects.filter(
-                            name__in=old_tags.difference(new_tags)
-                        )
-                        for tag in tags_to_remove:
-                            mt.tags.remove(tag)
-
-                    tags_to_add = None
-                    if new_tags.difference(old_tags):
-                        tags_to_add = []
-                        for tag in new_tags.difference(old_tags):
-                            try:
-                                mtag = admin_models.MetricTags.objects.get(
-                                    name=tag
+                        if old_tags.difference(new_tags):
+                            for tag in old_tags.difference(new_tags):
+                                metrictemplate.tags.remove(
+                                    admin_models.MetricTags.objects.get(name=tag)
                                 )
 
-                            except admin_models.MetricTags.DoesNotExist:
-                                mtag = admin_models.MetricTags.objects.create(
-                                    name=tag
-                                )
-                            tags_to_add.append(mtag)
-                            mt.tags.add(mtag)
+                        if new_tags.difference(old_tags):
+                            for tag in new_tags.difference(old_tags):
+                                try:
+                                    mtag = admin_models.MetricTags.objects.get(
+                                        name=tag
+                                    )
 
-                    new_data.update({
-                        'version_comment': update_comment(
-                            admin_models.MetricTemplate.objects.get(
-                                id=request.data['id']
+                                except admin_models.MetricTags.DoesNotExist:
+                                    mtag = admin_models.MetricTags.objects.create(
+                                        name=tag
+                                    )
+                                metrictemplate.tags.add(mtag)
+
+                        create_history(metrictemplate, request.user.username)
+
+                    else:
+                        new_data = {
+                            'name': request.data['name'],
+                            'probekey': new_probekey,
+                            'mtype': admin_models.MetricTemplateType.objects.get(
+                                name=request.data['mtype']
+                            ),
+                            'description': request.data['description'],
+                            'parent': parent,
+                            'probeexecutable': probeexecutable,
+                            'config': inline_metric_for_db(request.data['config']),
+                            'attribute': inline_metric_for_db(
+                                request.data['attribute']
+                            ),
+                            'dependency': inline_metric_for_db(
+                                request.data['dependency']
+                            ),
+                            'flags': inline_metric_for_db(request.data['flags']),
+                            'parameter': inline_metric_for_db(
+                                request.data['parameter']
                             )
+                        }
+                        admin_models.MetricTemplate.objects.filter(
+                            id=request.data['id']
+                        ).update(**new_data)
+
+                        mt = admin_models.MetricTemplate.objects.get(
+                            pk=request.data['id']
                         )
-                    })
 
-                    admin_models.MetricTemplateHistory.objects.filter(
-                        name=old_name, probekey=old_probekey
-                    ).update(**new_data)
+                        tags_to_remove = None
+                        if old_tags.difference(new_tags):
+                            tags_to_remove = admin_models.MetricTags.objects.filter(
+                                name__in=old_tags.difference(new_tags)
+                            )
+                            for tag in tags_to_remove:
+                                mt.tags.remove(tag)
 
-                    history = admin_models.MetricTemplateHistory.objects.get(
-                        name=request.data['name'], probekey=new_probekey
-                    )
+                        tags_to_add = None
+                        if new_tags.difference(old_tags):
+                            tags_to_add = []
+                            for tag in new_tags.difference(old_tags):
+                                try:
+                                    mtag = admin_models.MetricTags.objects.get(
+                                        name=tag
+                                    )
 
-                    if tags_to_remove:
-                        for tag in tags_to_remove:
-                            history.tags.remove(tag)
+                                except admin_models.MetricTags.DoesNotExist:
+                                    mtag = admin_models.MetricTags.objects.create(
+                                        name=tag
+                                    )
+                                tags_to_add.append(mtag)
+                                mt.tags.add(mtag)
 
-                    if tags_to_add:
-                        for tag in tags_to_add:
-                            history.tags.add(tag)
+                        new_data.update({
+                            'version_comment': update_comment(
+                                admin_models.MetricTemplate.objects.get(
+                                    id=request.data['id']
+                                )
+                            )
+                        })
 
-                    msgs = update_metrics(mt, old_name, old_probekey)
+                        admin_models.MetricTemplateHistory.objects.filter(
+                            name=old_name, probekey=old_probekey
+                        ).update(**new_data)
 
-                    if msgs:
-                        return error_response(
-                            detail='\n'.join(msgs),
-                            status_code=status.HTTP_418_IM_A_TEAPOT
+                        history = admin_models.MetricTemplateHistory.objects.get(
+                            name=request.data['name'], probekey=new_probekey
                         )
+
+                        if tags_to_remove:
+                            for tag in tags_to_remove:
+                                history.tags.remove(tag)
+
+                        if tags_to_add:
+                            for tag in tags_to_add:
+                                history.tags.add(tag)
+
+                        msgs = update_metrics(mt, old_name, old_probekey)
+
+                        if msgs:
+                            return error_response(
+                                detail='\n'.join(msgs),
+                                status_code=status.HTTP_418_IM_A_TEAPOT
+                            )
 
                 try:
                     sync_tags_webapi()
@@ -425,8 +430,8 @@ class ListMetricTemplates(APIView):
                     return Response(status=status.HTTP_201_CREATED)
 
                 except WebApiException as error:
-                    return error_response(
-                        status_code=status.HTTP_201_CREATED, detail=str(error)
+                    return Response(
+                        {'warning': str(error)}, status=status.HTTP_201_CREATED
                     )
 
             except admin_models.MetricTemplate.DoesNotExist:

@@ -17,6 +17,7 @@ import {
 import ArgoLogo from './argologo_color.svg';
 import { Footer } from './UIElements.js';
 import { Backend } from './DataManager.js';
+import PageUnavailable from './PageUnavailable';
 
 import './Login.css';
 import { Controller, useForm } from 'react-hook-form';
@@ -25,7 +26,7 @@ import { Controller, useForm } from 'react-hook-form';
 const Login = (props) => {
   const [loginFailedVisible, setLoginFailedVisible] = useState(false);
   const [isTenantSchema, setIsTenantSchema] = useState(null);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [privacyLink, setPrivacyLink] = useState(undefined);
   const [termsLink, setTermsLink] = useState(undefined);
 
@@ -153,10 +154,7 @@ const Login = (props) => {
   }
   else if (isTenantSchema === null && !loading) {
     return (
-      <React.Fragment>
-        <h1>Something went wrong</h1>
-        <p>Cannot obtain schema</p>
-      </React.Fragment>
+      <PageUnavailable error="Unable to load the application configuration." />
     )
   }
   else

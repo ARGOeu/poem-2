@@ -5,6 +5,7 @@ mocked ``requests.request`` calls; they never contact a live WEB-API.
 """
 
 import datetime
+import json
 from unittest.mock import patch
 
 from django.utils import timezone
@@ -252,6 +253,63 @@ class ServiceTypeReplacementTests(TenantTestCase):
 
         methods = [c[0][0] for c in mock_request.call_args_list]
         self.assertEqual(methods, ["GET", "DELETE", "POST"])
+
+    @patch("Poem.services.webapi_client.requests.request")
+    def test_delete_missing_collection_still_posts_replacement(self, mock_request):
+        from Poem.services.service_types import replace_service_types
+
+        mock_request.side_effect = [
+            MockResponse({"data": [{"name": "old"}]}, 200),
+            MockResponse({
+                "status": {"message": "Not Found", "code": "404"},
+                "errors": [{"details": "Specific query returned no items"}],
+            }, 404),
+            MockResponse({"data": {}}, 200),
+        ]
+        desired = [{"name": "s1", "tags": ["topology"]}]
+        with self.settings(
+            WEBAPI_SERVICETYPES="https://webapi.example/service-types"
+        ):
+            result = replace_service_types("TENANT", desired)
+
+        self.assertEqual(result, desired)
+        self.assertEqual(
+            [call.args[0] for call in mock_request.call_args_list],
+            ["GET", "DELETE", "POST"],
+        )
+        self.assertEqual(
+            mock_request.call_args.kwargs["data"],
+            json.dumps(desired),
+        )
+
+    @patch("Poem.services.webapi_client.requests.request")
+    def test_other_delete_failures_prevent_post(self, mock_request):
+        from Poem.services.service_types import (
+            replace_service_types,
+            ServiceTypeReplacementError,
+        )
+
+        for status_code in (400, 401, 403, 500, 502, 504):
+            with self.subTest(status_code=status_code):
+                mock_request.reset_mock()
+                mock_request.side_effect = [
+                    MockResponse({"data": [{"name": "old"}]}, 200),
+                    MockResponse({"status": {"details": "delete failed"}},
+                                 status_code),
+                ]
+                with self.settings(
+                    WEBAPI_SERVICETYPES="https://webapi.example/service-types"
+                ):
+                    with self.assertRaises(ServiceTypeReplacementError) as ctx:
+                        replace_service_types("TENANT", [{"name": "s1"}])
+
+                self.assertFalse(ctx.exception.partial)
+                self.assertIn("Unable to clear existing service types",
+                              ctx.exception.detail)
+                self.assertEqual(
+                    [call.args[0] for call in mock_request.call_args_list],
+                    ["GET", "DELETE"],
+                )
 
     @patch("Poem.services.webapi_client.requests.request")
     def test_post_failure_is_partial(self, mock_request):

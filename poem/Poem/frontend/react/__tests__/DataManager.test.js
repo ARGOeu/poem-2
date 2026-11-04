@@ -587,6 +587,37 @@ describe('Tests for backend', () => {
     expect(spy).toHaveBeenCalledWith('/some/mock/url', 'PUT', mockSendValues);
   })
 
+  test.each([
+    ['changeObject', 'PUT'],
+    ['addObject', 'POST']
+  ])('%s returns save warnings when response parsing is enabled', async (method, verb) => {
+    const backend = new Backend();
+    const warning = { warning: 'Error syncing metric tags: 500 SERVER ERROR' };
+    const spy = jest.spyOn(backend, 'send').mockResolvedValueOnce({
+      ok: true,
+      status: 201,
+      json: jest.fn().mockResolvedValue(warning)
+    });
+
+    await expect(backend[method]('/api/v2/internal/metrictemplates/', mockSendValues, true))
+      .resolves.toEqual(warning);
+    expect(spy).toHaveBeenCalledWith('/api/v2/internal/metrictemplates/', verb, mockSendValues);
+  });
+
+  test.each(['changeObject', 'addObject'])(
+    '%s accepts an empty successful save response when parsing is enabled', async (method) => {
+      const backend = new Backend();
+      jest.spyOn(backend, 'send').mockResolvedValueOnce({
+        ok: true,
+        status: 201,
+        json: jest.fn().mockRejectedValue(new SyntaxError('Empty response'))
+      });
+
+      await expect(backend[method]('/api/v2/internal/metrictemplates/', mockSendValues, true))
+        .resolves.toBeUndefined();
+    }
+  );
+
   test('Test error changing an object with json message', async () => {
     const backend = new Backend();
 
