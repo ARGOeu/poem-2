@@ -369,6 +369,27 @@ describe('Tests for tenant API key change', () => {
     expect(screen.getByRole("button", {name: ''})).toBeInTheDocument()
   })
 
+  test.each([true, false])('Explain an omitted token on the API key page (tenant=%s)', async (isTenant) => {
+    Backend.mockImplementation(() => ({
+      fetchData: () => Promise.resolve({
+        id: 1,
+        name: 'WEB-API-TENANT',
+        created: '2023-03-09 10:27:13',
+        revoked: false,
+        used_by: 'webapi'
+      })
+    }));
+
+    renderChangeView(isTenant, true);
+
+    expect(await screen.findByRole('alert')).toHaveTextContent(
+      'This token is managed on the server and is not available to view or copy.'
+    );
+    expect(screen.queryByTestId('token')).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: '' })).not.toBeInTheDocument();
+    expect(navigator.clipboard.writeText).not.toHaveBeenCalled();
+  });
+
   it('Test copy to clipbord button', async () => {
     renderChangeView(true)
 
@@ -688,6 +709,15 @@ describe('Tests for super POEM API key change', () => {
     expect(queryClient.invalidateQueries).toHaveBeenCalledWith('apikey');
     expect(NotificationManager.success).toHaveBeenCalledWith('API key successfully changed', 'Changed', 2000)
   })
+
+  it('Test copying the stored web API token', async () => {
+    renderChangeView(false, true);
+
+    expect(await screen.findByDisplayValue('78910')).toBeDisabled();
+    fireEvent.click(screen.getByRole('button', { name: '' }));
+
+    expect(navigator.clipboard.writeText).toHaveBeenCalledWith('78910');
+  });
 
   it('Test revoke web API key and save', async () => {
     renderChangeView(false, true)

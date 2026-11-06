@@ -168,6 +168,7 @@ const APIKeyForm = ({
   const isTenantSchema = props.isTenantSchema
   const location = useLocation();
   const addview = props.addview;
+  const tokenUnavailable = !addview && !data?.token;
 
   const [areYouSureModal, setAreYouSureModal] = useState(false)
   const [modalTitle, setModalTitle] = useState(undefined)
@@ -322,37 +323,43 @@ const APIKeyForm = ({
                 If token field is <b>left empty</b>, value will be automatically generated on save.
               </Alert>
           }
-          <Row className="g-0">
-            <Col sm={6}>
-              <InputGroup>
-                <InputGroupText>Token</InputGroupText>
-                <Controller
-                  name="token"
-                  control={ control }
-                  render={ ({ field }) =>
-                    <Input
-                      {...field}
-                      data-testid="token"
-                      className="form-control"
-                      disabled={ addview ? false : true }
-                      innerRef={ refToken }
-                    />
-                  }
-                />
-              </InputGroup>
-              <FormText color='muted'>
-                A public, unique identifier for this API key.
-              </FormText>
-            </Col>
-            {
-              !addview &&
-              <Col sm={2}>
-                <Button className="btn" color="success" onClick={(e) => copyToClipboard(e)}>
-                  <FontAwesomeIcon icon={faClipboard} size="lg" color='white'/>
-                </Button>
+          {tokenUnavailable ? (
+            <Alert color="info">
+              This token is managed on the server and is not available to view or copy.
+            </Alert>
+          ) : (
+            <Row className="g-0">
+              <Col sm={6}>
+                <InputGroup>
+                  <InputGroupText>Token</InputGroupText>
+                  <Controller
+                    name="token"
+                    control={ control }
+                    render={ ({ field }) =>
+                      <Input
+                        {...field}
+                        data-testid="token"
+                        className="form-control"
+                        disabled={ addview ? false : true }
+                        innerRef={ refToken }
+                      />
+                    }
+                  />
+                </InputGroup>
+                <FormText color='muted'>
+                  Credential used to authenticate requests to this API.
+                </FormText>
               </Col>
-            }
-          </Row>
+              {
+                !addview &&
+                <Col sm={2}>
+                  <Button className="btn" color="success" onClick={(e) => copyToClipboard(e)}>
+                    <FontAwesomeIcon icon={faClipboard} size="lg" color='white'/>
+                  </Button>
+                </Col>
+              }
+            </Row>
+          )}
         </FormGroup>
         {
           !(isTenantSchema && getValues("used_by") === "webapi") &&
