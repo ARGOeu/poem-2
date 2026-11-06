@@ -1,8 +1,10 @@
 """Server-side resolution of WEB-API credentials.
 
-The browser must never receive a WEB-API token. This module resolves the
-correct tenant credential for an already-authorized read or write purpose and
-returns only the secret value to the *server-side* HTTP client.
+Application data requests do not expose WEB-API tokens to the browser; only
+the superuser API-key detail view permits inspecting stored credentials.
+This module resolves the correct tenant credential for an already-authorized
+read or write purpose and returns the secret value to the *server-side*
+HTTP client.
 
 Credential naming convention (see ``poem_super_admin/dbmodels/apikey.py``):
 

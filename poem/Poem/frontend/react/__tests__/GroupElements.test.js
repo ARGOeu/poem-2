@@ -3,7 +3,6 @@ import React from 'react';
 import { MemoryRouter, Routes, Route } from 'react-router-dom';
 import { GroupList, GroupChange } from '../GroupElements';
 import { render, waitFor, screen, fireEvent, within } from '@testing-library/react';
-import useEvent from '@testing-library/user-event';
 import { Backend } from '../DataManager';
 import { NotificationManager } from 'react-notifications';
 import { QueryClient, QueryClientProvider, setLogger } from 'react-query';
@@ -442,33 +441,35 @@ describe('Tests for group elements changeview', () => {
   })
 
   test('Test add item to group and save', async () => {
-    const user = useEvent.setup();
     renderChangeView();
 
-    await waitFor(() => {
-      expect(screen.getByRole('button', {name: /save/i})).toBeInTheDocument();
-    })
+    const saveButton = await screen.findByRole('button', { name: /save/i });
+    const addButton = screen.getByRole('button', { name: /add/i });
+    const groupTable = within(screen.getByRole('table'));
 
-    expect(screen.getAllByRole('row')).toHaveLength(6);
+    expect(groupTable.getAllByRole('row')).toHaveLength(6);
 
-    const selectField = screen.getByTestId('available_metrics');
-    await user.type(within(selectField).getByRole('combobox'), 'test');
-    await user.click(await within(selectField).findByRole('option', { name: 'test.AMS-Check' }));
-    await user.click(screen.getByRole('button', { name: /add/i }));
+    const selectField = within(screen.getByTestId('available_metrics'));
+    const selectInput = selectField.getByRole('combobox');
+    fireEvent.change(selectInput, { target: { value: 'test' } });
+    fireEvent.click(await selectField.findByRole('option', { name: 'test.AMS-Check' }));
+    fireEvent.click(addButton);
     await waitFor(() => {
-      expect(screen.getAllByRole('row')).toHaveLength(7);
+      expect(groupTable.getAllByRole('row')).toHaveLength(7);
     })
-    expect(screen.getByRole('row', { name: /test\.AMS-Check/ })).toBeInTheDocument();
+    expect(groupTable.getByRole('row', { name: /test\.AMS-Check/ })).toBeInTheDocument();
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
 
-    await user.click(within(selectField).getByRole('combobox'));
-    expect(within(selectField).queryByRole('option', { name: 'test.AMS-Check' }))
+    fireEvent.focus(selectInput);
+    fireEvent.keyDown(selectInput, { key: 'ArrowDown', code: 'ArrowDown' });
+    expect(selectField.getByRole('option', { name: 'argo.CE-Check' })).toBeInTheDocument();
+    expect(selectField.queryByRole('option', { name: 'test.AMS-Check' }))
       .not.toBeInTheDocument();
-    await user.keyboard('{Escape}');
-    await user.click(screen.getByRole('button', { name: /add/i }));
-    expect(screen.getAllByRole('row')).toHaveLength(7);
+    fireEvent.keyDown(selectInput, { key: 'Escape', code: 'Escape' });
+    fireEvent.click(addButton);
+    expect(groupTable.getAllByRole('row')).toHaveLength(7);
 
-    fireEvent.click(screen.getByRole('button', { name: /save/i }))
+    fireEvent.click(saveButton)
 
     await waitFor(() => {
       expect(screen.getByRole('dialog', { title: /change/i })).toBeInTheDocument()
