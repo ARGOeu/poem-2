@@ -505,7 +505,8 @@ class ListAPIKeysAPIViewTests(TenantTestCase):
             {
                 "id": self.id4,
                 "name": "WEB-API-TENANT",
-                                "created": self.created4,
+                "token": self.token4,
+                "created": self.created4,
                 "revoked": False,
                 "used_by": "webapi"
             }
@@ -579,7 +580,8 @@ class ListAPIKeysAPIViewTests(TenantTestCase):
             {
                 "id": self.id4,
                 "name": "WEB-API-TENANT",
-                                "created": self.created4,
+                "token": self.token4,
+                "created": self.created4,
                 "revoked": False,
                 "used_by": "webapi"
             }
@@ -601,7 +603,8 @@ class ListAPIKeysAPIViewTests(TenantTestCase):
             {
                 "id": self.id7,
                 "name": "WEB-API-TENANT2-RO",
-                                "created": self.created7,
+                "token": self.token7,
+                "created": self.created7,
                 "revoked": False,
                 "used_by": "webapi"
             }

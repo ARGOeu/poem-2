@@ -101,9 +101,9 @@ class ListAPIKeys(APIView):
                     used_by=used_by
                 )
 
-                # Only POEM's own API keys expose their token; WEB-API
-                # credentials are never returned to the browser.
-                if used_by == "poem":
+                # Superusers can inspect stored WEB-API credentials on the
+                # administration detail page. Other users get metadata only.
+                if used_by == "poem" or request.user.is_superuser:
                     api_format['token'] = apikey.token
 
             else:
