@@ -93,7 +93,7 @@
     "@popperjs/core": "^2.11.8",
     "async": "^3.2.5",
     "caniuse-lite": "^1.0.30001607",
-    "decode-uri-component": "^0.4.1",
+    "decode-uri-component": "^0.5.1",
     "jest-environment-jsdom": "^29.7.0",
     "loader-utils": "^3.2.1",
     "lodash": "^4.17.21",
