@@ -171,21 +171,18 @@ def apply_other_migrations(user):
 def dump_data(schema, filename):
     setup_django()
 
-    options = {
-        "indent": 2,
-        "natural_foreign": True,
-        "natural_primary": True,
-        "schema": schema,
-    }
+    # Wrapped command options must be positional CLI arguments: Django checks
+    # keyword options against tenant_command before it invokes dumpdata.
+    dump_args = ["dumpdata", "--indent=2", "--natural-foreign", "--natural-primary"]
     if schema == "public":
-        options["exclude"] = ["tenants.tenant", "tenants.domain"]
+        dump_args.extend(["--exclude=tenants.tenant", "--exclude=tenants.domain"])
 
     with open(filename, "w") as output:
         call_management_command(
             "tenant_command",
-            "dumpdata",
+            *dump_args,
+            schema=schema,
             stdout=output,
-            **options,
         )
     return 0
 
